@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d2938ca162f5278f0a58961a581c10b616ae8aa58357832f1b97d4e8d3ba7af6
+-- hash: 535847419056cb88ed2d84364985efe7e103a6350e35b741d028b3bd79f44638
 
 name:           goog-api-client
 version:        0.1.0.0
@@ -26,14 +26,24 @@ source-repository head
   location: https://github.com/JunKikuchi/goog-api-client
 
 library
+  exposed-modules:
+      Discovery
+      Discovery.List
+      Discovery.List.Icons
+      Discovery.List.Item
   other-modules:
       Paths_goog_api_client
   hs-source-dirs:
       src
   default-extensions: NoImplicitPrelude
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , http-client
+    , http-client-tls
     , rio
+    , servant
+    , servant-client
   default-language: Haskell2010
 
 executable goog-api-client-exe
@@ -45,9 +55,14 @@ executable goog-api-client-exe
   default-extensions: NoImplicitPrelude
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Werror
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , goog-api-client
+    , http-client
+    , http-client-tls
     , rio
+    , servant
+    , servant-client
   default-language: Haskell2010
 
 test-suite goog-api-client-test
@@ -60,8 +75,13 @@ test-suite goog-api-client-test
   default-extensions: NoImplicitPrelude
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , doctest
     , goog-api-client
+    , http-client
+    , http-client-tls
     , rio
+    , servant
+    , servant-client
   default-language: Haskell2010
