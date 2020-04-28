@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 53fa04fcfa7038ee02462921daa3c0cbc8f82f9ff295508ee9964b4dc5ef949b
+-- hash: d2938ca162f5278f0a58961a581c10b616ae8aa58357832f1b97d4e8d3ba7af6
 
 name:           goog-api-client
 version:        0.1.0.0
@@ -26,14 +26,14 @@ source-repository head
   location: https://github.com/JunKikuchi/goog-api-client
 
 library
-  exposed-modules:
-      Lib
   other-modules:
       Paths_goog_api_client
   hs-source-dirs:
       src
+  default-extensions: NoImplicitPrelude
   build-depends:
       base >=4.7 && <5
+    , rio
   default-language: Haskell2010
 
 executable goog-api-client-exe
@@ -42,10 +42,12 @@ executable goog-api-client-exe
       Paths_goog_api_client
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions: NoImplicitPrelude
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Werror
   build-depends:
       base >=4.7 && <5
     , goog-api-client
+    , rio
   default-language: Haskell2010
 
 test-suite goog-api-client-test
@@ -55,8 +57,11 @@ test-suite goog-api-client-test
       Paths_goog_api_client
   hs-source-dirs:
       test
+  default-extensions: NoImplicitPrelude
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , doctest
     , goog-api-client
+    , rio
   default-language: Haskell2010

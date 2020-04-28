@@ -1,2 +1,5 @@
+import           RIO
+import           Test.DocTest                   ( doctest )
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = doctest ["app", "src"]

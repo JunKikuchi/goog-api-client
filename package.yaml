@@ -21,6 +21,10 @@ description: Please see the README on GitHub at <https://github.com/JunKikuchi/g
 
 dependencies:
   - base >= 4.7 && < 5
+  - rio
+
+default-extensions:
+  - NoImplicitPrelude
 
 library:
   source-dirs: src
@@ -33,6 +37,14 @@ executables:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
+      - -Wall
+      - -Wcompat
+      - -Widentities
+      - -Wincomplete-record-updates
+      - -Wincomplete-uni-patterns
+      - -Wpartial-fields
+      - -Wredundant-constraints
+      - -Werror
     dependencies:
       - goog-api-client
 
@@ -46,3 +58,4 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - goog-api-client
+      - doctest
