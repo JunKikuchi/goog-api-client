@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables, RankNTypes, NoMonoLocalBinds #-}
 module Main where
 
 import           RIO
@@ -13,9 +14,13 @@ import           Prelude                        ( putStrLn
 import           Discovery                      ( baseUrl
                                                 , list
                                                 )
+import           Options                        ( parseOpts )
 
 main :: IO ()
 main = do
+  opts <- parseOpts
+  print opts
+
   manager <- newManager tlsManagerSettings
 
   res     <- runClientM (list (Just "firestore") (Just False))

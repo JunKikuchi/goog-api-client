@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 535847419056cb88ed2d84364985efe7e103a6350e35b741d028b3bd79f44638
+-- hash: 6ad451fc3a2446fdc1e009bd285af5b17b36bbb8da543a40bceaaee04e7bf4b4
 
 name:           goog-api-client
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
     , base >=4.7 && <5
     , http-client
     , http-client-tls
+    , optparse-applicative
     , rio
     , servant
     , servant-client
@@ -49,6 +50,7 @@ library
 executable goog-api-client-exe
   main-is: Main.hs
   other-modules:
+      Options
       Paths_goog_api_client
   hs-source-dirs:
       app
@@ -60,6 +62,7 @@ executable goog-api-client-exe
     , goog-api-client
     , http-client
     , http-client-tls
+    , optparse-applicative
     , rio
     , servant
     , servant-client
@@ -81,6 +84,7 @@ test-suite goog-api-client-test
     , goog-api-client
     , http-client
     , http-client-tls
+    , optparse-applicative
     , rio
     , servant
     , servant-client

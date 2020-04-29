@@ -27,6 +27,7 @@ dependencies:
   - http-client
   - http-client-tls
   - aeson
+  - optparse-applicative
 
 default-extensions:
   - NoImplicitPrelude
