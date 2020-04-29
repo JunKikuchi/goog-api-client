@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ebdc0d9da481ac4eca6a97db000065155a57de527f32b8e3de5152e0448dc5e2
+-- hash: bdfe0309e469fee3a247f917d075dcd44f0e758999760335117c8c766b93426e
 
 name:           goog-api-client
 version:        0.1.0.0
@@ -28,7 +28,7 @@ source-repository head
 library
   exposed-modules:
       Discovery
-      Discovery.Desc
+      Discovery.Document
       Discovery.List
       Discovery.List.Icons
       Discovery.List.Item
