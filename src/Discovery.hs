@@ -6,7 +6,7 @@ import           RIO
 import           RIO.Text
 import           Servant.API
 import           Servant.Client                 ( BaseUrl(..)
-                                                , Scheme(..)
+                                                , Scheme(Https)
                                                 , ClientM
                                                 , client
                                                 )
