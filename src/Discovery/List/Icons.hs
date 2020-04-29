@@ -3,7 +3,6 @@ module Discovery.List.Icons where
 
 import           GHC.Generics
 import           RIO
-import           RIO.Text
 import           Data.Aeson
 
 data Icons = Icons

@@ -3,7 +3,6 @@
 module Discovery where
 
 import           RIO
-import           RIO.Text
 import           Network.HTTP.Client            ( newManager )
 import           Network.HTTP.Client.TLS        ( tlsManagerSettings )
 import           Servant.API

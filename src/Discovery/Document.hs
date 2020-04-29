@@ -4,7 +4,6 @@ module Discovery.Document where
 import           GHC.Generics
 import           RIO
 import qualified RIO.Map                       as Map
-import           RIO.Text
 import           Data.Aeson
 import           Discovery.Document.Icons       ( Icons )
 
