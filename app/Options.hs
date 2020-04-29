@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Options where
 
 import           RIO
@@ -10,7 +11,7 @@ data Commands
 
 data List
   = List
-  { name :: Maybe Text
+  { name :: Text
   , preferred :: Bool
   } deriving Show
 
@@ -41,12 +42,11 @@ getRestCommand = GetRestCommand <$> getRest
 list :: Parser List
 list =
   List
-    <$> option
-          auto
+    <$> strOption
           (  long "name"
           <> metavar "API"
           <> help "Only include APIs with the given name."
-          <> value Nothing
+          <> value ""
           )
     <*> switch
           (  long "preferred"
@@ -56,8 +56,7 @@ list =
 getRest :: Parser GetRest
 getRest =
   GetRest
-    <$> option auto (long "api" <> metavar "API" <> help "The name of the API.")
-    <*> option
-          auto
+    <$> strOption (long "api" <> metavar "API" <> help "The name of the API.")
+    <*> strOption
           (long "version" <> metavar "VERSION" <> help "The version of the API."
           )
