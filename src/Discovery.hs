@@ -5,8 +5,15 @@ module Discovery where
 import           RIO
 import           RIO.Text
 import           Servant.API
-import           Servant.Client
+import           Servant.Client                 ( BaseUrl(..)
+                                                , Scheme(..)
+                                                , ClientM
+                                                , client
+                                                )
 import           Discovery.List                 ( List )
+
+baseUrl :: BaseUrl
+baseUrl = BaseUrl Https "www.googleapis.com" 443 ""
 
 type Desc = Text
 type Name = Text
