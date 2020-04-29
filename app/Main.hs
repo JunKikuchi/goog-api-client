@@ -2,9 +2,6 @@
 module Main where
 
 import           RIO
-import           Discovery                      ( baseUrl
-                                                , list
-                                                )
 import           Network.HTTP.Client            ( newManager )
 import           Network.HTTP.Client.TLS        ( tlsManagerSettings )
 import           Servant.Client                 ( runClientM
@@ -12,6 +9,9 @@ import           Servant.Client                 ( runClientM
                                                 )
 import           Prelude                        ( putStrLn
                                                 , print
+                                                )
+import           Discovery                      ( baseUrl
+                                                , list
                                                 )
 
 main :: IO ()
