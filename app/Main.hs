@@ -21,7 +21,8 @@ main :: IO ()
 main = do
   manager <- newManager tlsManagerSettings
 
-  res     <- runClientM list (mkClientEnv manager baseURL)
+  res     <- runClientM (list (Just "firestore") (Just False))
+                        (mkClientEnv manager baseURL)
   case res of
     Left  err   -> putStrLn $ "Error: " ++ show err
     Right items -> print items
