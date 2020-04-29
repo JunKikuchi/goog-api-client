@@ -19,7 +19,7 @@ type Desc = Text
 type Name = Text
 type Preferred = Bool
 
-type Discovery
+type API
      = "discovery" :> "v1" :> "apis"
        :> QueryParam "name" Name
        :> QueryParam "preferred" Preferred
@@ -27,10 +27,10 @@ type Discovery
   :<|> "discovery" :> "v1" :> "apis" :> Capture "api" Text :> Capture "version" Text :> "rest"
        :> Get '[PlainText] Desc
 
-discovery :: Proxy Discovery
-discovery = Proxy
+api :: Proxy API
+api = Proxy
 
 list :: Maybe Name -> Maybe Preferred -> ClientM List
 getRest :: Text -> Text -> ClientM Desc
 
-(list :<|> getRest) = client discovery
+(list :<|> getRest) = client api
