@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables, RankNTypes, NoMonoLocalBinds #-}
 module Main where
 
 import           RIO
