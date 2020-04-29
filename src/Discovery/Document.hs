@@ -6,6 +6,7 @@ import           RIO
 import qualified RIO.Map                       as Map
 import           RIO.Text
 import           Data.Aeson
+import           Discovery.Document.Icons       ( Icons )
 
 data Document = Document
   { kind :: Text
@@ -34,14 +35,6 @@ data Document = Document
   } deriving (Show, Generic)
 
 instance FromJSON Document
-
-data Icons
-  = Icons
-  { x16 :: Text
-  , x32 :: Text
-  } deriving (Show, Generic)
-
-instance FromJSON Icons
 
 data Auth
   = Auth
