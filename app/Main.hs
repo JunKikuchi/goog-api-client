@@ -2,28 +2,30 @@
 module Main where
 
 import           RIO
-import           Network.HTTP.Client            ( newManager )
-import           Network.HTTP.Client.TLS        ( tlsManagerSettings )
-import           Servant.Client                 ( runClientM
-                                                , mkClientEnv
-                                                )
 import           Prelude                        ( putStrLn
                                                 , print
                                                 )
-import           Discovery                      ( baseUrl
-                                                , list
+import           Discovery                      ( list
+                                                , run
                                                 )
-import           Options                        ( parseOpts )
+import qualified Options                       as Opts
 
 main :: IO ()
 main = do
-  opts <- parseOpts
+  opts <- Opts.parseOpts
   print opts
 
-  manager <- newManager tlsManagerSettings
+  runCommand opts
 
-  res     <- runClientM (list (Just "firestore") (Just False))
-                        (mkClientEnv manager baseUrl)
+runCommand :: Opts.Commands -> IO ()
+runCommand (Opts.ListCommand a) = do
+  res <- run $ list name preferred
   case res of
     Left  err   -> putStrLn $ "Error: " ++ show err
     Right items -> print items
+ where
+  name = case Opts.name a of
+    ""  -> Nothing
+    n@_ -> Just n
+  preferred = if Opts.preferred a then Just True else Nothing
+runCommand (Opts.GetRestCommand _) = undefined
