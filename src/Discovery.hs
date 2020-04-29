@@ -37,7 +37,6 @@ api = Proxy
 
 list :: Maybe Name -> Maybe Preferred -> ClientM List
 getRest :: Text -> Text -> ClientM Desc
-
 (list :<|> getRest) = client api
 
 run :: ClientM a -> IO (Either ClientError a)
