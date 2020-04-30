@@ -20,13 +20,10 @@ import           Discovery.Document             ( Document )
 baseUrl :: BaseUrl
 baseUrl = BaseUrl Https "www.googleapis.com" 443 ""
 
-type Name = Text
-type Preferred = Bool
-
 type API
      = "discovery" :> "v1" :> "apis"
-       :> QueryParam "name" Name
-       :> QueryParam "preferred" Preferred
+       :> QueryParam "name" Text
+       :> QueryParam "preferred" Bool
        :> Get '[JSON] List
   :<|> "discovery" :> "v1" :> "apis" :> Capture "api" Text :> Capture "version" Text :> "rest"
        :> Get '[JSON] Document
@@ -34,7 +31,7 @@ type API
 api :: Proxy API
 api = Proxy
 
-list :: Maybe Name -> Maybe Preferred -> ClientM List
+list :: Maybe Text -> Maybe Bool -> ClientM List
 getRest :: Text -> Text -> ClientM Document
 (list :<|> getRest) = client api
 
