@@ -6,8 +6,8 @@ import           Prelude                        ( putStrLn
                                                 , print
                                                 )
 import           Discovery                      ( list
-                                                , run
                                                 , getRest
+                                                , run
                                                 )
 import qualified Options                       as Opts
 
