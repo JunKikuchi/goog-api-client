@@ -5,6 +5,8 @@ import           RIO
 import           Prelude                        ( putStrLn
                                                 , print
                                                 )
+import           Data.Aeson                     ( Value )
+import           Servant.Client                 ( ClientError )
 import           Discovery                      ( list
                                                 , getRest
                                                 , run
@@ -20,17 +22,17 @@ main = do
 
 runCommand :: Opts.Commands -> IO ()
 runCommand (Opts.ListCommand a) = do
-  res <- run $ list name preferred
-  case res of
-    Left  err   -> putStrLn $ "Error: " ++ show err
-    Right items -> print items
+  ret <- run $ list name preferred
+  put ret
  where
   name = case Opts.name a of
     ""  -> Nothing
     n@_ -> Just n
   preferred = if Opts.preferred a then Just True else Nothing
 runCommand (Opts.GetRestCommand a) = do
-  res <- run $ getRest (Opts.api a) (Opts.version a)
-  case res of
-    Left  err   -> putStrLn $ "Error: " ++ show err
-    Right items -> print items
+  ret <- run $ getRest (Opts.api a) (Opts.version a)
+  put ret
+
+put :: Either ClientError Value -> IO ()
+put (Right val) = print val
+put (Left  err) = putStrLn $ "Error: " ++ show err
