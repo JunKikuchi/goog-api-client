@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 64778c5770015032810f966365724114849e4efd33bcd15cda0fae82f5a34753
+-- hash: 9ace3a0df801419ab82c61809f903cd8b18d27283a0aed98ff3f7ef3dedafe58
 
 name:           goog-api-client
 version:        0.1.0.0
@@ -28,21 +28,16 @@ source-repository head
 library
   exposed-modules:
       Discovery
-      Discovery.Document
-      Discovery.List
   other-modules:
       Paths_goog_api_client
   hs-source-dirs:
       src
-      json-autotype/src
   default-extensions: NoImplicitPrelude
   build-depends:
       aeson
     , base >=4.7 && <5
     , http-client
     , http-client-tls
-    , json-alt
-    , json-autotype
     , optparse-applicative
     , rio
     , servant
@@ -64,8 +59,6 @@ executable goog-api-client-exe
     , goog-api-client
     , http-client
     , http-client-tls
-    , json-alt
-    , json-autotype
     , optparse-applicative
     , rio
     , servant
@@ -88,8 +81,6 @@ test-suite goog-api-client-test
     , goog-api-client
     , http-client
     , http-client-tls
-    , json-alt
-    , json-autotype
     , optparse-applicative
     , rio
     , servant

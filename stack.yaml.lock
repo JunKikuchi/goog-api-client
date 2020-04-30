@@ -3,21 +3,7 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: json-autotype-3.1.2@sha256:054191a85b710c790cb1f1a62de982194dfd086c745299a677210899e0b6625b,8510
-    pantry-tree:
-      size: 2465
-      sha256: 23e4c9b01cdb6884e5c305313f0e9bfbe8c2986afb89cd9761c92057d33207f6
-  original:
-    hackage: json-autotype-3.1.2@sha256:054191a85b710c790cb1f1a62de982194dfd086c745299a677210899e0b6625b,8510
-- completed:
-    hackage: run-haskell-module-0.0.2@sha256:69eaa538fa6f3820581451a157b439feede147cd4bce032dcc393b247f7a597d,1317
-    pantry-tree:
-      size: 296
-      sha256: eb779c8663bc37ec07c2bf3d9689fe987e07e63bc47b7242f088d440da600809
-  original:
-    hackage: run-haskell-module-0.0.2@sha256:69eaa538fa6f3820581451a157b439feede147cd4bce032dcc393b247f7a597d,1317
+packages: []
 snapshots:
 - completed:
     size: 493124

@@ -28,8 +28,6 @@ dependencies:
   - http-client-tls
   - aeson
   - optparse-applicative
-  - json-alt
-  - json-autotype
 
 default-extensions:
   - NoImplicitPrelude
@@ -37,7 +35,6 @@ default-extensions:
 library:
   source-dirs:
     - src
-    - json-autotype/src
 
 executables:
   goog-api-client-exe:
