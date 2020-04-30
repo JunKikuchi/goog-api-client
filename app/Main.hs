@@ -7,6 +7,7 @@ import           Prelude                        ( putStrLn
                                                 )
 import           Discovery                      ( list
                                                 , run
+                                                , getRest
                                                 )
 import qualified Options                       as Opts
 
@@ -28,4 +29,8 @@ runCommand (Opts.ListCommand a) = do
     ""  -> Nothing
     n@_ -> Just n
   preferred = if Opts.preferred a then Just True else Nothing
-runCommand (Opts.GetRestCommand _) = undefined
+runCommand (Opts.GetRestCommand a) = do
+  res <- run $ getRest (Opts.api a) (Opts.version a)
+  case res of
+    Left  err   -> putStrLn $ "Error: " ++ show err
+    Right items -> print items
