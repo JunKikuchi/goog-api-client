@@ -21,6 +21,7 @@ import           Data.Aeson(eitherDecode, Value(..), FromJSON(..), ToJSON(..),pa
 import           Data.Monoid((<>))
 -- import           Data.Text (Text)
 import qualified GHC.Generics
+{-# ANN module ("HLint: ignore" :: String) #-}
 
 data Icons = Icons { 
     iconsX16 :: Text,

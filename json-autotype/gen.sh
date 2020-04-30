@@ -16,6 +16,8 @@ function gen() {
     -e 's/^import.*System/-- &/' \
     -e 's/^import.*Data.ByteString.Lazy.Char8/-- &/' \
     -e 's/^import.*Data.Text/-- &/' \
+    -e '/^import qualified GHC.Generics/a\
+    {-# ANN module ("HLint: ignore" :: String) #-}' \
     -e '/^-- | Use parser to get .* object$/a\
     {--' \
     -e '$a\
