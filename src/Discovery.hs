@@ -14,8 +14,7 @@ import           Servant.Client                 ( BaseUrl(..)
                                                 , mkClientEnv
                                                 , runClientM
                                                 )
-import           Discovery.List                 ( List )
-import           Discovery.Document             ( Document )
+import           Data.Aeson                     ( Value )
 
 baseUrl :: BaseUrl
 baseUrl = BaseUrl Https "www.googleapis.com" 443 ""
@@ -24,15 +23,15 @@ type API
      = "discovery" :> "v1" :> "apis"
        :> QueryParam "name" Text
        :> QueryParam "preferred" Bool
-       :> Get '[JSON] List
+       :> Get '[JSON] Value
   :<|> "discovery" :> "v1" :> "apis" :> Capture "api" Text :> Capture "version" Text :> "rest"
-       :> Get '[JSON] Document
+       :> Get '[JSON] Value
 
 api :: Proxy API
 api = Proxy
 
-list :: Maybe Text -> Maybe Bool -> ClientM List
-getRest :: Text -> Text -> ClientM Document
+list :: Maybe Text -> Maybe Bool -> ClientM Value
+getRest :: Text -> Text -> ClientM Value
 (list :<|> getRest) = client api
 
 run :: ClientM a -> IO (Either ClientError a)
