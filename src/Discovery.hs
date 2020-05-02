@@ -20,6 +20,7 @@ import           Servant.Client                 ( BaseUrl(..)
                                                 , runClientM
                                                 )
 import           Data.Aeson                     ( Value )
+import           Discovery.DirectoryList        ( DirectoryList )
 
 type Name = Text
 type Preferred = Bool
@@ -33,14 +34,14 @@ type API
      = "discovery" :> "v1" :> "apis"
        :> QueryParam "name" Name
        :> QueryParam "preferred" Preferred
-       :> Get '[JSON] Value
+       :> Get '[JSON] DirectoryList
   :<|> "discovery" :> "v1" :> "apis" :> Capture "api" Api :> Capture "version" Version :> "rest"
        :> Get '[JSON] Value
 
 api :: Proxy API
 api = Proxy
 
-list :: Maybe Name -> Maybe Preferred -> ClientM Value
+list :: Maybe Name -> Maybe Preferred -> ClientM DirectoryList
 getRest :: Api -> Version -> ClientM Value
 (list :<|> getRest) = client api
 

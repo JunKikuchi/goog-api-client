@@ -5,7 +5,6 @@ import           RIO
 import           Prelude                        ( putStrLn
                                                 , print
                                                 )
-import           Data.Aeson                     ( Value )
 import           Servant.Client                 ( ClientError )
 import           Discovery                      ( list
                                                 , getRest
@@ -33,6 +32,6 @@ runCommand (Opts.GetRestCommand a) = do
   ret <- run $ getRest (Opts.api a) (Opts.version a)
   put ret
 
-put :: Either ClientError Value -> IO ()
+put :: (Show a) => Either ClientError a -> IO ()
 put (Right val) = print val
 put (Left  err) = putStrLn $ "Error: " ++ show err
