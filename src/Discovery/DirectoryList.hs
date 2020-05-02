@@ -4,7 +4,6 @@ module Discovery.DirectoryList where
 
 import           RIO
 import           Data.Aeson                     ( FromJSON(..)
-                                                , (.:)
                                                 , (.:?)
                                                 , withObject
                                                 )

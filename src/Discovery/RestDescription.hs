@@ -4,7 +4,6 @@ module Discovery.RestDescription where
 
 import           RIO
 import           Data.Aeson                     ( FromJSON(..)
-                                                , (.:)
                                                 , (.:?)
                                                 , withObject
                                                 )
