@@ -16,22 +16,27 @@ import           Servant.Client                 ( BaseUrl(..)
                                                 )
 import           Data.Aeson                     ( Value )
 
+type Name = Text
+type Preferred = Bool
+type Api = Text
+type Version = Text
+
 baseUrl :: BaseUrl
 baseUrl = BaseUrl Https "www.googleapis.com" 443 ""
 
 type API
      = "discovery" :> "v1" :> "apis"
-       :> QueryParam "name" Text
-       :> QueryParam "preferred" Bool
+       :> QueryParam "name" Name
+       :> QueryParam "preferred" Preferred
        :> Get '[JSON] Value
-  :<|> "discovery" :> "v1" :> "apis" :> Capture "api" Text :> Capture "version" Text :> "rest"
+  :<|> "discovery" :> "v1" :> "apis" :> Capture "api" Api :> Capture "version" Version :> "rest"
        :> Get '[JSON] Value
 
 api :: Proxy API
 api = Proxy
 
-list :: Maybe Text -> Maybe Bool -> ClientM Value
-getRest :: Text -> Text -> ClientM Value
+list :: Maybe Name -> Maybe Preferred -> ClientM Value
+getRest :: Api -> Version -> ClientM Value
 (list :<|> getRest) = client api
 
 run :: ClientM a -> IO (Either ClientError a)
