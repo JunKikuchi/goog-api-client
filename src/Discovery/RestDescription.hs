@@ -8,24 +8,12 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , withObject
                                                 )
 import           GHC.Generics                   ( Generic )
+import qualified JSON.Schema                   as JSON
 
 type Key = Text
 
--- https://tools.ietf.org/html/draft-zyp-json-schema-03#section-5.1
-data JsonSchema
-  = JsonSchema
-  { jsonSchemaType :: Maybe Text
-  , jsonSchemaDescription :: Maybe Text
-  , jsonSchemaFormat :: Maybe Text
-  } deriving (Show, Generic)
-
-instance FromJSON JsonSchema where
-  parseJSON = withObject "JsonSchema" $ \v -> JsonSchema
-    <$> v .:? "type"
-    <*> v .:? "description"
-    <*> v .:? "format"
-
 -- https://developers.google.com/discovery/v1/reference/apis/getRest
+
 data RestDescription
   = RestDescription
   { restDescriptionKind :: Maybe Text -- "discovery#restDescription"
@@ -103,9 +91,9 @@ data RestDescriptionParameter
   , restDescriptionParameterEnumDescriptions :: Maybe [Text]
   , restDescriptionParameterRepeated :: Maybe Bool
   , restDescriptionParameterLocation :: Maybe Text
-  , restDescriptionParameterProperties :: Maybe (Map Key JsonSchema)
-  , restDescriptionParameterAdditionalProperties :: Maybe JsonSchema
-  , restDescriptionParameterItems:: Maybe [JsonSchema]
+  , restDescriptionParameterProperties :: Maybe (Map Key JSON.Schema)
+  , restDescriptionParameterAdditionalProperties :: Maybe JSON.Schema
+  , restDescriptionParameterItems:: Maybe [JSON.Schema]
   , restDescriptionParameterAnnotations :: Maybe RestDescriptionParameterAnnotations
   } deriving (Show, Generic)
 
