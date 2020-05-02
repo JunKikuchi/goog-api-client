@@ -41,13 +41,13 @@ data RestDescription
   , restDescriptionLabels :: Maybe [Text]
   , restDescriptionProtocol :: Maybe Text
   , restDescriptionRootUrl :: Maybe Text
+  , restDescriptionServicePath :: Maybe Text
+  , restDescriptionBatchPath :: Maybe Text
   , restDescriptionParameters :: Maybe (Map Key RestDescriptionParameter)
   , restDescriptionAuth :: Maybe RestDescriptionAuth
   , restDescriptionFeatures :: Maybe [Text]
   , restDescriptionSchemas :: Maybe (Map Key RestDescriptionParameter)
   , restDescriptionMethods :: Maybe (Map Key RestDescriptionMethod)
-  , restDescriptionServicePath :: Maybe Text
-  , restDescriptionBatchPath :: Maybe Text
   , restDescriptionResources :: Maybe (Map Key RestDescriptionResource)
   } deriving (Show, Generic)
 
@@ -66,13 +66,13 @@ instance FromJSON RestDescription where
     <*> v .:? "labels"
     <*> v .:? "protocol"
     <*> v .:? "rootUrl"
+    <*> v .:? "servicePath"
+    <*> v .:? "batchPath"
     <*> v .:? "parameters"
     <*> v .:? "auth"
     <*> v .:? "features"
     <*> v .:? "schemas"
     <*> v .:? "methods"
-    <*> v .:? "servicePath"
-    <*> v .:? "batchPath"
     <*> v .:? "resources"
 
 data RestDescriptionIcons
