@@ -1,5 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Options where
+module Options
+  ( Commands(..)
+  , List(..)
+  , GetRest(..)
+  , parseOpts
+  )
+where
 
 import           RIO
 import           Options.Applicative

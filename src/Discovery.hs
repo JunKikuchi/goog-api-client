@@ -1,6 +1,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
-module Discovery where
+module Discovery
+  ( list
+  , getRest
+  , run
+  )
+where
 
 import           RIO
 import           Network.HTTP.Client            ( newManager )
