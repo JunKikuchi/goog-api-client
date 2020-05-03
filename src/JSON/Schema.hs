@@ -8,8 +8,6 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , withObject
                                                 )
 
--- https://tools.ietf.org/html/draft-zyp-json-schema-03#section-5.1
-
 data Schema
   = Schema
   { schemaType :: Maybe Text
