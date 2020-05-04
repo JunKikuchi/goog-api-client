@@ -62,7 +62,7 @@ data String
   { stringMinLength :: Maybe Int
   , stringMaxLength :: Maybe Int
   , stringPattern   :: Maybe Pattern
-  , stringFormat    :: Maybe Format
+  , stringFormat    :: Maybe StringFormat
   } deriving (Show, Eq)
 
 parseString :: Aeson.Object -> Aeson.Parser String
@@ -78,29 +78,21 @@ parseString v =
     .:? "format"
 
 -- https://developers.google.com/discovery/v1/type-format
-data Format
-  = Int32
-  | UInt32
+data StringFormat
+  = Byte
+  | Date
+  | DateTime
   | Int64
   | UInt64
-  | Byte
-  | Float
-  | Double
-  | DateTime
-  | Date
- deriving (Show, Eq)
+  deriving (Show, Eq)
 
-instance FromJSON Format where
-  parseJSON = Aeson.withText "Format" $ \case
-    "int32"                 -> pure Int32
-    "int64"                 -> pure Int64
-    "uint32"                -> pure UInt32
-    "uint64"                -> pure UInt64
+instance FromJSON StringFormat where
+  parseJSON = Aeson.withText "StringFormat" $ \case
     "byte"                  -> pure Byte
-    "float"                 -> pure Float
-    "double"                -> pure Double
-    "date-time"             -> pure DateTime
     "date"                  -> pure Date
+    "date-time"             -> pure DateTime
+    "int64"                 -> pure Int64
+    "uint64"                -> pure UInt64
     _                       -> mempty
 
 data Numeric
@@ -112,6 +104,28 @@ data Numeric
   , numericExclusiveMinimum :: Maybe Int
   , numericExclusiveMaximum :: Maybe Int
   } deriving (Show, Eq)
+
+data IntegerFormat
+  = Int32
+  | UInt32
+ deriving (Show, Eq)
+
+instance FromJSON IntegerFormat where
+  parseJSON = Aeson.withText "IntegerFormat" $ \case
+    "int32"                 -> pure Int32
+    "unt32"                 -> pure UInt32
+    _                       -> mempty
+
+data NumberFormat
+  = Double
+  | Float
+ deriving (Show, Eq)
+
+instance FromJSON NumberFormat where
+  parseJSON = Aeson.withText "NumberFormat" $ \case
+    "double"                -> pure Double
+    "float"                 -> pure Float
+    _                       -> mempty
 
 parseNumeric :: Aeson.Object -> Aeson.Parser Numeric
 parseNumeric v =

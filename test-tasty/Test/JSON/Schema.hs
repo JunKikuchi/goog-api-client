@@ -13,8 +13,8 @@ import           JSON.Schema
 {-# ANN module ("HLint: ignore Use camelCase" :: RIO.String) #-}
 
 spec_Test_JSON_Schema :: Spec
-spec_Test_JSON_Schema =
-  describe "parse" $ describe "Type-specific keywords" $ do
+spec_Test_JSON_Schema = describe "parse" $ do
+  describe "Type-specific keywords" $ do
     describe "string" $ do
       let json   = [r|{ "type": "string" }|]
           schema = Schema
@@ -137,5 +137,62 @@ spec_Test_JSON_Schema =
             , schemaComment     = Nothing
             , schemaEnum        = Nothing
             , schemaConst       = Nothing
+            }
+      it "Schema にエンコード" $ decode json `shouldBe` Just schema
+  describe "string" $ do
+    describe "length" $ do
+      let json   = [r|{ "type": "string", "minLength": 2, "maxLength": 3 }|]
+          schema = Schema
+            { schemaType        = Just (StringType stringType)
+            , schemaTitle       = Nothing
+            , schemaDescription = Nothing
+            , schemaExamples    = Nothing
+            , schemaComment     = Nothing
+            , schemaEnum        = Nothing
+            , schemaConst       = Nothing
+            }
+          stringType = String
+            { stringMinLength = Just 2
+            , stringMaxLength = Just 3
+            , stringPattern   = Nothing
+            , stringFormat    = Nothing
+            }
+      it "Schema にエンコード" $ decode json `shouldBe` Just schema
+    describe "Regular Expressions" $ do
+      let
+        json
+          = [r|{ "type": "string", "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$" }|]
+        schema = Schema
+          { schemaType        = Just (StringType stringType)
+          , schemaTitle       = Nothing
+          , schemaDescription = Nothing
+          , schemaExamples    = Nothing
+          , schemaComment     = Nothing
+          , schemaEnum        = Nothing
+          , schemaConst       = Nothing
+          }
+        stringType = String
+          { stringMinLength = Nothing
+          , stringMaxLength = Nothing
+          , stringPattern   = Just "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$"
+          , stringFormat    = Nothing
+          }
+      it "Schema にエンコード" $ decode json `shouldBe` Just schema
+    describe "Format" $ do
+      let json   = [r|{ "type": "string", "format": "byte" }|]
+          schema = Schema
+            { schemaType        = Just (StringType stringType)
+            , schemaTitle       = Nothing
+            , schemaDescription = Nothing
+            , schemaExamples    = Nothing
+            , schemaComment     = Nothing
+            , schemaEnum        = Nothing
+            , schemaConst       = Nothing
+            }
+          stringType = String
+            { stringMinLength = Nothing
+            , stringMaxLength = Nothing
+            , stringPattern   = Nothing
+            , stringFormat    = Just Byte
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
