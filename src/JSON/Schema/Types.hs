@@ -1,25 +1,43 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 module JSON.Schema.Types where
 
-import           RIO                            ( Bool
-                                                , Int
-                                                , Map
-                                                , Maybe
-                                                , Text
+import           RIO                     hiding ( String )
+import           Data.Aeson                     ( FromJSON(..)
+                                                , (.:?)
                                                 )
-import           Data.Aeson                     ( Value )
+import qualified Data.Aeson                    as Aeson
+import qualified Data.Aeson.Types              as Aeson
 
 -- https://json-schema.org/understanding-json-schema/index.html
+-- https://developers.google.com/discovery/v1/type-format
 
 data Schema
   = Schema
   { schemaType        :: Maybe Type
   , schemaTitle       :: Maybe Text
   , schemaDescription :: Maybe Text
-  , schemaExamples    :: Maybe [Value]
+  , schemaExamples    :: Maybe [Aeson.Value]
   , schemaComment     :: Maybe Text
-  , schemaEnum        :: Maybe [Value]
-  , schemaConst       :: Maybe Value
-  }
+  , schemaEnum        :: Maybe [Aeson.Value]
+  , schemaConst       :: Maybe Aeson.Value
+  } deriving (Show, Eq)
+
+instance FromJSON Schema where
+  parseJSON = Aeson.withObject "Schema" $ \v -> Schema
+    <$> parseType v
+    <*> v .:? "title"
+    <*> v .:? "description"
+    <*> v .:? "examples"
+    <*> v .:? "comment"
+    <*> v .:? "enum"
+    <*> v .:? "const"
+    where
+      parseType v = do
+        t <- v .:? "type" :: Aeson.Parser (Maybe Text)
+        case t of
+          (Just "string") -> (Just . StringType) <$> parseString v
+          _ -> pure Nothing
 
 data Type
   = StringType String
@@ -28,6 +46,7 @@ data Type
   | ArrayType Array
   | BooleanType Bool
   | NullType
+  deriving (Show, Eq)
 
 type Pattern = Text
 
@@ -37,26 +56,45 @@ data String
   , stringMaxLength :: Maybe Int
   , stringPattern   :: Maybe Pattern
   , stringFormat    :: Maybe Format
-  }
+  } deriving (Show, Eq)
 
+parseString :: Aeson.Object -> Aeson.Parser String
+parseString v =
+  String
+    <$> v
+    .:? "minLength"
+    <*> v
+    .:? "maxLength"
+    <*> v
+    .:? "pattern"
+    <*> v
+    .:? "format"
+
+-- https://developers.google.com/discovery/v1/type-format
 data Format
-  = DateTime
-  | Time
+  = Int32
+  | UInt32
+  | Int64
+  | UInt64
+  | Byte
+  | Float
+  | Double
+  | DateTime
   | Date
-  | EMail
-  | IDNEMail
-  | Hostname
-  | IDNHostname
-  | IPV4
-  | IPV6
-  | URL
-  | URLReference
-  | IRI
-  | IRIReference
-  | URITemplate
-  | JSONPointer
-  | RelativeJSONPointer
-  | Regex
+ deriving (Show, Eq)
+
+instance FromJSON Format where
+  parseJSON = Aeson.withText "Format" $ \case
+    "int32"                 -> pure Int32
+    "int64"                 -> pure Int64
+    "uint32"                -> pure UInt32
+    "uint64"                -> pure UInt64
+    "byte"                  -> pure Byte
+    "float"                 -> pure Float
+    "double"                -> pure Double
+    "date-time"             -> pure DateTime
+    "date"                  -> pure Date
+    _                       -> mempty
 
 data Numeric
   = Numeric
@@ -66,11 +104,12 @@ data Numeric
   , numericMaximum          :: Maybe Int
   , numericExclusiveMinimum :: Maybe Int
   , numericExclusiveMaximum :: Maybe Int
-  }
+  } deriving (Show, Eq)
 
 data NumericType
   = Integer
   | Number
+  deriving (Show, Eq)
 
 data Object
   = Object
@@ -82,20 +121,22 @@ data Object
   , objectMaxProperties        :: Maybe Int
   , objectDependencies         :: Maybe (Map Text Dependencies)
   , objectPatternProperties    :: Maybe (Map Pattern Dependencies)
-  }
+  } deriving (Show, Eq)
 
 data AdditionalProperties
   = AdditionalPropertiesBool Bool
   | AdditionalPropertiesSchema Schema
+  deriving (Show, Eq)
 
 newtype PropertyNames
   = PropertyNames
   { propertyNamesPattern :: Pattern
-  }
+  } deriving (Show, Eq)
 
 data Dependencies
   = DependenciesList [Text]
   | DependenciesObject Object
+  deriving (Show, Eq)
 
 data Array
   = Array
@@ -105,12 +146,14 @@ data Array
   , arrayMinItems        :: Maybe Int
   , arrayMaxItems        :: Maybe Int
   , arrayUniqueItems     :: Maybe Bool
-  }
+  } deriving (Show, Eq)
 
 data ArrayItems
   = ArrayItemsItem Schema
   | ArrayItemsTuple [Schema]
+  deriving (Show, Eq)
 
 data ArrayAdditionalItems
   = ArrayAdditionalItemsBool Bool
   | ArrayAdditionalItemsSchema Schema
+  deriving (Show, Eq)

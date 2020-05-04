@@ -75,6 +75,7 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - goog-api-client
+      - raw-strings-qq
       - tasty
       - tasty-discover
       - tasty-hspec
