@@ -103,8 +103,8 @@ data Integer
   { integerMultipleOf       :: Maybe Int
   , integerMinimum          :: Maybe Int
   , integerMaximum          :: Maybe Int
-  , integerExclusiveMinimum :: Maybe Int
-  , integerExclusiveMaximum :: Maybe Int
+  , integerExclusiveMinimum :: Maybe Bool
+  , integerExclusiveMaximum :: Maybe Bool
   , integerFormat           :: Maybe IntegerFormat
   } deriving (Show, Eq)
 
@@ -140,8 +140,8 @@ data Number
   { numberMultipleOf       :: Maybe Int
   , numberMinimum          :: Maybe Int
   , numberMaximum          :: Maybe Int
-  , numberExclusiveMinimum :: Maybe Int
-  , numberExclusiveMaximum :: Maybe Int
+  , numberExclusiveMinimum :: Maybe Bool
+  , numberExclusiveMaximum :: Maybe Bool
   , numberFormat           :: Maybe NumberFormat
   } deriving (Show, Eq)
 
