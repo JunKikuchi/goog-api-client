@@ -4,6 +4,7 @@ module JSON.Schema.Types where
 
 import           RIO                     hiding ( String )
 import           Data.Aeson                     ( FromJSON(..)
+                                                , (.:)
                                                 , (.:?)
                                                 )
 import qualified Data.Aeson                    as Aeson
@@ -36,7 +37,9 @@ instance FromJSON Schema where
       parseType v = do
         t <- v .:? "type" :: Aeson.Parser (Maybe Text)
         case t of
-          (Just "string") -> (Just . StringType) <$> parseString v
+          (Just "string" ) -> (Just . StringType ) <$> parseString v
+          (Just "integer") -> (Just . NumericType) <$> parseNumeric v
+          (Just "number")  -> (Just . NumericType) <$> parseNumeric v
           _ -> pure Nothing
 
 data Type
@@ -106,10 +109,32 @@ data Numeric
   , numericExclusiveMaximum :: Maybe Int
   } deriving (Show, Eq)
 
+parseNumeric :: Aeson.Object -> Aeson.Parser Numeric
+parseNumeric v =
+  Numeric
+    <$> v
+    .:  "type"
+    <*> v
+    .:? "multipleOf"
+    <*> v
+    .:? "minimum"
+    <*> v
+    .:? "maximum"
+    <*> v
+    .:? "exclusiveMinimum"
+    <*> v
+    .:? "exclusiveMaximum"
+
 data NumericType
   = Integer
   | Number
   deriving (Show, Eq)
+
+instance FromJSON NumericType where
+  parseJSON = Aeson.withText "NumericType" $ \case
+    "integer" -> pure Integer
+    "number"  -> pure Number
+    _         -> mempty
 
 data Object
   = Object
