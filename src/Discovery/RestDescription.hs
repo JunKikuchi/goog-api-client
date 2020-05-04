@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Discovery.RestDescription where
 
@@ -7,7 +6,6 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , (.:?)
                                                 , withObject
                                                 )
-import           GHC.Generics                   ( Generic )
 import qualified JSON.Schema                   as JSON
 
 type Key = Text
@@ -37,7 +35,7 @@ data RestDescription
   , restDescriptionSchemas :: Maybe (Map Key RestDescriptionParameter)
   , restDescriptionMethods :: Maybe (Map Key RestDescriptionMethod)
   , restDescriptionResources :: Maybe (Map Key RestDescriptionResource)
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescription where
   parseJSON = withObject "RestDescription" $ \v -> RestDescription
@@ -67,7 +65,7 @@ data RestDescriptionIcons
   = RestDescriptionIcons
   { restDescriptionIconsX16 :: Maybe Text
   , restDescriptionIconsX32 :: Maybe Text
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionIcons where
   parseJSON = withObject "RestDescriptionIcons" $ \v -> RestDescriptionIcons
@@ -95,7 +93,7 @@ data RestDescriptionParameter
   , restDescriptionParameterAdditionalProperties :: Maybe JSON.Schema
   , restDescriptionParameterItems:: Maybe [JSON.Schema]
   , restDescriptionParameterAnnotations :: Maybe RestDescriptionParameterAnnotations
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionParameter where
   parseJSON = withObject "RestDescriptionParameter" $ \v -> RestDescriptionParameter
@@ -121,7 +119,7 @@ instance FromJSON RestDescriptionParameter where
 newtype RestDescriptionParameterAnnotations
   = RestDescriptionParameterAnnotations
   { restDescriptionParameterAnnotationsRequired :: Maybe [Text]
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionParameterAnnotations where
   parseJSON = withObject "RestDescriptionParameterAnnotations" $ \v -> RestDescriptionParameterAnnotations
@@ -130,7 +128,7 @@ instance FromJSON RestDescriptionParameterAnnotations where
 newtype RestDescriptionAuth
   = RestDescriptionAuth
   { restDescriptionAuthOAuth2 :: Maybe RestDescriptionAuthOAuth2
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionAuth where
   parseJSON = withObject "RestDescriptionAuth" $ \v -> RestDescriptionAuth
@@ -139,7 +137,7 @@ instance FromJSON RestDescriptionAuth where
 newtype RestDescriptionAuthOAuth2
   = RestDescriptionAuthOAuth2
   { restDescriptionAuthOAuth2Scopes :: Maybe (Map Key RestDescriptionAuthOAuth2Scope)
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionAuthOAuth2 where
   parseJSON = withObject "RestDescriptionAuthOAuth2" $ \v -> RestDescriptionAuthOAuth2
@@ -148,7 +146,7 @@ instance FromJSON RestDescriptionAuthOAuth2 where
 newtype RestDescriptionAuthOAuth2Scope
   = RestDescriptionAuthOAuth2Scope
   { restDescriptionAuthOAuth2ScopeDescription :: Maybe Text
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionAuthOAuth2Scope where
   parseJSON = withObject "RestDescriptionAuthOAuth2Scope" $ \v -> RestDescriptionAuthOAuth2Scope
@@ -169,7 +167,7 @@ data RestDescriptionMethod
   , restDescriptionMethodHttpMethod :: Maybe Text
   , restDescriptionMethodRequest :: Maybe RestDescriptionMethodRequest
   , restDescriptionMethodResponse :: Maybe RestDescriptionMethodResponse
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionMethod where
   parseJSON = withObject "RestDescriptionMethod" $ \v -> RestDescriptionMethod
@@ -192,7 +190,7 @@ data RestDescriptionMethodMediaUpload
   { restDescriptionMethodMediaUploadAccept :: Maybe [Text]
   , restDescriptionMethodMediaMaxSize :: Maybe Text
   , restDescriptionMethodMediaProtocols :: Maybe RestDescriptionMethodMediaProtocols
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionMethodMediaUpload where
   parseJSON = withObject "RestDescriptionMethodMediaUpload" $ \v -> RestDescriptionMethodMediaUpload
@@ -204,7 +202,7 @@ data RestDescriptionMethodMediaProtocols
   = RestDescriptionMethodMediaProtocols
   { restDescriptionMethodMediaProtocolsSimple :: Maybe RestDescriptionMethodMediaProtocolsSimple
   , restDescriptionMethodMediaProtocolsResumable :: Maybe RestDescriptionMethodMediaProtocolsResumable
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionMethodMediaProtocols where
   parseJSON = withObject "RestDescriptionMethodMediaProtocols" $ \v -> RestDescriptionMethodMediaProtocols
@@ -215,7 +213,7 @@ data RestDescriptionMethodMediaProtocolsSimple
   = RestDescriptionMethodMediaProtocolsSimple
   { restDescriptionMethodMediaProtocolsSimpleMultipart :: Maybe Bool
   , restDescriptionMethodMediaProtocolsSimplePath :: Maybe Text
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionMethodMediaProtocolsSimple where
   parseJSON = withObject "RestDescriptionMethodMediaProtocolsSimple" $ \v -> RestDescriptionMethodMediaProtocolsSimple
@@ -226,7 +224,7 @@ data RestDescriptionMethodMediaProtocolsResumable
   = RestDescriptionMethodMediaProtocolsResumable
   { restDescriptionMethodMediaProtocolsResumableMultipart :: Maybe Bool
   , restDescriptionMethodMediaProtocolsResumablePath :: Maybe Text
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionMethodMediaProtocolsResumable where
   parseJSON = withObject "RestDescriptionMethodMediaProtocolsResumable" $ \v -> RestDescriptionMethodMediaProtocolsResumable
@@ -236,7 +234,7 @@ instance FromJSON RestDescriptionMethodMediaProtocolsResumable where
 newtype RestDescriptionMethodRequest
   = RestDescriptionMethodRequest
   { restDescriptionMethodRequestRef :: Maybe Text
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionMethodRequest where
   parseJSON = withObject "RestDescriptionMethodRequest" $ \v -> RestDescriptionMethodRequest
@@ -245,7 +243,7 @@ instance FromJSON RestDescriptionMethodRequest where
 newtype RestDescriptionMethodResponse
   = RestDescriptionMethodResponse
   { restDescriptionMethodResponseRef :: Maybe Text
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionMethodResponse where
   parseJSON = withObject "RestDescriptionMethodResponse" $ \v -> RestDescriptionMethodResponse
@@ -255,7 +253,7 @@ data RestDescriptionResource
   = RestDescriptionResource
   { restDescriptionResourceMethods :: Maybe (Map Key RestDescriptionMethod)
   , restDescriptionResourceResources :: Maybe (Map Key RestDescriptionResource)
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON RestDescriptionResource where
   parseJSON = withObject "RestDescriptionResource" $ \v -> RestDescriptionResource

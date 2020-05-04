@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Discovery.DirectoryList where
 
@@ -7,7 +6,6 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , (.:?)
                                                 , withObject
                                                 )
-import           GHC.Generics                   ( Generic )
 
 -- https://developers.google.com/discovery/v1/reference/apis/list
 
@@ -16,7 +14,7 @@ data DirectoryList
   { directoryListKind :: Maybe Text -- "discovery#directoryList"
   , directoryListDiscoveryVersion :: Maybe Text -- "v1"
   , directoryListItems :: Maybe [DirectoryItem]
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON DirectoryList where
   parseJSON = withObject "DirectoryList" $ \v -> DirectoryList
@@ -38,7 +36,7 @@ data DirectoryItem
   , directoryItemDocumentationLink :: Maybe Text
   , directoryItemLabel :: Maybe [Text]
   , directoryItemPreferred :: Maybe Bool
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON DirectoryItem where
   parseJSON = withObject "DirectoryItem" $ \v -> DirectoryItem
@@ -59,7 +57,7 @@ data DirectoryItemIcons
   = DirectoryItemIcons
   { directoryItemIconsX16 :: Maybe Text
   , directoryItemIconsX32 :: Maybe Text
-  } deriving (Show, Generic)
+  } deriving Show
 
 instance FromJSON DirectoryItemIcons where
   parseJSON = withObject "DirectoryItemIcons" $ \v -> DirectoryItemIcons
