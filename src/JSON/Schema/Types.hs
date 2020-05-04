@@ -42,6 +42,7 @@ instance FromJSON Schema where
           (Just "number" ) -> (Just . NumericType) <$> parseNumeric v
           (Just "object" ) -> (Just . ObjectType ) <$> parseObject  v
           (Just "array"  ) -> (Just . ArrayType  ) <$> parseArray   v
+          (Just "boolean") -> pure (Just BooleanType)
           _ -> pure Nothing
 
 data Type
@@ -49,7 +50,7 @@ data Type
   | NumericType Numeric
   | ObjectType Object
   | ArrayType Array
-  | BooleanType Bool
+  | BooleanType
   | NullType
   deriving (Show, Eq)
 

@@ -115,3 +115,15 @@ spec_Test_JSON_Schema =
             , arrayUniqueItems     = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
+    describe "boolean" $ do
+      let json   = [r|{ "type": "boolean"}|]
+          schema = Schema
+            { schemaType        = Just BooleanType
+            , schemaTitle       = Nothing
+            , schemaDescription = Nothing
+            , schemaExamples    = Nothing
+            , schemaComment     = Nothing
+            , schemaEnum        = Nothing
+            , schemaConst       = Nothing
+            }
+      it "Schema にエンコード" $ decode json `shouldBe` Just schema
