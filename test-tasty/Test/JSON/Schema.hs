@@ -95,3 +95,23 @@ spec_Test_JSON_Schema =
             , objectPatternProperties    = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
+    describe "array" $ do
+      let json   = [r|{ "type": "array"}|]
+          schema = Schema
+            { schemaType        = Just (ArrayType arrayType)
+            , schemaTitle       = Nothing
+            , schemaDescription = Nothing
+            , schemaExamples    = Nothing
+            , schemaComment     = Nothing
+            , schemaEnum        = Nothing
+            , schemaConst       = Nothing
+            }
+          arrayType = Array
+            { arrayItems           = Nothing
+            , arrayContains        = Nothing
+            , arrayAdditionalItems = Nothing
+            , arrayMinItems        = Nothing
+            , arrayMaxItems        = Nothing
+            , arrayUniqueItems     = Nothing
+            }
+      it "Schema にエンコード" $ decode json `shouldBe` Just schema

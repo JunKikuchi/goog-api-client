@@ -41,6 +41,7 @@ instance FromJSON Schema where
           (Just "integer") -> (Just . NumericType) <$> parseNumeric v
           (Just "number" ) -> (Just . NumericType) <$> parseNumeric v
           (Just "object" ) -> (Just . ObjectType ) <$> parseObject  v
+          (Just "array"  ) -> (Just . ArrayType  ) <$> parseArray   v
           _ -> pure Nothing
 
 data Type
@@ -213,12 +214,40 @@ data Array
   , arrayUniqueItems     :: Maybe Bool
   } deriving (Show, Eq)
 
+parseArray :: Aeson.Object -> Aeson.Parser Array
+parseArray v =
+  Array
+    <$> v
+    .:? "items"
+    <*> v
+    .:? "contains"
+    <*> v
+    .:? "additionalItems"
+    <*> v
+    .:? "minItems"
+    <*> v
+    .:? "maxItems"
+    <*> v
+    .:? "uniqueItems"
+
 data ArrayItems
   = ArrayItemsItem Schema
   | ArrayItemsTuple [Schema]
   deriving (Show, Eq)
 
+instance FromJSON ArrayItems where
+  parseJSON s = parseItem s <|> parseTuple s
+    where
+      parseItem  = fmap ArrayItemsItem . parseJSON
+      parseTuple = fmap ArrayItemsTuple . parseJSON
+
 data ArrayAdditionalItems
   = ArrayAdditionalItemsBool Bool
   | ArrayAdditionalItemsSchema Schema
   deriving (Show, Eq)
+
+instance FromJSON ArrayAdditionalItems where
+  parseJSON s = parseBool s <|> parseSchema s
+    where
+      parseBool   = fmap ArrayAdditionalItemsBool . parseJSON
+      parseSchema = fmap ArrayAdditionalItemsSchema . parseJSON
