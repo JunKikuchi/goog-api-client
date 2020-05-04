@@ -127,3 +127,15 @@ spec_Test_JSON_Schema =
             , schemaConst       = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
+    describe "null" $ do
+      let json   = [r|{ "type": "null"}|]
+          schema = Schema
+            { schemaType        = Just NullType
+            , schemaTitle       = Nothing
+            , schemaDescription = Nothing
+            , schemaExamples    = Nothing
+            , schemaComment     = Nothing
+            , schemaEnum        = Nothing
+            , schemaConst       = Nothing
+            }
+      it "Schema にエンコード" $ decode json `shouldBe` Just schema

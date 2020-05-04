@@ -43,6 +43,7 @@ instance FromJSON Schema where
           (Just "object" ) -> (Just . ObjectType ) <$> parseObject  v
           (Just "array"  ) -> (Just . ArrayType  ) <$> parseArray   v
           (Just "boolean") -> pure (Just BooleanType)
+          (Just "null"   ) -> pure (Just NullType   )
           _ -> pure Nothing
 
 data Type
