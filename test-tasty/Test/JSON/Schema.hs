@@ -36,7 +36,7 @@ spec_Test_JSON_Schema = describe "parse" $ do
     describe "integer" $ do
       let json   = [r|{ "type": "integer"}|]
           schema = Schema
-            { schemaType        = Just (NumericType numericType)
+            { schemaType        = Just (IntegerType integerType)
             , schemaTitle       = Nothing
             , schemaDescription = Nothing
             , schemaExamples    = Nothing
@@ -44,19 +44,19 @@ spec_Test_JSON_Schema = describe "parse" $ do
             , schemaEnum        = Nothing
             , schemaConst       = Nothing
             }
-          numericType = Numeric
-            { numericType             = Integer
-            , numericMultipleOf       = Nothing
-            , numericMinimum          = Nothing
-            , numericMaximum          = Nothing
-            , numericExclusiveMinimum = Nothing
-            , numericExclusiveMaximum = Nothing
+          integerType = Integer
+            { integerMultipleOf       = Nothing
+            , integerMinimum          = Nothing
+            , integerMaximum          = Nothing
+            , integerExclusiveMinimum = Nothing
+            , integerExclusiveMaximum = Nothing
+            , integerFormat           = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
     describe "number" $ do
       let json   = [r|{ "type": "number"}|]
           schema = Schema
-            { schemaType        = Just (NumericType numericType)
+            { schemaType        = Just (NumberType numberType)
             , schemaTitle       = Nothing
             , schemaDescription = Nothing
             , schemaExamples    = Nothing
@@ -64,13 +64,13 @@ spec_Test_JSON_Schema = describe "parse" $ do
             , schemaEnum        = Nothing
             , schemaConst       = Nothing
             }
-          numericType = Numeric
-            { numericType             = Number
-            , numericMultipleOf       = Nothing
-            , numericMinimum          = Nothing
-            , numericMaximum          = Nothing
-            , numericExclusiveMinimum = Nothing
-            , numericExclusiveMaximum = Nothing
+          numberType = Number
+            { numberMultipleOf       = Nothing
+            , numberMinimum          = Nothing
+            , numberMaximum          = Nothing
+            , numberExclusiveMinimum = Nothing
+            , numberExclusiveMaximum = Nothing
+            , numberFormat           = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
     describe "object" $ do

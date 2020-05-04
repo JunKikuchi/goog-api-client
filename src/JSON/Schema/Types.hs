@@ -2,7 +2,9 @@
 {-# LANGUAGE LambdaCase #-}
 module JSON.Schema.Types where
 
-import           RIO                     hiding ( String )
+import           RIO                     hiding ( Integer
+                                                , String
+                                                )
 import           Data.Aeson                     ( FromJSON(..)
                                                 , (.:)
                                                 , (.:?)
@@ -38,8 +40,8 @@ instance FromJSON Schema where
         t <- v .:? "type" :: Aeson.Parser (Maybe Text)
         case t of
           (Just "string" ) -> (Just . StringType ) <$> parseString  v
-          (Just "integer") -> (Just . NumericType) <$> parseNumeric v
-          (Just "number" ) -> (Just . NumericType) <$> parseNumeric v
+          (Just "integer") -> (Just . IntegerType) <$> parseInteger v
+          (Just "number" ) -> (Just . NumberType ) <$> parseNumber  v
           (Just "object" ) -> (Just . ObjectType ) <$> parseObject  v
           (Just "array"  ) -> (Just . ArrayType  ) <$> parseArray   v
           (Just "boolean") -> pure (Just BooleanType)
@@ -48,7 +50,8 @@ instance FromJSON Schema where
 
 data Type
   = StringType String
-  | NumericType Numeric
+  | IntegerType Integer
+  | NumberType Number
   | ObjectType Object
   | ArrayType Array
   | BooleanType
@@ -95,15 +98,31 @@ instance FromJSON StringFormat where
     "uint64"                -> pure UInt64
     _                       -> mempty
 
-data Numeric
-  = Numeric
-  { numericType             :: NumericType
-  , numericMultipleOf       :: Maybe Int
-  , numericMinimum          :: Maybe Int
-  , numericMaximum          :: Maybe Int
-  , numericExclusiveMinimum :: Maybe Int
-  , numericExclusiveMaximum :: Maybe Int
+data Integer
+  = Integer
+  { integerMultipleOf       :: Maybe Int
+  , integerMinimum          :: Maybe Int
+  , integerMaximum          :: Maybe Int
+  , integerExclusiveMinimum :: Maybe Int
+  , integerExclusiveMaximum :: Maybe Int
+  , integerFormat           :: Maybe IntegerFormat
   } deriving (Show, Eq)
+
+parseInteger :: Aeson.Object -> Aeson.Parser Integer
+parseInteger v =
+  Integer
+    <$> v
+    .:? "multipleOf"
+    <*> v
+    .:? "minimum"
+    <*> v
+    .:? "maximum"
+    <*> v
+    .:? "exclusiveMinimum"
+    <*> v
+    .:? "exclusiveMaximum"
+    <*> v
+    .:? "format"
 
 data IntegerFormat
   = Int32
@@ -116,6 +135,32 @@ instance FromJSON IntegerFormat where
     "unt32"                 -> pure UInt32
     _                       -> mempty
 
+data Number
+  = Number
+  { numberMultipleOf       :: Maybe Int
+  , numberMinimum          :: Maybe Int
+  , numberMaximum          :: Maybe Int
+  , numberExclusiveMinimum :: Maybe Int
+  , numberExclusiveMaximum :: Maybe Int
+  , numberFormat           :: Maybe NumberFormat
+  } deriving (Show, Eq)
+
+parseNumber :: Aeson.Object -> Aeson.Parser Number
+parseNumber v =
+  Number
+    <$> v
+    .:? "multipleOf"
+    <*> v
+    .:? "minimum"
+    <*> v
+    .:? "maximum"
+    <*> v
+    .:? "exclusiveMinimum"
+    <*> v
+    .:? "exclusiveMaximum"
+    <*> v
+    .:? "format"
+
 data NumberFormat
   = Double
   | Float
@@ -126,33 +171,6 @@ instance FromJSON NumberFormat where
     "double"                -> pure Double
     "float"                 -> pure Float
     _                       -> mempty
-
-parseNumeric :: Aeson.Object -> Aeson.Parser Numeric
-parseNumeric v =
-  Numeric
-    <$> v
-    .:  "type"
-    <*> v
-    .:? "multipleOf"
-    <*> v
-    .:? "minimum"
-    <*> v
-    .:? "maximum"
-    <*> v
-    .:? "exclusiveMinimum"
-    <*> v
-    .:? "exclusiveMaximum"
-
-data NumericType
-  = Integer
-  | Number
-  deriving (Show, Eq)
-
-instance FromJSON NumericType where
-  parseJSON = Aeson.withText "NumericType" $ \case
-    "integer" -> pure Integer
-    "number"  -> pure Number
-    _         -> mempty
 
 data Object
   = Object
