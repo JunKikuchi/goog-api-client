@@ -73,3 +73,25 @@ spec_Test_JSON_Schema =
             , numericExclusiveMaximum = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
+    describe "object" $ do
+      let json   = [r|{ "type": "object"}|]
+          schema = Schema
+            { schemaType        = Just (ObjectType objectType)
+            , schemaTitle       = Nothing
+            , schemaDescription = Nothing
+            , schemaExamples    = Nothing
+            , schemaComment     = Nothing
+            , schemaEnum        = Nothing
+            , schemaConst       = Nothing
+            }
+          objectType = Object
+            { objectProperties           = Nothing
+            , objectAdditionalProperties = Nothing
+            , objectRequired             = Nothing
+            , objectPropertyNames        = Nothing
+            , objectMinProperties        = Nothing
+            , objectMaxProperties        = Nothing
+            , objectDependencies         = Nothing
+            , objectPatternProperties    = Nothing
+            }
+      it "Schema にエンコード" $ decode json `shouldBe` Just schema

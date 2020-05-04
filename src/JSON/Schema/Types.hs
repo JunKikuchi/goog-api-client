@@ -37,9 +37,10 @@ instance FromJSON Schema where
       parseType v = do
         t <- v .:? "type" :: Aeson.Parser (Maybe Text)
         case t of
-          (Just "string" ) -> (Just . StringType ) <$> parseString v
+          (Just "string" ) -> (Just . StringType ) <$> parseString  v
           (Just "integer") -> (Just . NumericType) <$> parseNumeric v
-          (Just "number")  -> (Just . NumericType) <$> parseNumeric v
+          (Just "number" ) -> (Just . NumericType) <$> parseNumeric v
+          (Just "object" ) -> (Just . ObjectType ) <$> parseObject  v
           _ -> pure Nothing
 
 data Type
@@ -148,20 +149,59 @@ data Object
   , objectPatternProperties    :: Maybe (Map Pattern Dependencies)
   } deriving (Show, Eq)
 
+instance FromJSON Object where
+  parseJSON = Aeson.withObject "Object" parseObject
+
+parseObject :: Aeson.Object -> Aeson.Parser Object
+parseObject v =
+  Object
+    <$> v
+    .:? "properties"
+    <*> v
+    .:? "additionalProperties"
+    <*> v
+    .:? "required"
+    <*> v
+    .:? "propertyNames"
+    <*> v
+    .:? "minProperties"
+    <*> v
+    .:? "maxProperties"
+    <*> v
+    .:? "dependencies"
+    <*> v
+    .:? "patternProperties"
+
 data AdditionalProperties
   = AdditionalPropertiesBool Bool
   | AdditionalPropertiesSchema Schema
   deriving (Show, Eq)
+
+instance FromJSON AdditionalProperties where
+  parseJSON s = parseBool s <|> parseSchema s
+    where
+      parseBool   = Aeson.withBool "AdditionalPropertiesBool" (pure . AdditionalPropertiesBool)
+      parseSchema = fmap AdditionalPropertiesSchema . parseJSON
 
 newtype PropertyNames
   = PropertyNames
   { propertyNamesPattern :: Pattern
   } deriving (Show, Eq)
 
+instance FromJSON PropertyNames where
+  parseJSON = Aeson.withObject "PropertyNames" $ \v ->
+    PropertyNames <$> v .: "pattern"
+
 data Dependencies
   = DependenciesList [Text]
   | DependenciesObject Object
   deriving (Show, Eq)
+
+instance FromJSON Dependencies where
+  parseJSON s = parseList s <|> parseObject s
+    where
+      parseList   = Aeson.withObject "DependenciesList"   $ \v -> DependenciesList   <$> v .: "dependencies"
+      parseObject = Aeson.withObject "DependenciesObject" $ \v -> DependenciesObject <$> v .: "dependencies"
 
 data Array
   = Array
