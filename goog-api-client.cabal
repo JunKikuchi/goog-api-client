@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7e13f983de6d6816609222d1fd9770f00fef442c3604ef98d7725b81e8c21b0f
+-- hash: f310ce6fc082e9df9ea0ee563aa41dccb84539f2de9243e356928f16d564f656
 
 name:           goog-api-client
 version:        0.1.0.0
@@ -74,6 +74,7 @@ test-suite goog-api-client-tasty
   main-is: Tasty.hs
   other-modules:
       Test.JSON.Schema
+      Test.JSON.Schema.Array
       Test.JSON.Schema.Integer
       Test.JSON.Schema.Number
       Test.JSON.Schema.Object
