@@ -35,6 +35,15 @@ default-extensions:
 library:
   source-dirs:
     - src
+  ghc-options:
+    - -Wall
+    - -Wcompat
+    - -Widentities
+    - -Wincomplete-record-updates
+    - -Wincomplete-uni-patterns
+    - -Wpartial-fields
+    - -Wredundant-constraints
+    - -Werror
 
 executables:
   goog-api-client-exe:
