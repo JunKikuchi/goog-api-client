@@ -10,6 +10,7 @@ import           Discovery                      ( list
                                                 , getRest
                                                 , run
                                                 )
+import           CodeGen                        ( gen )
 import qualified Options                       as Opts
 
 main :: IO ()
@@ -30,7 +31,8 @@ runCommand (Opts.ListCommand a) = do
   preferred = if Opts.preferred a then Just True else Nothing
 runCommand (Opts.GetRestCommand a) = do
   ret <- run $ getRest (Opts.api a) (Opts.version a)
-  put ret
+  -- put ret
+  either (error . show) (gen "dest") ret
 
 put :: (Show a) => Either ClientError a -> IO ()
 put (Right val) = print val
