@@ -29,12 +29,12 @@ data RestDescription
   , restDescriptionRootUrl :: Maybe Text
   , restDescriptionServicePath :: Maybe Text
   , restDescriptionBatchPath :: Maybe Text
-  , restDescriptionParameters :: Maybe (Map Key RestDescriptionParameter)
+  , restDescriptionParameters :: Maybe RestDescriptionParameters
   , restDescriptionAuth :: Maybe RestDescriptionAuth
   , restDescriptionFeatures :: Maybe [Text]
-  , restDescriptionSchemas :: Maybe (Map Key RestDescriptionParameter)
-  , restDescriptionMethods :: Maybe (Map Key RestDescriptionMethod)
-  , restDescriptionResources :: Maybe (Map Key RestDescriptionResource)
+  , restDescriptionSchemas :: Maybe RestDescriptionSchemas
+  , restDescriptionMethods :: Maybe RestDescriptionMethods
+  , restDescriptionResources :: Maybe RestDescriptionResources
   } deriving Show
 
 instance FromJSON RestDescription where
@@ -60,6 +60,11 @@ instance FromJSON RestDescription where
     <*> v .:? "schemas"
     <*> v .:? "methods"
     <*> v .:? "resources"
+
+type RestDescriptionParameters = Map Key RestDescriptionParameter
+type RestDescriptionSchemas    = Map Key RestDescriptionParameter
+type RestDescriptionMethods    = Map Key RestDescriptionMethod
+type RestDescriptionResources  = Map Key RestDescriptionResource
 
 data RestDescriptionIcons
   = RestDescriptionIcons
