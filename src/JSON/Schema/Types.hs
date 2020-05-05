@@ -215,7 +215,7 @@ data AdditionalProperties
 instance FromJSON AdditionalProperties where
   parseJSON s = parseBool s <|> parseSchema s
     where
-      parseBool   = Aeson.withBool "AdditionalPropertiesBool" (pure . AdditionalPropertiesBool)
+      parseBool   = fmap AdditionalPropertiesBool . parseJSON
       parseSchema = fmap AdditionalPropertiesSchema . parseJSON
 
 newtype PropertyNames
@@ -235,8 +235,8 @@ data Dependencies
 instance FromJSON Dependencies where
   parseJSON s = parseList s <|> parseObject s
     where
-      parseList   = Aeson.withObject "DependenciesList"   $ \v -> DependenciesList   <$> v .: "dependencies"
-      parseObject = Aeson.withObject "DependenciesObject" $ \v -> DependenciesObject <$> v .: "dependencies"
+      parseList   = fmap DependenciesList . parseJSON
+      parseObject = fmap DependenciesObject . parseJSON
 
 data Array
   = Array

@@ -378,3 +378,176 @@ spec_Test_JSON_Schema_Object = describe "object" $ describe "Properties" $ do
         , objectPatternProperties    = Nothing
         }
     it "Schema にエンコード" $ decode json `shouldBe` Just schema
+  describe "Dependencies list" $ do
+    let
+      json
+        = [r|
+            {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "credit_card": { "type": "number" },
+                "billing_address": { "type": "string" }
+              },
+              "required": ["name"],
+              "dependencies": {
+                "credit_card": ["billing_address"]
+              }
+            }
+          |]
+      schema = Schema
+        { schemaType        = Just (ObjectType objectType)
+        , schemaTitle       = Nothing
+        , schemaDescription = Nothing
+        , schemaExamples    = Nothing
+        , schemaComment     = Nothing
+        , schemaEnum        = Nothing
+        , schemaConst       = Nothing
+        }
+      propertiess = Map.fromList
+        [ ( "name"
+          , Schema
+            (Just
+              (StringType
+                (String Nothing Nothing Nothing Nothing)
+              )
+            )
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        , ( "credit_card"
+          , Schema
+            (Just (NumberType (Number Nothing Nothing Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        , ( "billing_address"
+          , Schema
+            (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        ]
+      objectType = Object
+        { objectProperties           = Just propertiess
+        , objectAdditionalProperties = Nothing
+        , objectRequired             = Just ["name"]
+        , objectPropertyNames        = Nothing
+        , objectMinProperties        = Nothing
+        , objectMaxProperties        = Nothing
+        , objectDependencies         = Just (Map.fromList [("credit_card", DependenciesList ["billing_address"])] )
+        , objectPatternProperties    = Nothing
+        }
+    it "Schema にエンコード" $ decode json `shouldBe` Just schema
+  describe "Dependencies list" $ do
+    let
+      json
+        = [r|
+            {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "credit_card": { "type": "number" }
+              },
+              "required": ["name"],
+              "dependencies": {
+                "credit_card": {
+                  "properties": {
+                    "billing_address": { "type": "string" }
+                  },
+                  "required": ["billing_address"]
+                }
+              }
+            }
+          |]
+      schema = Schema
+        { schemaType        = Just (ObjectType objectType)
+        , schemaTitle       = Nothing
+        , schemaDescription = Nothing
+        , schemaExamples    = Nothing
+        , schemaComment     = Nothing
+        , schemaEnum        = Nothing
+        , schemaConst       = Nothing
+        }
+      propertiess = Map.fromList
+        [ ( "name"
+          , Schema
+            (Just
+              (StringType
+                (String Nothing Nothing Nothing Nothing)
+              )
+            )
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        , ( "credit_card"
+          , Schema
+            (Just (NumberType (Number Nothing Nothing Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        ]
+      dependencies = Map.fromList
+        [ ( "credit_card"
+          , DependenciesObject
+            ( Object
+              ( Just
+                ( Map.fromList
+                  [( "billing_address"
+                    , Schema
+                      (Just
+                        (StringType
+                          (String Nothing Nothing Nothing Nothing)
+                        )
+                      )
+                      Nothing
+                      Nothing
+                      Nothing
+                      Nothing
+                      Nothing
+                      Nothing
+                   )
+                  ]
+                )
+              )
+              Nothing
+              (Just ["billing_address"])
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+            )
+          )
+        ]
+      objectType = Object
+        { objectProperties           = Just propertiess
+        , objectAdditionalProperties = Nothing
+        , objectRequired             = Just ["name"]
+        , objectPropertyNames        = Nothing
+        , objectMinProperties        = Nothing
+        , objectMaxProperties        = Nothing
+        , objectDependencies         = Just dependencies
+        , objectPatternProperties    = Nothing
+        }
+    it "Schema にエンコード" $ decode json `shouldBe` Just schema
