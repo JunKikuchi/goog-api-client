@@ -7,39 +7,53 @@ import           RIO.Directory                  ( createDirectoryIfMissing )
 import           RIO.FilePath                   ( (</>)
                                                 , addExtension
                                                 )
-import qualified RIO.Map                       as Map
 import qualified RIO.Text                      as T
 import qualified RIO.ByteString                as B
 import           Discovery.RestDescription
 
-type BasePath = Text
+type DestDir     = Text
+type ServiceName = Text
+type Version     = Text
+type SchemaName  = Text
 
-gen :: BasePath -> RestDescription -> IO ()
-gen path desc = do
-  service <- T.toTitle <$> getName
-  version <- T.toTitle <$> getVersion
-  let serviceDir = T.unpack path </> T.unpack service </> T.unpack version
+gen :: DestDir -> RestDescription -> IO ()
+gen dest desc = do
+  serviceName <- T.toTitle <$> getName
+  version     <- T.toTitle <$> getVersion
+  -- サービスディレクトリ作成
+  let serviceDir = T.unpack dest </> T.unpack serviceName </> T.unpack version
   createDirectoryIfMissing True serviceDir
-
+  -- スキーマファイル作成
   schemas <- getSchemas
-  createSchemaFiles service version serviceDir schemas
+  createSchemaFiles serviceName version serviceDir schemas
  where
-  getName    = get restDescriptionName "filed to get name."
-  getVersion = get restDescriptionVersion "filed to get version."
-  getSchemas = get restDescriptionSchemas "failed to get schemas."
-  get f s = maybe (error s) pure (f desc)
+  getName    = get restDescriptionName "failed to get name." desc
+  getVersion = get restDescriptionVersion "failed to get version." desc
+  getSchemas = get restDescriptionSchemas "failed to get schemas." desc
 
-createSchemaFiles :: Text -> Text -> FilePath -> RestDescriptionSchemas -> IO ()
-createSchemaFiles service version serviceDir schemas =
-  forM_ (Map.toList schemas) $ \(name, schema) -> do
+createSchemaFiles
+  :: ServiceName -> Version -> FilePath -> RestDescriptionSchemas -> IO ()
+createSchemaFiles serviceName version serviceDir schemas =
+  forM_ schemas $ \schema -> do
+    -- スキーマディレクトリ作成
     let dir = serviceDir </> "Schemas"
     createDirectoryIfMissing True dir
-    let path = addExtension (dir </> T.unpack name) "hs"
+    -- スキーマファイル出力
+    schemaName <- get restDescriptionParameterId
+                      "failed to get schema id."
+                      schema
+    let path = addExtension (dir </> T.unpack schemaName) "hs"
     print path
-    B.writeFile path (T.encodeUtf8 (createSchema service version name schema))
+    B.writeFile
+      path
+      (T.encodeUtf8 (createSchema serviceName version schemaName schema))
 
-createSchema :: Text -> Text -> Text -> RestDescriptionParameter -> Text
-createSchema service version name _ = T.unlines [moduleDef]
+createSchema
+  :: ServiceName -> Version -> SchemaName -> RestDescriptionParameter -> Text
+createSchema serviceName version name _ = T.unlines [moduleDef]
  where
   moduleDef  = T.intercalate " " ["module", moduleName, "where"]
-  moduleName = T.intercalate "." [service, version, "Schemas", name]
+  moduleName = T.intercalate "." [serviceName, version, "Schemas", name]
+
+get :: Applicative f => (t -> Maybe a) -> String -> t -> f a
+get f s desc = maybe (error s) pure (f desc)
