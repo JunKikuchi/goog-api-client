@@ -87,16 +87,18 @@ data StringFormat
   | DateTime
   | Int64
   | UInt64
+  | GoogleDateTime
   deriving (Show, Eq)
 
 instance FromJSON StringFormat where
   parseJSON = Aeson.withText "StringFormat" $ \case
-    "byte"                  -> pure Byte
-    "date"                  -> pure Date
-    "date-time"             -> pure DateTime
-    "int64"                 -> pure Int64
-    "uint64"                -> pure UInt64
-    _                       -> mempty
+    "byte"            -> pure Byte
+    "date"            -> pure Date
+    "date-time"       -> pure DateTime
+    "int64"           -> pure Int64
+    "uint64"          -> pure UInt64
+    "google-datetime" -> pure GoogleDateTime
+    _                 -> mempty
 
 data Integer
   = Integer
@@ -131,9 +133,9 @@ data IntegerFormat
 
 instance FromJSON IntegerFormat where
   parseJSON = Aeson.withText "IntegerFormat" $ \case
-    "int32"                 -> pure Int32
-    "unt32"                 -> pure UInt32
-    _                       -> mempty
+    "int32" -> pure Int32
+    "unt32" -> pure UInt32
+    _       -> mempty
 
 data Number
   = Number
@@ -168,9 +170,9 @@ data NumberFormat
 
 instance FromJSON NumberFormat where
   parseJSON = Aeson.withText "NumberFormat" $ \case
-    "double"                -> pure Double
-    "float"                 -> pure Float
-    _                       -> mempty
+    "double" -> pure Double
+    "float"  -> pure Float
+    _        -> mempty
 
 data Object
   = Object
