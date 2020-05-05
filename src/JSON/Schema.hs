@@ -88,16 +88,20 @@ data StringFormat
   | Int64
   | UInt64
   | GoogleDateTime
+  | GoogleDuration
+  | GoogleFieldmask
   deriving (Show, Eq)
 
 instance FromJSON StringFormat where
   parseJSON = Aeson.withText "StringFormat" $ \case
-    "byte"            -> pure Byte
-    "date"            -> pure Date
-    "date-time"       -> pure DateTime
-    "int64"           -> pure Int64
-    "uint64"          -> pure UInt64
-    "google-datetime" -> pure GoogleDateTime
+    "byte"             -> pure Byte
+    "date"             -> pure Date
+    "date-time"        -> pure DateTime
+    "int64"            -> pure Int64
+    "uint64"           -> pure UInt64
+    "google-datetime"  -> pure GoogleDateTime
+    "google-duration"  -> pure GoogleDuration
+    "google-fieldmask" -> pure GoogleFieldmask
     _                 -> mempty
 
 data Integer
@@ -133,9 +137,9 @@ data IntegerFormat
 
 instance FromJSON IntegerFormat where
   parseJSON = Aeson.withText "IntegerFormat" $ \case
-    "int32" -> pure Int32
-    "unt32" -> pure UInt32
-    _       -> mempty
+    "int32"  -> pure Int32
+    "uint32" -> pure UInt32
+    _        -> mempty
 
 data Number
   = Number
@@ -235,10 +239,10 @@ data Dependencies
   deriving (Show, Eq)
 
 instance FromJSON Dependencies where
-  parseJSON s = parseList s <|> parseObject s
+  parseJSON s = parseDepList s <|> parseDepObject s
     where
-      parseList   = fmap DependenciesList . parseJSON
-      parseObject = fmap DependenciesObject . parseJSON
+      parseDepList   = fmap DependenciesList . parseJSON
+      parseDepObject = fmap DependenciesObject . parseJSON
 
 data Array
   = Array
