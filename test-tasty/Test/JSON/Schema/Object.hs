@@ -551,3 +551,58 @@ spec_Test_JSON_Schema_Object = describe "object" $ describe "Properties" $ do
         , objectPatternProperties    = Nothing
         }
     it "Schema にエンコード" $ decode json `shouldBe` Just schema
+  describe "Pattern Properties" $ do
+    let
+      json
+        = [r|
+            {
+              "type": "object",
+              "patternProperties": {
+                "^S_": { "type": "string" },
+                "^I_": { "type": "integer" }
+              },
+              "additionalProperties": false
+            }
+          |]
+      schema = Schema
+        { schemaType        = Just (ObjectType objectType)
+        , schemaTitle       = Nothing
+        , schemaDescription = Nothing
+        , schemaExamples    = Nothing
+        , schemaComment     = Nothing
+        , schemaEnum        = Nothing
+        , schemaConst       = Nothing
+        }
+      objectType = Object
+        { objectProperties           = Nothing
+        , objectAdditionalProperties = Just (AdditionalPropertiesBool False)
+        , objectRequired             = Nothing
+        , objectPropertyNames        = Nothing
+        , objectMinProperties        = Nothing
+        , objectMaxProperties        = Nothing
+        , objectDependencies         = Nothing
+        , objectPatternProperties    = Just properties
+        }
+      properties = Map.fromList
+        [ ( "^S_"
+          , Schema
+            (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        , ( "^I_"
+          , Schema
+            (Just (IntegerType (Integer Nothing Nothing Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        ]
+    it "Schema にエンコード" $ decode json `shouldBe` Just schema

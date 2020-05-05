@@ -181,7 +181,7 @@ data Object
   , objectMinProperties        :: Maybe Int
   , objectMaxProperties        :: Maybe Int
   , objectDependencies         :: Maybe (Map Text Dependencies)
-  , objectPatternProperties    :: Maybe (Map Pattern Dependencies)
+  , objectPatternProperties    :: Maybe (Map Pattern Schema)
   } deriving (Show, Eq)
 
 instance FromJSON Object where
