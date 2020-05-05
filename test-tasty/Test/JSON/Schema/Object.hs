@@ -24,8 +24,8 @@ spec_Test_JSON_Schema_Object = describe "object" $ describe "Properties" $ do
               "street_name": { "type": "string" },
               "street_type": { "type": "string",
                                "enum": ["Street", "Avenue", "Boulevard"]
+                             }
             }
-          }
           }
         |]
     schema = Schema
@@ -229,6 +229,87 @@ spec_Test_JSON_Schema_Object = describe "object" $ describe "Properties" $ do
             )
           )
         , objectRequired             = Nothing
+        , objectPropertyNames        = Nothing
+        , objectMinProperties        = Nothing
+        , objectMaxProperties        = Nothing
+        , objectDependencies         = Nothing
+        , objectPatternProperties    = Nothing
+        }
+    it "Schema にエンコード" $ decode json `shouldBe` Just schema
+  describe "Required Properties" $ do
+    let
+      json
+        = [r|
+            {
+              "type": "object",
+              "properties": {
+                "name":      { "type": "string" },
+                "email":     { "type": "string" },
+                "address":   { "type": "string" },
+                "telephone": { "type": "string" }
+              },
+              "required": ["name", "email"]
+            }
+          |]
+      schema = Schema
+        { schemaType        = Just (ObjectType objectType)
+        , schemaTitle       = Nothing
+        , schemaDescription = Nothing
+        , schemaExamples    = Nothing
+        , schemaComment     = Nothing
+        , schemaEnum        = Nothing
+        , schemaConst       = Nothing
+        }
+      propertiess = Map.fromList
+        [ ( "name"
+          , Schema
+            (Just
+              (StringType
+                (String Nothing Nothing Nothing Nothing)
+              )
+            )
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        , ( "email"
+          , Schema
+            (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        , ( "address"
+          , Schema
+            (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        , ( "telephone"
+          , Schema
+            (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+          )
+        ]
+      objectType = Object
+        { objectProperties           = Just propertiess
+        , objectAdditionalProperties = Nothing
+        , objectRequired             = Just ["name", "email"]
         , objectPropertyNames        = Nothing
         , objectMinProperties        = Nothing
         , objectMaxProperties        = Nothing
