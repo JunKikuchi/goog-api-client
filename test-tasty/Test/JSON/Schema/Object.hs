@@ -317,3 +317,34 @@ spec_Test_JSON_Schema_Object = describe "object" $ describe "Properties" $ do
         , objectPatternProperties    = Nothing
         }
     it "Schema にエンコード" $ decode json `shouldBe` Just schema
+  describe "Property names" $ do
+    let
+      json
+        = [r|
+            {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              }
+            }
+          |]
+      schema = Schema
+        { schemaType        = Just (ObjectType objectType)
+        , schemaTitle       = Nothing
+        , schemaDescription = Nothing
+        , schemaExamples    = Nothing
+        , schemaComment     = Nothing
+        , schemaEnum        = Nothing
+        , schemaConst       = Nothing
+        }
+      objectType = Object
+        { objectProperties           = Nothing
+        , objectAdditionalProperties = Nothing
+        , objectRequired             = Nothing
+        , objectPropertyNames        = Just (PropertyNames "^[A-Za-z_][A-Za-z0-9_]*$")
+        , objectMinProperties        = Nothing
+        , objectMaxProperties        = Nothing
+        , objectDependencies         = Nothing
+        , objectPatternProperties    = Nothing
+        }
+    it "Schema にエンコード" $ decode json `shouldBe` Just schema
