@@ -348,3 +348,33 @@ spec_Test_JSON_Schema_Object = describe "object" $ describe "Properties" $ do
         , objectPatternProperties    = Nothing
         }
     it "Schema にエンコード" $ decode json `shouldBe` Just schema
+  describe "Size" $ do
+    let
+      json
+        = [r|
+            {
+              "type": "object",
+              "minProperties": 2,
+              "maxProperties": 3
+            }
+          |]
+      schema = Schema
+        { schemaType        = Just (ObjectType objectType)
+        , schemaTitle       = Nothing
+        , schemaDescription = Nothing
+        , schemaExamples    = Nothing
+        , schemaComment     = Nothing
+        , schemaEnum        = Nothing
+        , schemaConst       = Nothing
+        }
+      objectType = Object
+        { objectProperties           = Nothing
+        , objectAdditionalProperties = Nothing
+        , objectRequired             = Nothing
+        , objectPropertyNames        = Nothing
+        , objectMinProperties        = Just 2
+        , objectMaxProperties        = Just 3
+        , objectDependencies         = Nothing
+        , objectPatternProperties    = Nothing
+        }
+    it "Schema にエンコード" $ decode json `shouldBe` Just schema
