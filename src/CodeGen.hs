@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module CodeGen where
 
 import           Prelude                        ( print )
@@ -38,9 +39,7 @@ createSchemaFiles service version serviceDir schemas =
     B.writeFile path (T.encodeUtf8 (createSchema service version name schema))
 
 createSchema :: Text -> Text -> Text -> RestDescriptionParameter -> Text
-createSchema service version name _ = T.intercalate
-  (T.pack " ")
-  [T.pack "module", moduleName, T.pack "where"]
+createSchema service version name _ = T.unlines [moduleDef]
  where
-  moduleName =
-    T.intercalate (T.pack ".") [service, version, T.pack "Schemas", name]
+  moduleDef  = T.intercalate " " ["module", moduleName, "where"]
+  moduleName = T.intercalate "." [service, version, "Schemas", name]
