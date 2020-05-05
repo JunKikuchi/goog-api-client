@@ -46,6 +46,6 @@ getRest :: Api -> Version -> ClientM RestDescription
 (list :<|> getRest) = client api
 
 run :: ClientM a -> IO (Either ClientError a)
-run client = do
+run c = do
   manager <- newManager tlsManagerSettings
-  runClientM client (mkClientEnv manager baseUrl)
+  runClientM c (mkClientEnv manager baseUrl)
