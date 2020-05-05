@@ -19,7 +19,6 @@ import           Servant.Client                 ( BaseUrl(..)
                                                 , mkClientEnv
                                                 , runClientM
                                                 )
-import           Data.Aeson                     ( Value )
 import           Discovery.DirectoryList        ( DirectoryList )
 import           Discovery.RestDescription      ( RestDescription )
 
