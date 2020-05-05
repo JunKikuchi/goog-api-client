@@ -80,7 +80,6 @@ instance FromJSON RestDescriptionIcons where
 data RestDescriptionParameter
   = RestDescriptionParameter
   { restDescriptionParameterId :: Maybe Text
-
   , restDescriptionParameterType :: Maybe Text
   , restDescriptionParameterRef :: Maybe Text
   , restDescriptionParameterDescription :: Maybe Text
