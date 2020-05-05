@@ -13,74 +13,75 @@ import           JSON.Schema
 {-# ANN module ("HLint: ignore Use camelCase" :: RIO.String) #-}
 
 spec_Test_JSON_Schema_Object :: Spec
-spec_Test_JSON_Schema_Object = describe "object" $ describe "Properties" $ do
-  let
-    json
-      = [r|
-          {
-            "type": "object",
-            "properties": {
-              "number":      { "type": "number" },
-              "street_name": { "type": "string" },
-              "street_type": { "type": "string",
-                               "enum": ["Street", "Avenue", "Boulevard"]
-                             }
+spec_Test_JSON_Schema_Object = describe "object" $ do
+  describe "Properties" $ do
+    let
+      json
+        = [r|
+            {
+              "type": "object",
+              "properties": {
+                "number":      { "type": "number" },
+                "street_name": { "type": "string" },
+                "street_type": { "type": "string",
+                                 "enum": ["Street", "Avenue", "Boulevard"]
+                               }
+              }
             }
-          }
-        |]
-    schema = Schema
-      { schemaType        = Just (ObjectType objectType)
-      , schemaTitle       = Nothing
-      , schemaDescription = Nothing
-      , schemaExamples    = Nothing
-      , schemaComment     = Nothing
-      , schemaEnum        = Nothing
-      , schemaConst       = Nothing
-      }
-    propertiess = Map.fromList
-      [ ( "number"
-        , Schema
-          (Just
-            (NumberType (Number Nothing Nothing Nothing Nothing Nothing Nothing)
+          |]
+      schema = Schema
+        { schemaType        = Just (ObjectType objectType)
+        , schemaTitle       = Nothing
+        , schemaDescription = Nothing
+        , schemaExamples    = Nothing
+        , schemaComment     = Nothing
+        , schemaEnum        = Nothing
+        , schemaConst       = Nothing
+        }
+      propertiess = Map.fromList
+        [ ( "number"
+          , Schema
+            (Just
+              (NumberType (Number Nothing Nothing Nothing Nothing Nothing Nothing)
+              )
             )
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
           )
-          Nothing
-          Nothing
-          Nothing
-          Nothing
-          Nothing
-          Nothing
-        )
-      , ( "street_name"
-        , Schema (Just (StringType (String Nothing Nothing Nothing Nothing)))
-                 Nothing
-                 Nothing
-                 Nothing
-                 Nothing
-                 Nothing
-                 Nothing
-        )
-      , ( "street_type"
-        , Schema (Just (StringType (String Nothing Nothing Nothing Nothing)))
-                 Nothing
-                 Nothing
-                 Nothing
-                 Nothing
-                 (Just ["Street", "Avenue", "Boulevard"])
-                 Nothing
-        )
-      ]
-    objectType = Object
-      { objectProperties           = Just propertiess
-      , objectAdditionalProperties = Nothing
-      , objectRequired             = Nothing
-      , objectPropertyNames        = Nothing
-      , objectMinProperties        = Nothing
-      , objectMaxProperties        = Nothing
-      , objectDependencies         = Nothing
-      , objectPatternProperties    = Nothing
-      }
-  it "Schema にエンコード" $ decode json `shouldBe` Just schema
+        , ( "street_name"
+          , Schema (Just (StringType (String Nothing Nothing Nothing Nothing)))
+                   Nothing
+                   Nothing
+                   Nothing
+                   Nothing
+                   Nothing
+                   Nothing
+          )
+        , ( "street_type"
+          , Schema (Just (StringType (String Nothing Nothing Nothing Nothing)))
+                   Nothing
+                   Nothing
+                   Nothing
+                   Nothing
+                   (Just ["Street", "Avenue", "Boulevard"])
+                   Nothing
+          )
+        ]
+      objectType = Object
+        { objectProperties           = Just propertiess
+        , objectAdditionalProperties = Nothing
+        , objectRequired             = Nothing
+        , objectPropertyNames        = Nothing
+        , objectMinProperties        = Nothing
+        , objectMaxProperties        = Nothing
+        , objectDependencies         = Nothing
+        , objectPatternProperties    = Nothing
+        }
+    it "Schema にエンコード" $ decode json `shouldBe` Just schema
   describe "additionalProperties bool" $ do
     let
       json
