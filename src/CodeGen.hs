@@ -59,7 +59,7 @@ createSchema serviceName version schema = do
   moduleDef  <- createModuleDef serviceName version schema
   importsDef <- createImportsDef
   typeDef    <- createTypeDef schema
-  pure (T.unlines [moduleDef, importsDef, typeDef])
+  pure (T.unlines [moduleDef, "", importsDef, typeDef])
 
 createModuleDef :: ServiceName -> Version -> Schema -> IO Text
 createModuleDef serviceName version schema = do
@@ -84,9 +84,9 @@ createTypeDef schema = case schemaType schema of
       , schemaName
       , "="
       , schemaName
-      , "\n{"
+      , "\n  {"
       , recordFields
-      , "\n}"
+      , "\n  }"
       , "deriving"
       , "Show"
       ]
@@ -94,7 +94,7 @@ createTypeDef schema = case schemaType schema of
 
 createRecordFieldsDef :: SchemaName -> ObjectProperties -> IO Text
 createRecordFieldsDef schemaName =
-  fmap (T.intercalate "\n ,")
+  fmap (T.intercalate "\n  , ")
     . foldr (\field acc -> (:) <$> field <*> acc) (pure [])
     . Map.foldrWithKey
         (\name schema acc -> createFieldDef schemaName name schema : acc)
