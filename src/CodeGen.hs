@@ -65,7 +65,7 @@ createModuleDef :: ServiceName -> Version -> Schema -> IO Text
 createModuleDef serviceName version schema = do
   schemaName <- get schemaId "schema id" schema
   let moduleDef =
-        T.intercalate "" [serviceName, version, "Schemas", schemaName]
+        T.intercalate "." [serviceName, version, "Schemas", schemaName]
   pure $ T.intercalate " " ["module", moduleDef, "where"]
 
 createImportsDef :: IO Text
