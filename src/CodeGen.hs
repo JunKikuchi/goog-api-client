@@ -38,8 +38,8 @@ gen dest desc = do
   getVersion = get restDescriptionVersion "version" desc
   getSchemas = get restDescriptionSchemas "schemas" desc
 
-defaultImpots :: [Text]
-defaultImpots = ["RIO"]
+defaultImports :: [Text]
+defaultImports = ["RIO"]
 
 createSchemaFiles
   :: ServiceName -> Version -> FilePath -> RestDescriptionSchemas -> IO ()
@@ -84,7 +84,7 @@ createImportsDef =
   pure
     $ T.intercalate "\n"
     . fmap (\s -> T.intercalate " " ["import", s])
-    $ defaultImpots
+    $ defaultImports
 
 createDataDef :: Schema -> IO (Text, [(ObjectName, JSON.Object)])
 createDataDef schema = case schemaType schema of
