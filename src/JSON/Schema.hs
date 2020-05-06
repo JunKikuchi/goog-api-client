@@ -17,13 +17,13 @@ import qualified Data.Aeson.Types              as Aeson
 
 data Schema
   = Schema
-  { schemaType        :: Maybe Type
-  , schemaTitle       :: Maybe Text
+  { schemaType :: Maybe Type
+  , schemaTitle :: Maybe Text
   , schemaDescription :: Maybe Text
-  , schemaExamples    :: Maybe [Aeson.Value]
-  , schemaComment     :: Maybe Text
-  , schemaEnum        :: Maybe [Aeson.Value]
-  , schemaConst       :: Maybe Aeson.Value
+  , schemaExamples :: Maybe [Aeson.Value]
+  , schemaComment :: Maybe Text
+  , schemaEnum :: Maybe [Aeson.Value]
+  , schemaConst :: Maybe Aeson.Value
   } deriving (Show, Eq)
 
 instance FromJSON Schema where
@@ -64,8 +64,8 @@ data String
   = String
   { stringMinLength :: Maybe Int
   , stringMaxLength :: Maybe Int
-  , stringPattern   :: Maybe Pattern
-  , stringFormat    :: Maybe StringFormat
+  , stringPattern :: Maybe Pattern
+  , stringFormat :: Maybe StringFormat
   } deriving (Show, Eq)
 
 parseString :: Aeson.Object -> Aeson.Parser String
@@ -106,12 +106,12 @@ instance FromJSON StringFormat where
 
 data Integer
   = Integer
-  { integerMultipleOf       :: Maybe Int
-  , integerMinimum          :: Maybe Int
-  , integerMaximum          :: Maybe Int
+  { integerMultipleOf :: Maybe Int
+  , integerMinimum :: Maybe Int
+  , integerMaximum :: Maybe Int
   , integerExclusiveMinimum :: Maybe Bool
   , integerExclusiveMaximum :: Maybe Bool
-  , integerFormat           :: Maybe IntegerFormat
+  , integerFormat :: Maybe IntegerFormat
   } deriving (Show, Eq)
 
 parseInteger :: Aeson.Object -> Aeson.Parser Integer
@@ -143,12 +143,12 @@ instance FromJSON IntegerFormat where
 
 data Number
   = Number
-  { numberMultipleOf       :: Maybe Int
-  , numberMinimum          :: Maybe Int
-  , numberMaximum          :: Maybe Int
+  { numberMultipleOf :: Maybe Int
+  , numberMinimum :: Maybe Int
+  , numberMaximum :: Maybe Int
   , numberExclusiveMinimum :: Maybe Bool
   , numberExclusiveMaximum :: Maybe Bool
-  , numberFormat           :: Maybe NumberFormat
+  , numberFormat :: Maybe NumberFormat
   } deriving (Show, Eq)
 
 parseNumber :: Aeson.Object -> Aeson.Parser Number
@@ -180,14 +180,14 @@ instance FromJSON NumberFormat where
 
 data Object
   = Object
-  { objectProperties           :: Maybe (Map Text Schema)
+  { objectProperties :: Maybe (Map Text Schema)
   , objectAdditionalProperties :: Maybe AdditionalProperties
-  , objectRequired             :: Maybe [Text]
-  , objectPropertyNames        :: Maybe PropertyNames
-  , objectMinProperties        :: Maybe Int
-  , objectMaxProperties        :: Maybe Int
-  , objectDependencies         :: Maybe (Map Text Dependencies)
-  , objectPatternProperties    :: Maybe (Map Pattern Schema)
+  , objectRequired :: Maybe [Text]
+  , objectPropertyNames :: Maybe PropertyNames
+  , objectMinProperties :: Maybe Int
+  , objectMaxProperties :: Maybe Int
+  , objectDependencies :: Maybe (Map Text Dependencies)
+  , objectPatternProperties :: Maybe (Map Pattern Schema)
   } deriving (Show, Eq)
 
 instance FromJSON Object where
@@ -246,12 +246,12 @@ instance FromJSON Dependencies where
 
 data Array
   = Array
-  { arrayItems           :: Maybe ArrayItems
-  , arrayContains        :: Maybe Schema
+  { arrayItems :: Maybe ArrayItems
+  , arrayContains :: Maybe Schema
   , arrayAdditionalItems :: Maybe ArrayAdditionalItems
-  , arrayMinItems        :: Maybe Int
-  , arrayMaxItems        :: Maybe Int
-  , arrayUniqueItems     :: Maybe Bool
+  , arrayMinItems :: Maybe Int
+  , arrayMaxItems :: Maybe Int
+  , arrayUniqueItems :: Maybe Bool
   } deriving (Show, Eq)
 
 parseArray :: Aeson.Object -> Aeson.Parser Array
