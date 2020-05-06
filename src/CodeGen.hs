@@ -30,9 +30,9 @@ gen dest desc = do
   schemas <- getSchemas
   createSchemaFiles serviceName version serviceDir schemas
  where
-  getName    = get restDescriptionName "failed to get name." desc
-  getVersion = get restDescriptionVersion "failed to get version." desc
-  getSchemas = get restDescriptionSchemas "failed to get schemas." desc
+  getName    = get restDescriptionName "name" desc
+  getVersion = get restDescriptionVersion "version" desc
+  getSchemas = get restDescriptionSchemas "schemas" desc
 
 createSchemaFiles
   :: ServiceName -> Version -> FilePath -> RestDescriptionSchemas -> IO ()
@@ -42,7 +42,7 @@ createSchemaFiles serviceName version serviceDir schemas =
     let dir = serviceDir </> "Schemas"
     createDirectoryIfMissing True dir
     -- スキーマファイルパス
-    schemaName <- get schemaId "failed to get schema id." schema
+    schemaName <- get schemaId "schema id" schema
     let path = addExtension (dir </> T.unpack schemaName) "hs"
     print path
     -- スキーマファイル
@@ -59,9 +59,9 @@ createSchema serviceName version schema = do
 
 createModuleDef :: ServiceName -> Version -> Schema -> IO Text
 createModuleDef serviceName version schema = do
-  schemaName <- get schemaId "failed to get schema id." schema
+  schemaName <- get schemaId "schema id" schema
   let moduleDef =
-        T.intercalate "." [serviceName, version, "Schemas", schemaName]
+        T.intercalate "" [serviceName, version, "Schemas", schemaName]
   pure $ T.intercalate " " ["module", moduleDef, "where"]
 
 createImportsDef :: IO Text
@@ -71,11 +71,12 @@ createImportsDef =
 createTypeDef :: Schema -> IO Text
 createTypeDef schema = case schemaType schema of
   (Just (ObjectType _)) -> do
-    schemaName <- get schemaId "failed to get schema id." schema
+    schemaName <- get schemaId "schema id" schema
     pure $ T.intercalate
       " "
       ["data", schemaName, "=", schemaName, "{", "}", "deriving", "Show"]
   _ -> pure "-- 未対応"
 
 get :: Applicative f => (t -> Maybe a) -> Text -> t -> f a
-get f s desc = maybe (error . T.unpack $ s) pure (f desc)
+get f s desc = maybe (error err) pure (f desc)
+  where err = T.unpack $ T.intercalate " " ["failed to get", s, "."]
