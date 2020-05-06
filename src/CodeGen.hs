@@ -89,7 +89,7 @@ createTypeDef schema = case schemaType schema of
       , "deriving"
       , "Show"
       ]
-  _ -> pure "-- TODO: 未実装 (schemaType)"
+  _ -> pure "{-- TODO: 未実装 (createTypeDef:schemaType) --}"
 
 createRecordFieldsDef :: SchemaName -> ObjectProperties -> IO Text
 createRecordFieldsDef schemaName =
@@ -102,18 +102,26 @@ createRecordFieldsDef schemaName =
 createFieldDef :: SchemaName -> Text -> JSON.Schema -> IO Text
 createFieldDef schemaName name schema = do
   filedType <- createFieldTypeDef schema
-  pure $ T.intercalate " " [fieldName, "=", filedType]
+  pure $ T.intercalate " " [fieldName, "::", filedType]
   where fieldName = T.concat [unTitle schemaName, toTitle name]
 
 createFieldTypeDef :: JSON.Schema -> IO Text
 createFieldTypeDef schema = case JSON.schemaType schema of
-  (Just (JSON.StringType _    )) -> pure "Text"
-  (Just (JSON.ArrayType  array)) -> case JSON.arrayItems array of
-    (Just (JSON.ArrayItemsItem item)) -> do
-      fieldType <- createFieldTypeDef item
-      pure $ T.concat ["[", fieldType, "]"]
-    _ -> pure "-- TODO: 未実装 (arrayItems)"
-  _ -> pure "-- TODO: 未実装 (schemaType)"
+  (Just (JSON.StringType  _    )) -> pure "Text"
+  (Just (JSON.IntegerType _    )) -> pure "Int"
+  (Just (JSON.NumberType  _    )) -> pure "Float"
+  (Just (JSON.ObjectType  _    )) -> pure "{-- TODO: 未実装 (Object) --}"
+  (Just (JSON.ArrayType   array)) -> createArrayFiledDef array
+  (Just JSON.BooleanType        ) -> pure "Bool"
+  (Just (JSON.RefType ref)      ) -> pure ref
+  _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:schemaType) --}"
+
+createArrayFiledDef :: JSON.Array -> IO Text
+createArrayFiledDef array = case JSON.arrayItems array of
+  (Just (JSON.ArrayItemsItem item)) -> do
+    fieldType <- createFieldTypeDef item
+    pure $ T.concat ["[", fieldType, "]"]
+  _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}"
 
 toTitle :: Text -> Text
 toTitle = applyHead C.toUpper
