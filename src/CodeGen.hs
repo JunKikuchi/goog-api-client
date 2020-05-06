@@ -129,7 +129,8 @@ createRecordFieldDef schemaName name schema = do
   pure (T.intercalate " " [fieldName, "::", filedType], jsonObj)
  where
   objName   = toTitle fieldName
-  fieldName = T.concat [unTitle schemaName, toTitle name]
+  fieldName = T.concat [unTitle schemaName, toTitle camelName]
+  camelName = T.concat . fmap toTitle . T.split (== '_') $ name
 
 createFieldTypeDef
   :: ObjectName -> JSON.Schema -> IO (Text, Maybe (ObjectName, JSON.Object))
@@ -152,7 +153,7 @@ createArrayFiledDef objName array = case JSON.arrayItems array of
   _ -> pure ("{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}", Nothing)
 
 createJsonObjDefs :: [(ObjectName, JSON.Object)] -> IO Text
-createJsonObjDefs = fmap (T.intercalate "\n") . foldr
+createJsonObjDefs = fmap (T.intercalate "\n\n") . foldr
   (\a acc -> do
     dataDef <- createJsonDataDef a
     as      <- acc
@@ -161,22 +162,57 @@ createJsonObjDefs = fmap (T.intercalate "\n") . foldr
   (pure [])
 
 createJsonDataDef :: (ObjectName, JSON.Object) -> IO Text
-createJsonDataDef (objectName, _jsonObj) = do
-  -- properties <- get JSON.objectProperties "JSON object properties" jsonObj
-  -- (recordFields, _jsonObjs) <- createRecordFieldsDef objectName properties
-  let dataDef = T.intercalate
-        " "
-        [ "data"
-        , objectName
-        , "="
-        , objectName
-        , "\n  {"
-        -- , recordFields
-        , "\n  }"
-        , "deriving"
-        , "Show"
-        ]
-  pure dataDef
+createJsonDataDef (objName, jsonObj) = do
+  recordFields <- createJsonRecordFieldsDef objName jsonObj
+  recordField  <- createJsonRecordFieldDef objName jsonObj
+  maybe (error "faild to get JSON object properties or additionalProperties")
+        pure
+        (recordFields <|> recordField)
+
+createJsonRecordFieldsDef :: ObjectName -> JSON.Object -> IO (Maybe Text)
+createJsonRecordFieldsDef objName jsonObj =
+  case JSON.objectProperties jsonObj of
+    (Just properties) -> do
+      (field, _) <- createRecordFieldsDef objName properties
+      let dataDef = T.intercalate
+            " "
+            [ if Map.size properties > 1 then "data" else "newtype"
+            , objName
+            , "="
+            , objName
+            , "\n  {"
+            , field
+            , "\n  }"
+            , "deriving"
+            , "Show"
+            ]
+      pure (Just dataDef)
+    Nothing -> pure Nothing
+
+createJsonRecordFieldDef :: ObjectName -> JSON.Object -> IO (Maybe Text)
+createJsonRecordFieldDef objName jsonObj =
+  case JSON.objectAdditionalProperties jsonObj of
+    (Just (JSON.AdditionalPropertiesSchema schema)) -> do
+      (typeDef, _) <- createFieldTypeDef objName schema
+      let dataDef = T.intercalate
+            " "
+            [ "newtype"
+            , objName
+            , "="
+            , objName
+            , "\n  {"
+            , T.concat ["un", objName]
+            , "::"
+            , "Map"
+            , "Text"
+            , typeDef
+            , "\n  }"
+            , "deriving"
+            , "Show"
+            ]
+      pure (Just dataDef)
+    (Just (JSON.AdditionalPropertiesBool _)) -> undefined
+    Nothing -> pure Nothing
 
 toTitle :: Text -> Text
 toTitle = applyHead C.toUpper
