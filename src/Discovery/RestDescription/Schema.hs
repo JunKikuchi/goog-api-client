@@ -91,10 +91,12 @@ parseNumber v =
 
 data Object
   = Object
-  { objectProperties :: Maybe (Map Text Schema)
+  { objectProperties :: Maybe ObjectProperties
   , objectAdditionalProperties :: Maybe JSON.AdditionalProperties
   , objectRequired :: Maybe Bool
   } deriving Show
+
+type ObjectProperties = Map Text JSON.Schema
 
 parseObject :: Aeson.Object -> Aeson.Parser Object
 parseObject v =
