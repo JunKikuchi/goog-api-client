@@ -58,8 +58,8 @@ createSchema :: ServiceName -> Version -> Schema -> IO Text
 createSchema serviceName version schema = do
   moduleDef  <- createModuleDef serviceName version schema
   importsDef <- createImportsDef
-  typeDef    <- createTypeDef schema
-  pure (T.unlines [moduleDef, "", importsDef, typeDef])
+  dataDef    <- createDataDef schema
+  pure (T.unlines [moduleDef, "", importsDef, dataDef])
 
 createModuleDef :: ServiceName -> Version -> Schema -> IO Text
 createModuleDef serviceName version schema = do
@@ -72,8 +72,8 @@ createImportsDef :: IO Text
 createImportsDef =
   pure $ T.unlines . fmap (\s -> T.intercalate " " ["import", s]) $ ["RIO"]
 
-createTypeDef :: Schema -> IO Text
-createTypeDef schema = case schemaType schema of
+createDataDef :: Schema -> IO Text
+createDataDef schema = case schemaType schema of
   (Just (ObjectType object)) -> do
     schemaName   <- get schemaId "schema id" schema
     properties   <- get objectProperties "object properties" object
@@ -90,7 +90,7 @@ createTypeDef schema = case schemaType schema of
       , "deriving"
       , "Show"
       ]
-  _ -> pure "{-- TODO: 未実装 (createTypeDef:schemaType) --}"
+  _ -> pure "{-- TODO: 未実装 (createDataDef:schemaType) --}"
 
 createRecordFieldsDef :: SchemaName -> ObjectProperties -> IO Text
 createRecordFieldsDef schemaName =
