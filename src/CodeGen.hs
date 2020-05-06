@@ -10,6 +10,8 @@ import           RIO.FilePath                   ( (</>)
 import qualified RIO.Text                      as T
 import qualified RIO.ByteString                as B
 import           Discovery.RestDescription
+import           Discovery.RestDescription.Schema
+                                                ( Schema(..) )
 
 type DestDir     = Text
 type ServiceName = Text
@@ -39,17 +41,14 @@ createSchemaFiles serviceName version serviceDir schemas =
     let dir = serviceDir </> "Schemas"
     createDirectoryIfMissing True dir
     -- スキーマファイル出力
-    schemaName <- get restDescriptionParameterId
-                      "failed to get schema id."
-                      schema
+    schemaName <- get schemaId "failed to get schema id." schema
     let path = addExtension (dir </> T.unpack schemaName) "hs"
     print path
     B.writeFile
       path
       (T.encodeUtf8 (createSchema serviceName version schemaName schema))
 
-createSchema
-  :: ServiceName -> Version -> SchemaName -> RestDescriptionParameter -> Text
+createSchema :: ServiceName -> Version -> SchemaName -> Schema -> Text
 createSchema serviceName version name _ = T.unlines [moduleDef]
  where
   moduleDef  = T.intercalate " " ["module", moduleName, "where"]

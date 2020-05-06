@@ -2,11 +2,10 @@
 module Discovery.RestDescription where
 
 import           RIO
-import           Data.Aeson                     ( FromJSON(..)
-                                                , (.:?)
-                                                , withObject
-                                                )
-import qualified JSON.Schema                   as JSON
+import           Data.Aeson                     ( (.:?) )
+import qualified Data.Aeson                    as Aeson
+import           Discovery.RestDescription.Schema
+                                                ( Schema )
 
 type Key = Text
 
@@ -37,8 +36,8 @@ data RestDescription
   , restDescriptionResources :: Maybe RestDescriptionResources
   } deriving Show
 
-instance FromJSON RestDescription where
-  parseJSON = withObject "RestDescription" $ \v -> RestDescription
+instance Aeson.FromJSON RestDescription where
+  parseJSON = Aeson.withObject "RestDescription" $ \v -> RestDescription
     <$> v .:? "kind"
     <*> v .:? "discoveryVersion"
     <*> v .:? "id"
@@ -61,81 +60,29 @@ instance FromJSON RestDescription where
     <*> v .:? "methods"
     <*> v .:? "resources"
 
-type RestDescriptionParameters = Map Key RestDescriptionParameter
-type RestDescriptionSchemas    = Map Key RestDescriptionParameter
-type RestDescriptionMethods    = Map Key RestDescriptionMethod
-type RestDescriptionResources  = Map Key RestDescriptionResource
-
 data RestDescriptionIcons
   = RestDescriptionIcons
   { restDescriptionIconsX16 :: Maybe Text
   , restDescriptionIconsX32 :: Maybe Text
   } deriving Show
 
-instance FromJSON RestDescriptionIcons where
-  parseJSON = withObject "RestDescriptionIcons" $ \v -> RestDescriptionIcons
+instance Aeson.FromJSON RestDescriptionIcons where
+  parseJSON = Aeson.withObject "RestDescriptionIcons" $ \v -> RestDescriptionIcons
     <$> v .:? "x16"
     <*> v .:? "x32"
 
-data RestDescriptionParameter
-  = RestDescriptionParameter
-  { restDescriptionParameterId :: Maybe Text
-  , restDescriptionParameterType :: Maybe Text
-  , restDescriptionParameterRef :: Maybe Text
-  , restDescriptionParameterDescription :: Maybe Text
-  , restDescriptionParameterDefault :: Maybe Text
-  , restDescriptionParameterRequired :: Maybe Bool
-  , restDescriptionParameterFormat :: Maybe Text
-  , restDescriptionParameterPattern :: Maybe Text
-  , restDescriptionParameterMinimum :: Maybe Text
-  , restDescriptionParameterMaximum :: Maybe Text
-  , restDescriptionParameterEnum :: Maybe [Text]
-  , restDescriptionParameterEnumDescriptions :: Maybe [Text]
-  , restDescriptionParameterRepeated :: Maybe Bool
-  , restDescriptionParameterLocation :: Maybe Text
-  , restDescriptionParameterProperties :: Maybe (Map Key JSON.Schema)
-  , restDescriptionParameterAdditionalProperties :: Maybe JSON.Schema
-  , restDescriptionParameterItems:: Maybe [JSON.Schema]
-  , restDescriptionParameterAnnotations :: Maybe RestDescriptionParameterAnnotations
-  } deriving Show
-
-instance FromJSON RestDescriptionParameter where
-  parseJSON = withObject "RestDescriptionParameter" $ \v -> RestDescriptionParameter
-    <$> v .:? "id"
-    <*> v .:? "type"
-    <*> v .:? "$ref"
-    <*> v .:? "description"
-    <*> v .:? "default"
-    <*> v .:? "required"
-    <*> v .:? "format"
-    <*> v .:? "pattern"
-    <*> v .:? "minimum"
-    <*> v .:? "maximum"
-    <*> v .:? "enum"
-    <*> v .:? "enumDescriptions"
-    <*> v .:? "repeated"
-    <*> v .:? "location"
-    <*> v .:? "properties"
-    <*> v .:? "additionalProperties"
-    <*> v .:? "items"
-    <*> v .:? "annotations"
-
-newtype RestDescriptionParameterAnnotations
-  = RestDescriptionParameterAnnotations
-  { restDescriptionParameterAnnotationsRequired :: Maybe [Text]
-  } deriving Show
-
-instance FromJSON RestDescriptionParameterAnnotations where
-  parseJSON = withObject "RestDescriptionParameterAnnotations" $ \v -> RestDescriptionParameterAnnotations
-    <$> v .:? "required"
+type RestDescriptionParameters = Map Key Schema
+type RestDescriptionSchemas    = Map Key Schema
+type RestDescriptionMethods    = Map Key RestDescriptionMethod
+type RestDescriptionResources  = Map Key RestDescriptionResource
 
 newtype RestDescriptionAuth
   = RestDescriptionAuth
   { restDescriptionAuthOAuth2 :: Maybe RestDescriptionAuthOAuth2
   } deriving Show
 
-instance FromJSON RestDescriptionAuth where
-  parseJSON = withObject "RestDescriptionAuth" $ \v -> RestDescriptionAuth
+instance Aeson.FromJSON RestDescriptionAuth where
+  parseJSON = Aeson.withObject "RestDescriptionAuth" $ \v -> RestDescriptionAuth
     <$> v .:? "oauth2"
 
 newtype RestDescriptionAuthOAuth2
@@ -143,8 +90,8 @@ newtype RestDescriptionAuthOAuth2
   { restDescriptionAuthOAuth2Scopes :: Maybe (Map Key RestDescriptionAuthOAuth2Scope)
   } deriving Show
 
-instance FromJSON RestDescriptionAuthOAuth2 where
-  parseJSON = withObject "RestDescriptionAuthOAuth2" $ \v -> RestDescriptionAuthOAuth2
+instance Aeson.FromJSON RestDescriptionAuthOAuth2 where
+  parseJSON = Aeson.withObject "RestDescriptionAuthOAuth2" $ \v -> RestDescriptionAuthOAuth2
     <$> v .:? "scopes"
 
 newtype RestDescriptionAuthOAuth2Scope
@@ -152,15 +99,15 @@ newtype RestDescriptionAuthOAuth2Scope
   { restDescriptionAuthOAuth2ScopeDescription :: Maybe Text
   } deriving Show
 
-instance FromJSON RestDescriptionAuthOAuth2Scope where
-  parseJSON = withObject "RestDescriptionAuthOAuth2Scope" $ \v -> RestDescriptionAuthOAuth2Scope
+instance Aeson.FromJSON RestDescriptionAuthOAuth2Scope where
+  parseJSON = Aeson.withObject "RestDescriptionAuthOAuth2Scope" $ \v -> RestDescriptionAuthOAuth2Scope
     <$> v .:? "description"
 
 data RestDescriptionMethod
   = RestDescriptionMethod
   { restDescriptionMethodId :: Maybe Text
   , restDescriptionMethodDescription :: Maybe Text
-  , restDescriptionMethodParameters :: Maybe (Map Key RestDescriptionParameter)
+  , restDescriptionMethodParameters :: Maybe (Map Key Schema)
   , restDescriptionMethodParameterOrder :: Maybe [Text]
   , restDescriptionMethodScopes :: Maybe [Text]
   , restDescriptionMethodSupportsMediaDownload :: Maybe Bool
@@ -173,8 +120,8 @@ data RestDescriptionMethod
   , restDescriptionMethodResponse :: Maybe RestDescriptionMethodResponse
   } deriving Show
 
-instance FromJSON RestDescriptionMethod where
-  parseJSON = withObject "RestDescriptionMethod" $ \v -> RestDescriptionMethod
+instance Aeson.FromJSON RestDescriptionMethod where
+  parseJSON = Aeson.withObject "RestDescriptionMethod" $ \v -> RestDescriptionMethod
     <$> v .:? "id"
     <*> v .:? "description"
     <*> v .:? "parameters"
@@ -196,8 +143,8 @@ data RestDescriptionMethodMediaUpload
   , restDescriptionMethodMediaProtocols :: Maybe RestDescriptionMethodMediaProtocols
   } deriving Show
 
-instance FromJSON RestDescriptionMethodMediaUpload where
-  parseJSON = withObject "RestDescriptionMethodMediaUpload" $ \v -> RestDescriptionMethodMediaUpload
+instance Aeson.FromJSON RestDescriptionMethodMediaUpload where
+  parseJSON = Aeson.withObject "RestDescriptionMethodMediaUpload" $ \v -> RestDescriptionMethodMediaUpload
     <$> v .:? "accept"
     <*> v .:? "maxSize"
     <*> v .:? "protocols"
@@ -208,8 +155,8 @@ data RestDescriptionMethodMediaProtocols
   , restDescriptionMethodMediaProtocolsResumable :: Maybe RestDescriptionMethodMediaProtocolsResumable
   } deriving Show
 
-instance FromJSON RestDescriptionMethodMediaProtocols where
-  parseJSON = withObject "RestDescriptionMethodMediaProtocols" $ \v -> RestDescriptionMethodMediaProtocols
+instance Aeson.FromJSON RestDescriptionMethodMediaProtocols where
+  parseJSON = Aeson.withObject "RestDescriptionMethodMediaProtocols" $ \v -> RestDescriptionMethodMediaProtocols
     <$> v .:? "simple"
     <*> v .:? "resumable"
 
@@ -219,8 +166,8 @@ data RestDescriptionMethodMediaProtocolsSimple
   , restDescriptionMethodMediaProtocolsSimplePath :: Maybe Text
   } deriving Show
 
-instance FromJSON RestDescriptionMethodMediaProtocolsSimple where
-  parseJSON = withObject "RestDescriptionMethodMediaProtocolsSimple" $ \v -> RestDescriptionMethodMediaProtocolsSimple
+instance Aeson.FromJSON RestDescriptionMethodMediaProtocolsSimple where
+  parseJSON = Aeson.withObject "RestDescriptionMethodMediaProtocolsSimple" $ \v -> RestDescriptionMethodMediaProtocolsSimple
     <$> v .:? "multipart"
     <*> v .:? "path"
 
@@ -230,8 +177,8 @@ data RestDescriptionMethodMediaProtocolsResumable
   , restDescriptionMethodMediaProtocolsResumablePath :: Maybe Text
   } deriving Show
 
-instance FromJSON RestDescriptionMethodMediaProtocolsResumable where
-  parseJSON = withObject "RestDescriptionMethodMediaProtocolsResumable" $ \v -> RestDescriptionMethodMediaProtocolsResumable
+instance Aeson.FromJSON RestDescriptionMethodMediaProtocolsResumable where
+  parseJSON = Aeson.withObject "RestDescriptionMethodMediaProtocolsResumable" $ \v -> RestDescriptionMethodMediaProtocolsResumable
     <$> v .:? "multipart"
     <*> v .:? "path"
 
@@ -240,8 +187,8 @@ newtype RestDescriptionMethodRequest
   { restDescriptionMethodRequestRef :: Maybe Text
   } deriving Show
 
-instance FromJSON RestDescriptionMethodRequest where
-  parseJSON = withObject "RestDescriptionMethodRequest" $ \v -> RestDescriptionMethodRequest
+instance Aeson.FromJSON RestDescriptionMethodRequest where
+  parseJSON = Aeson.withObject "RestDescriptionMethodRequest" $ \v -> RestDescriptionMethodRequest
     <$> v .:? "$ref"
 
 newtype RestDescriptionMethodResponse
@@ -249,8 +196,8 @@ newtype RestDescriptionMethodResponse
   { restDescriptionMethodResponseRef :: Maybe Text
   } deriving Show
 
-instance FromJSON RestDescriptionMethodResponse where
-  parseJSON = withObject "RestDescriptionMethodResponse" $ \v -> RestDescriptionMethodResponse
+instance Aeson.FromJSON RestDescriptionMethodResponse where
+  parseJSON = Aeson.withObject "RestDescriptionMethodResponse" $ \v -> RestDescriptionMethodResponse
     <$> v .:? "$ref"
 
 data RestDescriptionResource
@@ -259,7 +206,7 @@ data RestDescriptionResource
   , restDescriptionResourceResources :: Maybe (Map Key RestDescriptionResource)
   } deriving Show
 
-instance FromJSON RestDescriptionResource where
-  parseJSON = withObject "RestDescriptionResource" $ \v -> RestDescriptionResource
+instance Aeson.FromJSON RestDescriptionResource where
+  parseJSON = Aeson.withObject "RestDescriptionResource" $ \v -> RestDescriptionResource
     <$> v .:? "methods"
     <*> v .:? "resources"
