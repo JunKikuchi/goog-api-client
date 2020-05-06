@@ -165,7 +165,7 @@ createJsonDataDef :: (ObjectName, JSON.Object) -> IO Text
 createJsonDataDef (objName, jsonObj) = do
   recordFields <- createJsonRecordFieldsDef objName jsonObj
   recordField  <- createJsonRecordFieldDef objName jsonObj
-  maybe (error "faild to get JSON object properties or additionalProperties")
+  maybe (error "faild to get JSON object properties nor additionalProperties")
         pure
         (recordFields <|> recordField)
 
