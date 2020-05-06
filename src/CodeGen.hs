@@ -21,6 +21,7 @@ type DestDir     = Text
 type ServiceName = Text
 type Version     = Text
 type SchemaName  = Text
+type ObjectName  = Text
 
 gen :: DestDir -> RestDescription -> IO ()
 gen dest desc = do
@@ -101,25 +102,27 @@ createRecordFieldsDef schemaName =
 
 createFieldDef :: SchemaName -> Text -> JSON.Schema -> IO Text
 createFieldDef schemaName name schema = do
-  filedType <- createFieldTypeDef schema
+  filedType <- createFieldTypeDef objName schema
   pure $ T.intercalate " " [fieldName, "::", filedType]
-  where fieldName = T.concat [unTitle schemaName, toTitle name]
+ where
+  objName   = toTitle fieldName
+  fieldName = T.concat [unTitle schemaName, toTitle name]
 
-createFieldTypeDef :: JSON.Schema -> IO Text
-createFieldTypeDef schema = case JSON.schemaType schema of
+createFieldTypeDef :: ObjectName -> JSON.Schema -> IO Text
+createFieldTypeDef objName schema = case JSON.schemaType schema of
   (Just (JSON.StringType  _    )) -> pure "Text"
   (Just (JSON.IntegerType _    )) -> pure "Int"
   (Just (JSON.NumberType  _    )) -> pure "Float"
-  (Just (JSON.ObjectType  _    )) -> pure "{-- TODO: 未実装 (Object) --}"
-  (Just (JSON.ArrayType   array)) -> createArrayFiledDef array
+  (Just (JSON.ObjectType  _    )) -> pure objName
+  (Just (JSON.ArrayType   array)) -> createArrayFiledDef objName array
   (Just JSON.BooleanType        ) -> pure "Bool"
   (Just (JSON.RefType ref)      ) -> pure ref
   _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:schemaType) --}"
 
-createArrayFiledDef :: JSON.Array -> IO Text
-createArrayFiledDef array = case JSON.arrayItems array of
+createArrayFiledDef :: ObjectName -> JSON.Array -> IO Text
+createArrayFiledDef objName array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem item)) -> do
-    fieldType <- createFieldTypeDef item
+    fieldType <- createFieldTypeDef objName item
     pure $ T.concat ["[", fieldType, "]"]
   _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}"
 
