@@ -56,10 +56,11 @@ createSchemaFiles serviceName version serviceDir schemas =
 
 createSchema :: ServiceName -> Version -> Schema -> IO Text
 createSchema serviceName version schema = do
-  moduleDef  <- createModuleDef serviceName version schema
-  importsDef <- createImportsDef
-  dataDef    <- createDataDef schema
-  pure (T.unlines [moduleDef, "", importsDef, dataDef])
+  moduleDef           <- createModuleDef serviceName version schema
+  importsDef          <- createImportsDef
+  (dataDef, jsonObjs) <- createDataDef schema
+  jsonObjDefs         <- createJsonObjDefs jsonObjs
+  pure (T.unlines [moduleDef, "", importsDef, dataDef, "", jsonObjDefs])
 
 createModuleDef :: ServiceName -> Version -> Schema -> IO Text
 createModuleDef serviceName version schema = do
@@ -72,59 +73,97 @@ createImportsDef :: IO Text
 createImportsDef =
   pure $ T.unlines . fmap (\s -> T.intercalate " " ["import", s]) $ ["RIO"]
 
-createDataDef :: Schema -> IO Text
+createDataDef :: Schema -> IO (Text, [(ObjectName, JSON.Object)])
 createDataDef schema = case schemaType schema of
   (Just (ObjectType object)) -> do
-    schemaName   <- get schemaId "schema id" schema
-    properties   <- get objectProperties "object properties" object
-    recordFields <- createRecordFieldsDef schemaName properties
-    pure $ T.intercalate
-      " "
-      [ "data"
-      , schemaName
-      , "="
-      , schemaName
-      , "\n  {"
-      , recordFields
-      , "\n  }"
-      , "deriving"
-      , "Show"
-      ]
-  _ -> pure "{-- TODO: 未実装 (createDataDef:schemaType) --}"
+    schemaName               <- get schemaId "schema id" schema
+    properties               <- get objectProperties "object properties" object
+    (recordFields, jsonObjs) <- createRecordFieldsDef schemaName properties
+    let dataDef = T.intercalate
+          " "
+          [ "data"
+          , schemaName
+          , "="
+          , schemaName
+          , "\n  {"
+          , recordFields
+          , "\n  }"
+          , "deriving"
+          , "Show"
+          ]
+    pure (dataDef, jsonObjs)
+  _ -> pure ("{-- TODO: 未実装 (createDataDef:schemaType) --}", [])
 
-createRecordFieldsDef :: SchemaName -> ObjectProperties -> IO Text
-createRecordFieldsDef schemaName =
-  fmap (T.intercalate "\n  , ")
-    . foldr (\field acc -> (:) <$> field <*> acc) (pure [])
-    . Map.foldrWithKey
-        (\name schema acc -> createFieldDef schemaName name schema : acc)
-        []
+createRecordFieldsDef
+  :: SchemaName -> ObjectProperties -> IO (Text, [(ObjectName, JSON.Object)])
+createRecordFieldsDef schemaName properties = do
+  (fields, jsonObjs) <- Map.foldrWithKey consFiled (pure ([], [])) properties
+  let filedsDef = T.intercalate "\n  , " fields
+  pure (filedsDef, catMaybes jsonObjs)
+ where
+  consFiled name schema acc = do
+    (fields, jsonObjs) <- acc
+    (field , jsonObj ) <- createFieldDef schemaName name schema
+    pure (field : fields, jsonObj : jsonObjs)
 
-createFieldDef :: SchemaName -> Text -> JSON.Schema -> IO Text
+createFieldDef
+  :: SchemaName
+  -> Text
+  -> JSON.Schema
+  -> IO (Text, Maybe (ObjectName, JSON.Object))
 createFieldDef schemaName name schema = do
-  filedType <- createFieldTypeDef objName schema
-  pure $ T.intercalate " " [fieldName, "::", filedType]
+  (filedType, jsonObj) <- createFieldTypeDef objName schema
+  pure (T.intercalate " " [fieldName, "::", filedType], jsonObj)
  where
   objName   = toTitle fieldName
   fieldName = T.concat [unTitle schemaName, toTitle name]
 
-createFieldTypeDef :: ObjectName -> JSON.Schema -> IO Text
+createFieldTypeDef
+  :: ObjectName -> JSON.Schema -> IO (Text, Maybe (ObjectName, JSON.Object))
 createFieldTypeDef objName schema = case JSON.schemaType schema of
-  (Just (JSON.StringType  _    )) -> pure "Text"
-  (Just (JSON.IntegerType _    )) -> pure "Int"
-  (Just (JSON.NumberType  _    )) -> pure "Float"
-  (Just (JSON.ObjectType  _    )) -> pure objName
+  (Just (JSON.StringType  _    )) -> pure ("Text", Nothing)
+  (Just (JSON.IntegerType _    )) -> pure ("Int", Nothing)
+  (Just (JSON.NumberType  _    )) -> pure ("Float", Nothing)
+  (Just (JSON.ObjectType  obj  )) -> pure (objName, Just (objName, obj))
   (Just (JSON.ArrayType   array)) -> createArrayFiledDef objName array
-  (Just JSON.BooleanType        ) -> pure "Bool"
-  (Just (JSON.RefType ref)      ) -> pure ref
-  _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:schemaType) --}"
+  (Just JSON.BooleanType        ) -> pure ("Bool", Nothing)
+  (Just (JSON.RefType ref)      ) -> pure (ref, Nothing)
+  _ -> pure ("{-- TODO: 未実装 (createFieldTypeDef:schemaType) --}", Nothing)
 
-createArrayFiledDef :: ObjectName -> JSON.Array -> IO Text
+createArrayFiledDef
+  :: ObjectName -> JSON.Array -> IO (Text, Maybe (ObjectName, JSON.Object))
 createArrayFiledDef objName array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem item)) -> do
-    fieldType <- createFieldTypeDef objName item
-    pure $ T.concat ["[", fieldType, "]"]
-  _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}"
+    (fieldType, jsonObj) <- createFieldTypeDef objName item
+    pure (T.concat ["[", fieldType, "]"], jsonObj)
+  _ -> pure ("{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}", Nothing)
+
+createJsonObjDefs :: [(ObjectName, JSON.Object)] -> IO Text
+createJsonObjDefs = fmap (T.intercalate "\n\n") . foldr
+  (\a acc -> do
+    dataDef <- createJsonDataDef a
+    as      <- acc
+    pure (dataDef : as)
+  )
+  (pure [])
+
+createJsonDataDef :: (ObjectName, JSON.Object) -> IO Text
+createJsonDataDef (objectName, _jsonObj) = do
+  -- properties <- get JSON.objectProperties "JSON object properties" jsonObj
+  -- (recordFields, _jsonObjs) <- createRecordFieldsDef objectName properties
+  let dataDef = T.intercalate
+        " "
+        [ "data"
+        , objectName
+        , "="
+        , objectName
+        , "\n  {"
+        -- , recordFields
+        , "\n  }"
+        , "deriving"
+        , "Show"
+        ]
+  pure dataDef
 
 toTitle :: Text -> Text
 toTitle = applyHead C.toUpper
@@ -137,4 +176,4 @@ applyHead f text = maybe text (\(c, t) -> T.cons (f c) t) (T.uncons text)
 
 get :: Applicative f => (t -> Maybe a) -> Text -> t -> f a
 get f s desc = maybe (error err) pure (f desc)
-  where err = T.unpack $ T.intercalate " " ["failed to get", s, "."]
+  where err = T.unpack $ T.intercalate " " ["failed to get", s]
