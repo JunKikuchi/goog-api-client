@@ -46,7 +46,9 @@ instance FromJSON Schema where
           (Just "array"  ) -> (Just . ArrayType  ) <$> parseArray   v
           (Just "boolean") -> pure (Just BooleanType)
           (Just "null"   ) -> pure (Just NullType   )
-          _ -> pure Nothing
+          _ -> do
+            ref <- v .:? "$ref" :: Aeson.Parser (Maybe Text)
+            pure $ fmap RefType ref
 
 data Type
   = StringType String
@@ -56,6 +58,7 @@ data Type
   | ArrayType Array
   | BooleanType
   | NullType
+  | RefType Text
   deriving (Show, Eq)
 
 type Pattern = Text
