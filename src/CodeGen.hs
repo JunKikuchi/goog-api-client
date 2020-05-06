@@ -38,29 +38,39 @@ gen dest desc = do
   getVersion = get restDescriptionVersion "version" desc
   getSchemas = get restDescriptionSchemas "schemas" desc
 
+defaultImpots :: [Text]
+defaultImpots = ["RIO"]
+
 createSchemaFiles
   :: ServiceName -> Version -> FilePath -> RestDescriptionSchemas -> IO ()
-createSchemaFiles serviceName version serviceDir schemas =
-  forM_ schemas $ \schema -> do
-    -- スキーマディレクトリ作成
-    let dir = serviceDir </> "Schemas"
-    createDirectoryIfMissing True dir
-    -- スキーマファイルパス
-    schemaName <- get schemaId "schema id" schema
-    let path = addExtension (dir </> T.unpack schemaName) "hs"
-    print path
-    -- スキーマファイル
-    schemaText <- createSchema serviceName version schema
-    -- スキーマファイル出力
-    B.writeFile path (T.encodeUtf8 schemaText)
+createSchemaFiles serviceName version serviceDir schemas = forM_ schemas
+  $ \schema -> createSchemaFile serviceName version serviceDir schema
 
-createSchema :: ServiceName -> Version -> Schema -> IO Text
-createSchema serviceName version schema = do
+createSchemaFile :: ServiceName -> Version -> FilePath -> Schema -> IO ()
+createSchemaFile serviceName version serviceDir schema = do
+  -- スキーマディレクトリ作成
+  let dir = serviceDir </> "Schemas"
+  createDirectoryIfMissing True dir
+  -- スキーマファイルパス
+  schemaName <- get schemaId "schema id" schema
+  let path = addExtension (dir </> T.unpack schemaName) "hs"
+  print path
+  -- スキーマファイル
+  schemaText <- createSchemaText serviceName version schema
+  -- スキーマファイル出力
+  B.writeFile path (T.encodeUtf8 schemaText)
+
+createSchemaText :: ServiceName -> Version -> Schema -> IO Text
+createSchemaText serviceName version schema = do
   moduleDef           <- createModuleDef serviceName version schema
   importsDef          <- createImportsDef
   (dataDef, jsonObjs) <- createDataDef schema
   jsonObjDefs         <- createJsonObjDefs jsonObjs
-  pure (T.unlines [moduleDef, "", importsDef, dataDef, "", jsonObjDefs])
+  pure
+    . flip T.snoc '\n'
+    . T.intercalate "\n\n"
+    . filter (not . T.null)
+    $ [moduleDef, importsDef, dataDef, jsonObjDefs]
 
 createModuleDef :: ServiceName -> Version -> Schema -> IO Text
 createModuleDef serviceName version schema = do
@@ -71,7 +81,10 @@ createModuleDef serviceName version schema = do
 
 createImportsDef :: IO Text
 createImportsDef =
-  pure $ T.unlines . fmap (\s -> T.intercalate " " ["import", s]) $ ["RIO"]
+  pure
+    $ T.intercalate "\n"
+    . fmap (\s -> T.intercalate " " ["import", s])
+    $ defaultImpots
 
 createDataDef :: Schema -> IO (Text, [(ObjectName, JSON.Object)])
 createDataDef schema = case schemaType schema of
@@ -103,15 +116,15 @@ createRecordFieldsDef schemaName properties = do
  where
   consFiled name schema acc = do
     (fields, jsonObjs) <- acc
-    (field , jsonObj ) <- createFieldDef schemaName name schema
+    (field , jsonObj ) <- createRecordFieldDef schemaName name schema
     pure (field : fields, jsonObj : jsonObjs)
 
-createFieldDef
+createRecordFieldDef
   :: SchemaName
   -> Text
   -> JSON.Schema
   -> IO (Text, Maybe (ObjectName, JSON.Object))
-createFieldDef schemaName name schema = do
+createRecordFieldDef schemaName name schema = do
   (filedType, jsonObj) <- createFieldTypeDef objName schema
   pure (T.intercalate " " [fieldName, "::", filedType], jsonObj)
  where
@@ -139,7 +152,7 @@ createArrayFiledDef objName array = case JSON.arrayItems array of
   _ -> pure ("{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}", Nothing)
 
 createJsonObjDefs :: [(ObjectName, JSON.Object)] -> IO Text
-createJsonObjDefs = fmap (T.intercalate "\n\n") . foldr
+createJsonObjDefs = fmap (T.intercalate "\n") . foldr
   (\a acc -> do
     dataDef <- createJsonDataDef a
     as      <- acc
