@@ -96,20 +96,20 @@ createDataDef schema = case schemaType schema of
     schemaName <- lift $ get schemaId "schema id" schema
     properties <- lift $ get objectProperties "object properties" object
     fieldDef   <- createRecordFieldsDef schemaName properties
-    let dataDef = T.intercalate
-          " "
-          [ "data"
-          , schemaName
-          , "="
-          , schemaName
-          , "\n  {"
-          , fieldDef
-          , "\n  }"
-          , "deriving"
-          , "Show"
-          ]
-    pure dataDef
+    pure (createDataDefText schemaName fieldDef (Map.size properties))
   _ -> pure "{-- TODO: 未実装 (createDataDef:schemaType) --}"
+
+createDataDefText :: SchemaName -> Text -> Int -> Text
+createDataDefText schemaName fieldDef numProperties = T.intercalate
+  " "
+  (  [ if numProperties == 0 || numProperties > 1 then "data" else "newtype"
+     , schemaName
+     , "="
+     , schemaName
+     ]
+  <> (if numProperties == 0 then [] else ["\n  {", fieldDef, "\n  }"])
+  <> ["deriving", "Show"]
+  )
 
 createRecordFieldsDef :: SchemaName -> ObjectProperties -> GenObject Text
 createRecordFieldsDef schemaName properties = do
