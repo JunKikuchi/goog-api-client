@@ -13,6 +13,7 @@ import qualified RIO.Char                      as C
 import qualified RIO.Text                      as T
 import qualified RIO.ByteString                as B
 import qualified RIO.Map                       as Map
+import           RIO.Writer
 import qualified JSON.Schema                   as JSON
 import           Discovery.RestDescription
 import           Discovery.RestDescription.Schema
@@ -21,6 +22,7 @@ type DestDir     = Text
 type ServiceName = Text
 type Version     = Text
 type SchemaName  = Text
+type FieldName   = Text
 type ObjectName  = Text
 
 gen :: DestDir -> RestDescription -> IO ()
@@ -62,10 +64,10 @@ createSchemaFile serviceName version serviceDir schema = do
 
 createSchemaText :: ServiceName -> Version -> Schema -> IO Text
 createSchemaText serviceName version schema = do
-  moduleDef           <- createModuleDef serviceName version schema
-  importsDef          <- createImportsDef
-  (dataDef, jsonObjs) <- createDataDef schema
-  jsonObjDefs         <- createJsonObjDefs jsonObjs
+  moduleDef                <- createModuleDef serviceName version schema
+  importsDef               <- createImportsDef
+  (dataDef    , jsonObjs ) <- runWriterT $ createDataDef schema
+  (jsonObjDefs, _jsonObjs) <- runWriterT $ createJsonObjDefs jsonObjs
   pure
     . flip T.snoc '\n'
     . T.intercalate "\n\n"
@@ -86,12 +88,14 @@ createImportsDef =
     . fmap (\s -> T.intercalate " " ["import", s])
     $ defaultImports
 
-createDataDef :: Schema -> IO (Text, [(ObjectName, JSON.Object)])
+type GenObject = WriterT [(ObjectName, JSON.Object)] IO
+
+createDataDef :: Schema -> GenObject Text
 createDataDef schema = case schemaType schema of
   (Just (ObjectType object)) -> do
-    schemaName               <- get schemaId "schema id" schema
-    properties               <- get objectProperties "object properties" object
-    (recordFields, jsonObjs) <- createRecordFieldsDef schemaName properties
+    schemaName <- lift $ get schemaId "schema id" schema
+    properties <- lift $ get objectProperties "object properties" object
+    fieldDef   <- createRecordFieldsDef schemaName properties
     let dataDef = T.intercalate
           " "
           [ "data"
@@ -99,60 +103,54 @@ createDataDef schema = case schemaType schema of
           , "="
           , schemaName
           , "\n  {"
-          , recordFields
+          , fieldDef
           , "\n  }"
           , "deriving"
           , "Show"
           ]
-    pure (dataDef, jsonObjs)
-  _ -> pure ("{-- TODO: 未実装 (createDataDef:schemaType) --}", [])
+    pure dataDef
+  _ -> pure "{-- TODO: 未実装 (createDataDef:schemaType) --}"
 
-createRecordFieldsDef
-  :: SchemaName -> ObjectProperties -> IO (Text, [(ObjectName, JSON.Object)])
+createRecordFieldsDef :: SchemaName -> ObjectProperties -> GenObject Text
 createRecordFieldsDef schemaName properties = do
-  (fields, jsonObjs) <- Map.foldrWithKey consFiled (pure ([], [])) properties
+  fields <- Map.foldrWithKey consFiled (pure []) properties
   let filedsDef = T.intercalate "\n  , " fields
-  pure (filedsDef, catMaybes jsonObjs)
+  pure filedsDef
  where
   consFiled name schema acc = do
-    (fields, jsonObjs) <- acc
-    (field , jsonObj ) <- createRecordFieldDef schemaName name schema
-    pure (field : fields, jsonObj : jsonObjs)
+    fields <- acc
+    let camelName = T.concat . fmap toTitle . T.split (== '_') $ name
+        fieldName = T.concat [unTitle schemaName, toTitle camelName]
+    field <- createRecordFieldDef fieldName schema
+    pure (field : fields)
 
-createRecordFieldDef
-  :: SchemaName
-  -> Text
-  -> JSON.Schema
-  -> IO (Text, Maybe (ObjectName, JSON.Object))
-createRecordFieldDef schemaName name schema = do
-  (filedType, jsonObj) <- createFieldTypeDef objName schema
-  pure (T.intercalate " " [fieldName, "::", filedType], jsonObj)
- where
-  objName   = toTitle fieldName
-  fieldName = T.concat [unTitle schemaName, toTitle camelName]
-  camelName = T.concat . fmap toTitle . T.split (== '_') $ name
+createRecordFieldDef :: FieldName -> JSON.Schema -> GenObject Text
+createRecordFieldDef fieldName schema = do
+  filedType <- createFieldTypeDef objName schema
+  pure (T.intercalate " " [fieldName, "::", filedType])
+  where objName = toTitle fieldName
 
-createFieldTypeDef
-  :: ObjectName -> JSON.Schema -> IO (Text, Maybe (ObjectName, JSON.Object))
+createFieldTypeDef :: ObjectName -> JSON.Schema -> GenObject Text
 createFieldTypeDef objName schema = case JSON.schemaType schema of
-  (Just (JSON.StringType  _    )) -> pure ("Text", Nothing)
-  (Just (JSON.IntegerType _    )) -> pure ("Int", Nothing)
-  (Just (JSON.NumberType  _    )) -> pure ("Float", Nothing)
-  (Just (JSON.ObjectType  obj  )) -> pure (objName, Just (objName, obj))
-  (Just (JSON.ArrayType   array)) -> createArrayFiledDef objName array
-  (Just JSON.BooleanType        ) -> pure ("Bool", Nothing)
-  (Just (JSON.RefType ref)      ) -> pure (ref, Nothing)
-  _ -> pure ("{-- TODO: 未実装 (createFieldTypeDef:schemaType) --}", Nothing)
+  (Just (JSON.StringType  _  )) -> pure "Text"
+  (Just (JSON.IntegerType _  )) -> pure "Int"
+  (Just (JSON.NumberType  _  )) -> pure "Float"
+  (Just (JSON.ObjectType  obj)) -> do
+    tell [(objName, obj)]
+    pure objName
+  (Just (JSON.ArrayType array)) -> createArrayFiledDef objName array
+  (Just JSON.BooleanType      ) -> pure "Bool"
+  (Just (JSON.RefType ref)    ) -> pure ref
+  _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:schemaType) --}"
 
-createArrayFiledDef
-  :: ObjectName -> JSON.Array -> IO (Text, Maybe (ObjectName, JSON.Object))
+createArrayFiledDef :: ObjectName -> JSON.Array -> GenObject Text
 createArrayFiledDef objName array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem item)) -> do
-    (fieldType, jsonObj) <- createFieldTypeDef objName item
-    pure (T.concat ["[", fieldType, "]"], jsonObj)
-  _ -> pure ("{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}", Nothing)
+    fieldType <- createFieldTypeDef objName item
+    pure (T.concat ["[", fieldType, "]"])
+  _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}"
 
-createJsonObjDefs :: [(ObjectName, JSON.Object)] -> IO Text
+createJsonObjDefs :: [(ObjectName, JSON.Object)] -> GenObject Text
 createJsonObjDefs = fmap (T.intercalate "\n\n") . foldr
   (\a acc -> do
     dataDef <- createJsonDataDef a
@@ -161,7 +159,7 @@ createJsonObjDefs = fmap (T.intercalate "\n\n") . foldr
   )
   (pure [])
 
-createJsonDataDef :: (ObjectName, JSON.Object) -> IO Text
+createJsonDataDef :: (ObjectName, JSON.Object) -> GenObject Text
 createJsonDataDef (objName, jsonObj) = do
   recordFields <- createJsonRecordFieldsDef objName jsonObj
   recordField  <- createJsonRecordFieldDef objName jsonObj
@@ -169,11 +167,11 @@ createJsonDataDef (objName, jsonObj) = do
         pure
         (recordFields <|> recordField)
 
-createJsonRecordFieldsDef :: ObjectName -> JSON.Object -> IO (Maybe Text)
+createJsonRecordFieldsDef :: ObjectName -> JSON.Object -> GenObject (Maybe Text)
 createJsonRecordFieldsDef objName jsonObj =
   case JSON.objectProperties jsonObj of
     (Just properties) -> do
-      (field, _) <- createRecordFieldsDef objName properties
+      fieldDef <- createRecordFieldsDef objName properties
       let dataDef = T.intercalate
             " "
             [ if Map.size properties > 1 then "data" else "newtype"
@@ -181,7 +179,7 @@ createJsonRecordFieldsDef objName jsonObj =
             , "="
             , objName
             , "\n  {"
-            , field
+            , fieldDef
             , "\n  }"
             , "deriving"
             , "Show"
@@ -189,11 +187,11 @@ createJsonRecordFieldsDef objName jsonObj =
       pure (Just dataDef)
     Nothing -> pure Nothing
 
-createJsonRecordFieldDef :: ObjectName -> JSON.Object -> IO (Maybe Text)
+createJsonRecordFieldDef :: ObjectName -> JSON.Object -> GenObject (Maybe Text)
 createJsonRecordFieldDef objName jsonObj =
   case JSON.objectAdditionalProperties jsonObj of
     (Just (JSON.AdditionalPropertiesSchema schema)) -> do
-      (typeDef, _) <- createFieldTypeDef objName schema
+      typeDef <- createFieldTypeDef objName schema
       let dataDef = T.intercalate
             " "
             [ "newtype"
