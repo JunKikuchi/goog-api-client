@@ -21,6 +21,7 @@ import           Discovery.RestDescription.Schema
 type DestDir     = Text
 type ServiceName = Text
 type Version     = Text
+type ModuleName  = Text
 type SchemaName  = Text
 type FieldName   = Text
 type ObjectName  = Text
@@ -33,8 +34,11 @@ gen dest desc = do
   let serviceDir = T.unpack dest </> T.unpack serviceName </> T.unpack version
   createDirectoryIfMissing True serviceDir
   -- スキーマファイル作成
-  schemas <- getSchemas
-  createSchemaFiles serviceName version serviceDir schemas
+  schemas     <- getSchemas
+  moduleNames <- createSchemaFiles serviceName version serviceDir schemas
+  -- Types.hs 作成
+  let typesModuleName = T.intercalate "." [serviceName, version, "Types"]
+  createTypesFile serviceDir typesModuleName moduleNames
  where
   getName    = get restDescriptionName "name" desc
   getVersion = get restDescriptionVersion "version" desc
@@ -43,12 +47,40 @@ gen dest desc = do
 defaultImports :: [Text]
 defaultImports = ["RIO"]
 
-createSchemaFiles
-  :: ServiceName -> Version -> FilePath -> RestDescriptionSchemas -> IO ()
-createSchemaFiles serviceName version serviceDir schemas = forM_ schemas
-  $ \schema -> createSchemaFile serviceName version serviceDir schema
+createTypesFile :: FilePath -> ModuleName -> [ModuleName] -> IO ()
+createTypesFile serviceDir moduleName moduleNames = B.writeFile
+  path
+  (T.encodeUtf8 content)
+ where
+  path      = serviceDir </> "Types.hs"
+  content   = T.intercalate "\n" [moduleDef, importsDef]
+  moduleDef = T.intercalate
+    "\n"
+    [ T.intercalate " " ["module", moduleName]
+    , "("
+    , exportModulesDef
+    , ")"
+    , "where"
+    ]
+  exportModulesDef = T.intercalate "\n  , "
+    $ fmap (\a -> T.intercalate " " ["module", a]) moduleNames
+  importsDef = T.intercalate "\n"
+    $ foldr (\a acc -> T.intercalate " " ["import", a] : acc) [] moduleNames
 
-createSchemaFile :: ServiceName -> Version -> FilePath -> Schema -> IO ()
+createSchemaFiles
+  :: ServiceName
+  -> Version
+  -> FilePath
+  -> RestDescriptionSchemas
+  -> IO [ModuleName]
+createSchemaFiles serviceName version serviceDir = foldM
+  (\acc schema ->
+    (: acc) <$> createSchemaFile serviceName version serviceDir schema
+  )
+  []
+
+createSchemaFile
+  :: ServiceName -> Version -> FilePath -> Schema -> IO ModuleName
 createSchemaFile serviceName version serviceDir schema = do
   -- スキーマディレクトリ作成
   let dir = serviceDir </> "Schemas"
@@ -57,14 +89,18 @@ createSchemaFile serviceName version serviceDir schema = do
   schemaName <- get schemaId "schema id" schema
   let path = addExtension (dir </> T.unpack schemaName) "hs"
   print path
+  -- モジュール名
+  let moduleName =
+        T.intercalate "." [serviceName, version, "Schemas", schemaName]
   -- スキーマファイル
-  schemaText <- createSchemaText serviceName version schema
+  schemaText <- createSchemaText moduleName schema
   -- スキーマファイル出力
   B.writeFile path (T.encodeUtf8 schemaText)
+  pure moduleName
 
-createSchemaText :: ServiceName -> Version -> Schema -> IO Text
-createSchemaText serviceName version schema = do
-  moduleDef           <- createModuleDef serviceName version schema
+createSchemaText :: ModuleName -> Schema -> IO Text
+createSchemaText moduleName schema = do
+  moduleDef           <- createModuleDef moduleName
   importsDef          <- createImportsDef
   (dataDef, jsonObjs) <- runWriterT $ createDataDef schema
   jsonObjDefs         <- createJsonObjDefs jsonObjs
@@ -74,12 +110,9 @@ createSchemaText serviceName version schema = do
     . filter (not . T.null)
     $ [moduleDef, importsDef, dataDef, jsonObjDefs]
 
-createModuleDef :: ServiceName -> Version -> Schema -> IO Text
-createModuleDef serviceName version schema = do
-  schemaName <- get schemaId "schema id" schema
-  let moduleDef =
-        T.intercalate "." [serviceName, version, "Schemas", schemaName]
-  pure $ T.intercalate " " ["module", moduleDef, "where"]
+createModuleDef :: ModuleName -> IO Text
+createModuleDef moduleName =
+  pure $ T.intercalate " " ["module", moduleName, "where"]
 
 createImportsDef :: IO Text
 createImportsDef =
@@ -140,7 +173,9 @@ createFieldTypeDef objName schema = case JSON.schemaType schema of
     pure objName
   (Just (JSON.ArrayType array)) -> createArrayFiledDef objName array
   (Just JSON.BooleanType      ) -> pure "Bool"
-  (Just (JSON.RefType ref)    ) -> pure ref
+  (Just (JSON.RefType ref)    ) -> do
+    lift $ print ref
+    pure ref -- TODO: 要 import
   _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:schemaType) --}"
 
 createArrayFiledDef :: ObjectName -> JSON.Array -> GenObject Text
