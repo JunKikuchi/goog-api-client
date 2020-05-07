@@ -64,10 +64,10 @@ createSchemaFile serviceName version serviceDir schema = do
 
 createSchemaText :: ServiceName -> Version -> Schema -> IO Text
 createSchemaText serviceName version schema = do
-  moduleDef                <- createModuleDef serviceName version schema
-  importsDef               <- createImportsDef
-  (dataDef    , jsonObjs ) <- runWriterT $ createDataDef schema
-  (jsonObjDefs, _jsonObjs) <- runWriterT $ createJsonObjDefs jsonObjs
+  moduleDef           <- createModuleDef serviceName version schema
+  importsDef          <- createImportsDef
+  (dataDef, jsonObjs) <- runWriterT $ createDataDef schema
+  jsonObjDefs         <- createJsonObjDefs jsonObjs
   pure
     . flip T.snoc '\n'
     . T.intercalate "\n\n"
@@ -150,14 +150,17 @@ createArrayFiledDef objName array = case JSON.arrayItems array of
     pure (T.concat ["[", fieldType, "]"])
   _ -> pure "{-- TODO: 未実装 (createFieldTypeDef:arrayItems) --}"
 
-createJsonObjDefs :: [(ObjectName, JSON.Object)] -> GenObject Text
-createJsonObjDefs = fmap (T.intercalate "\n\n") . foldr
-  (\a acc -> do
-    dataDef <- createJsonDataDef a
-    as      <- acc
-    pure (dataDef : as)
-  )
-  (pure [])
+createJsonObjDefs :: [(ObjectName, JSON.Object)] -> IO Text
+createJsonObjDefs = fmap (T.intercalate "\n\n") . foldr f (pure [])
+ where
+  f obj acc = do
+    (dataDef, jsonObjs) <- runWriterT $ createJsonDataDef obj
+    as                  <- acc
+    if null jsonObjs
+      then pure (dataDef : as)
+      else do
+        dataDef1 <- createJsonObjDefs jsonObjs
+        pure (dataDef : dataDef1 : as)
 
 createJsonDataDef :: (ObjectName, JSON.Object) -> GenObject Text
 createJsonDataDef (objName, jsonObj) = do
