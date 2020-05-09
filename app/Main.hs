@@ -21,7 +21,7 @@ main = do
   runCommand opts
 
 runCommand :: Opts.Commands -> IO ()
-runCommand (Opts.ListCommand a) = do
+runCommand (Opts.GenAllCommand a) = do
   ret <- run $ list name preferred
   put ret
  where
@@ -29,7 +29,7 @@ runCommand (Opts.ListCommand a) = do
     ""  -> Nothing
     n@_ -> Just n
   preferred = if Opts.preferred a then Just True else Nothing
-runCommand (Opts.GetRestCommand a) = do
+runCommand (Opts.GenApiCommand a) = do
   ret <- run $ getRest (Opts.api a) (Opts.version a)
   -- put ret
   either (error . show) (gen "dest") ret

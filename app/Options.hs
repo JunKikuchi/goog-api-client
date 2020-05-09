@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Options
   ( Commands(..)
-  , List(..)
-  , GetRest(..)
+  , GenAll(..)
+  , GenApi(..)
   , parseOpts
   )
 where
@@ -11,18 +11,18 @@ import           RIO
 import           Options.Applicative
 
 data Commands
-  = ListCommand List
-  | GetRestCommand GetRest
+  = GenAllCommand GenAll
+  | GenApiCommand GenApi
   deriving Show
 
-data List
-  = List
+data GenAll
+  = GenAll
   { name :: Text
   , preferred :: Bool
   } deriving Show
 
-data GetRest
-  = GetRest
+data GenApi
+  = GenApi
   { api :: Text
   , version :: Text
   } deriving Show
@@ -31,23 +31,23 @@ parseOpts :: IO Commands
 parseOpts = execParser (info (commands <**> helper) idm)
 
 commands :: Parser Commands
-commands = subparser (l <> g)
+commands = subparser (genAllCmd <> genApiCmd)
  where
-  l     = command "list" $ info (listCommand <**> helper) ldesc
-  g     = command "getRest" $ info (getRestCommand <**> helper) gdesc
-  ldesc = fullDesc <> progDesc "eg. goog-api-client-exe list"
-  gdesc = fullDesc
-    <> progDesc "eg. goog-api-client-exe getRest --api storage --version v1"
+  genAllCmd = command "all" $ info (genAllCommand <**> helper) allDesc
+  genApiCmd = command "api" $ info (genApiCommand <**> helper) apiDesc
+  allDesc   = fullDesc <> progDesc "eg. goog-api-client-gen all"
+  apiDesc   = fullDesc
+    <> progDesc "eg. goog-api-client-gen api --api storage --version v1"
 
-listCommand :: Parser Commands
-listCommand = ListCommand <$> list
+genAllCommand :: Parser Commands
+genAllCommand = GenAllCommand <$> genAll
 
-getRestCommand :: Parser Commands
-getRestCommand = GetRestCommand <$> getRest
+genApiCommand :: Parser Commands
+genApiCommand = GenApiCommand <$> genApi
 
-list :: Parser List
-list =
-  List
+genAll :: Parser GenAll
+genAll =
+  GenAll
     <$> strOption
           (  long "name"
           <> metavar "API"
@@ -59,9 +59,9 @@ list =
           <> help "Return only the preferred version of an API."
           )
 
-getRest :: Parser GetRest
-getRest =
-  GetRest
+genApi :: Parser GenApi
+genApi =
+  GenApi
     <$> strOption (long "api" <> metavar "API" <> help "The name of the API.")
     <*> strOption
           (long "version" <> metavar "VERSION" <> help "The version of the API."
