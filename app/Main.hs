@@ -2,9 +2,7 @@
 module Main where
 
 import           RIO
-import           Prelude                        ( putStrLn
-                                                , print
-                                                )
+import           Prelude                        ( print )
 import           Servant.Client                 ( ClientError )
 import           Discovery                      ( list
                                                 , getRest
@@ -17,7 +15,6 @@ main :: IO ()
 main = do
   opts <- Opts.parseOpts
   print opts
-
   runCommand opts
 
 runCommand :: Opts.Commands -> IO ()
@@ -35,5 +32,4 @@ runCommand (Opts.GenApiCommand a) = do
   either (error . show) (gen "dest") ret
 
 put :: (Show a) => Either ClientError a -> IO ()
-put (Right val) = print val
-put (Left  err) = putStrLn $ "Error: " ++ show err
+put = either (print . ("Error: " ++) . show) print
