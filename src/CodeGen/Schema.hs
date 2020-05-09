@@ -31,7 +31,7 @@ gen dest desc = do
   serviceName <- T.toTitle <$> getName
   version     <- T.toTitle <$> getVersion
   -- サービスディレクトリ作成
-  let serviceDir = T.unpack dest </> T.unpack serviceName </> T.unpack version
+  let serviceDir = dest </> T.unpack serviceName </> T.unpack version
   createDirectoryIfMissing True serviceDir
   -- スキーマファイル作成
   schemas     <- getSchemas

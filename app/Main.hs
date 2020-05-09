@@ -2,6 +2,7 @@
 module Main where
 
 import           RIO
+import           RIO.Text                      as T
 import           Prelude                        ( print )
 import           Servant.Client                 ( ClientError )
 import           Discovery                      ( list
@@ -28,8 +29,8 @@ runCommand (Opts.GenAllCommand a) = do
   preferred = if Opts.preferred a then Just True else Nothing
 runCommand (Opts.GenApiCommand a) = do
   ret <- run $ getRest (Opts.api a) (Opts.version a)
-  -- put ret
-  either (error . show) (gen $ Opts.genApiDist a) ret
+  let dist = T.unpack $ Opts.genApiDist a
+  either (error . show) (gen dist) ret
 
 put :: (Show a) => Either ClientError a -> IO ()
 put = either (print . ("Error: " ++) . show) print
