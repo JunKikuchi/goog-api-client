@@ -17,8 +17,8 @@ import           RIO.Writer
 import qualified JSON.Schema                   as JSON
 import           Discovery.RestDescription
 import           Discovery.RestDescription.Schema
+import           CodeGen.Types
 
-type Dist        = Text
 type ServiceName = Text
 type Version     = Text
 type ModuleName  = Text

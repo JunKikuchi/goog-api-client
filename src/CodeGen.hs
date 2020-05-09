@@ -1,8 +1,8 @@
 module CodeGen where
 
 import           RIO
-import qualified CodeGen.Schema
 import           Discovery.RestDescription
+import           CodeGen.Types
 
-gen :: CodeGen.Schema.Dist -> RestDescription -> IO ()
-gen = CodeGen.Schema.gen
+gen :: Dist -> RestDescription -> IO ()
+gen = undefined
