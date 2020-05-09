@@ -18,7 +18,7 @@ import qualified JSON.Schema                   as JSON
 import           Discovery.RestDescription
 import           Discovery.RestDescription.Schema
 
-type DestDir     = Text
+type Dist        = Text
 type ServiceName = Text
 type Version     = Text
 type ModuleName  = Text
@@ -26,7 +26,7 @@ type SchemaName  = Text
 type FieldName   = Text
 type ObjectName  = Text
 
-gen :: DestDir -> RestDescription -> IO ()
+gen :: Dist -> RestDescription -> IO ()
 gen dest desc = do
   serviceName <- T.toTitle <$> getName
   version     <- T.toTitle <$> getVersion
