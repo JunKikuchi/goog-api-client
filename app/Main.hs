@@ -29,7 +29,7 @@ runCommand (Opts.GenAllCommand a) = do
 runCommand (Opts.GenApiCommand a) = do
   ret <- run $ getRest (Opts.api a) (Opts.version a)
   -- put ret
-  either (error . show) (gen "dest") ret
+  either (error . show) (gen $ Opts.genApiDist a) ret
 
 put :: (Show a) => Either ClientError a -> IO ()
 put = either (print . ("Error: " ++) . show) print

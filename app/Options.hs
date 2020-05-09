@@ -17,13 +17,15 @@ data Commands
 
 data GenAll
   = GenAll
-  { name :: Text
+  { genAllDist :: Text
+  , name :: Text
   , preferred :: Bool
   } deriving Show
 
 data GenApi
   = GenApi
-  { api :: Text
+  { genApiDist :: Text
+  , api :: Text
   , version :: Text
   } deriving Show
 
@@ -48,7 +50,8 @@ genApiCommand = GenApiCommand <$> genApi
 genAll :: Parser GenAll
 genAll =
   GenAll
-    <$> strOption
+    <$> distOption
+    <*> strOption
           (  long "name"
           <> metavar "API"
           <> help "Only include APIs with the given name."
@@ -62,7 +65,17 @@ genAll =
 genApi :: Parser GenApi
 genApi =
   GenApi
-    <$> strOption (long "api" <> metavar "API" <> help "The name of the API.")
+    <$> distOption
+    <*> strOption (long "api" <> metavar "API" <> help "The name of the API.")
     <*> strOption
           (long "version" <> metavar "VERSION" <> help "The version of the API."
           )
+
+distOption :: Parser Text
+distOption = strOption
+  (  long "out-dir"
+  <> short 'd'
+  <> metavar "PATH"
+  <> help "Set the output directory. defaults to \"dist\"."
+  <> value "dist"
+  )
