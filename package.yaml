@@ -46,7 +46,7 @@ library:
     - -Werror
 
 executables:
-  goog-api-client-exe:
+  goog-api-client-gen:
     main: Main.hs
     source-dirs: app
     ghc-options:

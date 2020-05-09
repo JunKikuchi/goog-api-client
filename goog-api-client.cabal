@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bedd5e5f7a6f7dd7a4298742863aa7f98d528f814dbdc1e072cb3e1cc1ac314c
+-- hash: 734d079564b0c196fbecb95366f82cb64756ae37f0f268eb54cba7d21a120e23
 
 name:           goog-api-client
 version:        0.1.0.0
@@ -51,7 +51,7 @@ library
     , servant-client
   default-language: Haskell2010
 
-executable goog-api-client-exe
+executable goog-api-client-gen
   main-is: Main.hs
   other-modules:
       Options
