@@ -1,3 +1,3 @@
-# Changelog for goog-api-client
+# Changelog for goog-api-client-gen
 
 ## Unreleased changes
