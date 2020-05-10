@@ -14,5 +14,4 @@ gen dist desc = withDir dist $ do
   Proj.clean projDir
   Proj.gen projName
 
-  let srcDir = Proj.srcDir projDir
-  withDir srcDir $ Schema.gen desc
+  withDir projDir $ withDir Proj.srcDir $ Schema.gen desc

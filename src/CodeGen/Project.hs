@@ -3,7 +3,6 @@ module CodeGen.Project where
 
 import           RIO
 import qualified RIO.Directory                 as Dir
-import           RIO.FilePath                   ( (</>) )
 import qualified RIO.Process                   as Proc
 import qualified RIO.Text                      as T
 import           Discovery.RestDescription
@@ -17,8 +16,8 @@ projectName desc =
 projectDir :: ProjectName -> ProjectDir
 projectDir = T.unpack
 
-srcDir :: ProjectDir -> SrcDir
-srcDir dir = dir </> T.unpack "src"
+srcDir :: SrcDir
+srcDir = T.unpack "src"
 
 clean :: ProjectDir -> IO ()
 clean dir = do
