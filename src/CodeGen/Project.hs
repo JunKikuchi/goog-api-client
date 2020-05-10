@@ -11,7 +11,7 @@ import           CodeGen.Utils                  ( get )
 
 projectName :: RestDescription -> IO ProjectName
 projectName desc =
-  T.append "goog-api-client-" <$> get restDescriptionName "name" desc
+  ("goog-api-client-" <>) <$> get restDescriptionName "name" desc
 
 clean :: ProjectName -> IO ()
 clean name = do
