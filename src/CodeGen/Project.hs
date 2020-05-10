@@ -17,6 +17,8 @@ projectName desc =
 projectDir :: ProjectName -> ProjectDir
 projectDir = T.unpack
 
+srcDir :: ProjectDir -> SrcDir
+srcDir dir = dir </> T.unpack "src"
 
 clean :: ProjectDir -> IO ()
 clean dir = do
