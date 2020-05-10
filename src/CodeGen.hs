@@ -10,6 +10,7 @@ gen :: Dist -> RestDescription -> IO ()
 gen dist desc = do
   Dir.createDirectoryIfMissing True dist
   Dir.withCurrentDirectory dist $ do
-    projectName <- Proj.projectName desc
-    Proj.clean projectName
-    Proj.gen projectName desc
+    projName <- Proj.projectName desc
+    let projDir = Proj.projectDir projName
+    Proj.clean projDir
+    Proj.gen projName
