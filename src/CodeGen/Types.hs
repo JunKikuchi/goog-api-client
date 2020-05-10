@@ -8,3 +8,5 @@ type ProjectName = Text
 type ProjectDir  = FilePath
 
 type SrcDir = FilePath
+
+type SchemaDir = FilePath
