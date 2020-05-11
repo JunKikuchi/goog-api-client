@@ -1,9 +1,14 @@
+{-# LANGUAGE OverloadedStrings #-}
 module CodeGen where
 
 import           RIO
 import           Discovery.RestDescription      ( RestDescription )
+import qualified Discovery.RestDescription     as Desc
 import           CodeGen.Types
-import           CodeGen.Utils                  ( withDir )
+import           CodeGen.Utils                  ( get
+                                                , toTitle
+                                                , withDir
+                                                )
 import qualified CodeGen.Project               as Proj
 import qualified CodeGen.Schema                as Schema
 
@@ -14,4 +19,10 @@ gen dist desc = withDir dist $ do
   Proj.clean projDir
   Proj.gen projName
 
-  withDir projDir $ withDir Proj.srcDir $ Schema.gen desc
+  withDir projDir $ withDir Proj.srcDir $ do
+    svcName <- toTitle <$> get Desc.restDescriptionName "name" desc
+    svcVer  <- toTitle <$> get Desc.restDescriptionVersion "version" desc
+    svcDir  <- Proj.serviceDir svcName svcVer
+    withDir svcDir $ do
+      schemas <- get Desc.restDescriptionSchemas "schemas" desc
+      Schema.gen svcName svcVer schemas

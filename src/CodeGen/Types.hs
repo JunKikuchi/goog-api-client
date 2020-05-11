@@ -9,4 +9,8 @@ type ProjectDir  = FilePath
 
 type SrcDir = FilePath
 
+type ServiceDir = FilePath
+type ServiceName = Text
+type ServiceVersion = Text
+
 type SchemaDir = FilePath

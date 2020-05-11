@@ -19,7 +19,6 @@ import           Discovery.RestDescription
 import           Discovery.RestDescription.Schema
 import           CodeGen.Types
 
-type ServiceName = Text
 type Version     = Text
 type ModuleName  = Text
 type SchemaName  = Text
