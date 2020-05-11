@@ -8,7 +8,7 @@ import qualified RIO.Process                   as Proc
 import qualified RIO.Text                      as T
 import           Discovery.RestDescription
 import           CodeGen.Types
-import           CodeGen.Util                  ( get )
+import           CodeGen.Util                   ( get )
 
 projectName :: RestDescription -> IO ProjectName
 projectName desc =
