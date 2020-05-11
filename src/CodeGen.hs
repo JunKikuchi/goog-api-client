@@ -22,7 +22,7 @@ gen dist desc = withDir dist $ do
   withDir projDir $ withDir Proj.srcDir $ do
     svcName <- toTitle <$> get Desc.restDescriptionName "name" desc
     svcVer  <- toTitle <$> get Desc.restDescriptionVersion "version" desc
-    svcDir  <- Proj.serviceDir svcName svcVer
+    let svcDir = Proj.serviceDir svcName svcVer
     withDir svcDir $ do
       schemas <- get Desc.restDescriptionSchemas "schemas" desc
       Schema.gen svcName svcVer schemas
