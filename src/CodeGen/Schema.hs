@@ -9,7 +9,7 @@ import qualified RIO.Text                      as T
 import           Discovery.RestDescription
 import           Discovery.RestDescription.Schema
 import           CodeGen.Types
-import           CodeGen.Utils                  ( get
+import           CodeGen.Util                  ( get
                                                 , withDir
                                                 )
 

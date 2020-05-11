@@ -32,7 +32,7 @@ library
       CodeGen.Schema
       CodeGen.SchemaProto
       CodeGen.Types
-      CodeGen.Utils
+      CodeGen.Util
       Discovery
       Discovery.DirectoryList
       Discovery.RestDescription

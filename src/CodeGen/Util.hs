@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Utils where
+module CodeGen.Util where
 
 import           RIO
 import qualified RIO.Char                      as C
