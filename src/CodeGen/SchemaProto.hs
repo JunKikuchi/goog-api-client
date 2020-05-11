@@ -23,7 +23,6 @@ type Version     = Text
 type ModuleName  = Text
 type SchemaName  = Text
 type FieldName   = Text
-type ObjectName  = Text
 
 gen :: Dist -> RestDescription -> IO ()
 gen dest desc = do
