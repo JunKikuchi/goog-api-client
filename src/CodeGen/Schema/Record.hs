@@ -41,13 +41,14 @@ createType name schema = case JSON.schemaType schema of
   (Just (JSON.IntegerType _  )) -> pure "Int"
   (Just (JSON.NumberType  _  )) -> pure "Float"
   (Just (JSON.ObjectType  obj)) -> do
-    tell [(name, obj)]
+    tell [GenObject (name, obj)]
     pure name
   (Just (JSON.ArrayType array)) -> createArrayType name array
   (Just JSON.BooleanType      ) -> pure "Bool"
   (Just (JSON.RefType ref)    ) -> do
     lift $ print ref
-    pure ref -- TODO: 要 import
+    tell [GenRef ref]
+    pure ref
   _ -> undefined
 
 createArrayType :: ObjectName -> JSON.Array -> GenRecord Text
@@ -66,5 +67,5 @@ createRecordContent name field size =
     <> (if size == 0 then "" else "\n  { " <> field <> "\n  }")
     <> " deriving Show"
 
-createFieldRecords :: [CodeGen.Types.Object] -> GenRef Text
+createFieldRecords :: [Gen] -> GenRef Text
 createFieldRecords = undefined

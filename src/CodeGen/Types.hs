@@ -15,9 +15,9 @@ type ServiceName    = Text
 type ServiceVersion = Text
 type RecordName     = Text
 
-type GenRecord  = WriterT [Object] IO
+type GenRecord  = WriterT [Gen] IO
+type GenRef     = WriterT [Ref] IO
+data Gen        = GenObject Object | GenRef Ref
 type Object     = (ObjectName, JSON.Object)
 type ObjectName = Text
-
-type GenRef = WriterT [Ref] IO
-type Ref    = Text
+type Ref        = Text
