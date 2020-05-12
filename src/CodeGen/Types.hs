@@ -15,10 +15,6 @@ type ServiceName    = Text
 type ServiceVersion = Text
 type RecordName     = Text
 
-type Imports = Text
-type Record  = Text
-type Field   = Text
-
 type GenRecord  = WriterT [Object] IO
 type Object     = (ObjectName, JSON.Object)
 type ObjectName = Text
