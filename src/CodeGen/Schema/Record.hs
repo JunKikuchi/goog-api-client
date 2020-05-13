@@ -46,6 +46,7 @@ createType name schema = do
     (JSON.ArrayType   array) -> createArrayType name array
     (JSON.RefType     ref  ) -> createRefType ref
     JSON.BooleanType         -> pure "Bool"
+    JSON.AnyType             -> undefined
     JSON.NullType            -> undefined
 
 createObjectType :: ObjectName -> JSON.Object -> GenRecord Text

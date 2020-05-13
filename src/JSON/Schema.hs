@@ -45,6 +45,7 @@ instance FromJSON Schema where
           (Just "object" ) -> (Just . ObjectType ) <$> parseObject  v
           (Just "array"  ) -> (Just . ArrayType  ) <$> parseArray   v
           (Just "boolean") -> pure (Just BooleanType)
+          (Just "any"    ) -> pure (Just AnyType    )
           (Just "null"   ) -> pure (Just NullType   )
           _ -> do
             ref <- v .:? "$ref" :: Aeson.Parser (Maybe Text)
@@ -57,6 +58,7 @@ data Type
   | ObjectType Object
   | ArrayType Array
   | BooleanType
+  | AnyType
   | NullType
   | RefType Text
   deriving (Show, Eq)
