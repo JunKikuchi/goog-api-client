@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Schema.Record where
 
-import           Prelude                        ( print )
-
 import           RIO
 import qualified RIO.Map                       as Map
 import qualified RIO.Text                      as T
@@ -46,7 +44,6 @@ createType name schema = case JSON.schemaType schema of
   (Just (JSON.ArrayType array)) -> createArrayType name array
   (Just JSON.BooleanType      ) -> pure "Bool"
   (Just (JSON.RefType ref)    ) -> do
-    lift $ print ref
     tell [GenRef ref]
     pure ref
   _ -> undefined
@@ -68,4 +65,13 @@ createRecordContent name field size =
     <> " deriving Show"
 
 createFieldRecords :: [Gen] -> GenRef Text
-createFieldRecords = undefined
+createFieldRecords = fmap (T.intercalate "\n\n") . foldr f (pure [])
+ where
+  f :: Gen -> GenRef [Text] -> GenRef [Text]
+  f (GenRef ref) acc = do
+    tell [ref]
+    acc
+  f (GenObject _obj) acc = acc
+
+createFieldRecord :: CodeGen.Types.Object -> GenRecord Text
+createFieldRecord = undefined

@@ -39,9 +39,13 @@ createFile svcName svcVer schema = do
 
   let path    = FP.addExtension (T.unpack name) "hs"
   let imports = createImports svcName svcVer refs
-  let content = T.unlines
-        ["module " <> moduleName <> " where", imports, record, records]
+  let content =
+        flip T.snoc '\n'
+          . T.intercalate "\n\n"
+          . filter (not . T.null)
+          $ ["module " <> moduleName <> " where", imports, record, records]
   B.writeFile path (T.encodeUtf8 content)
 
 createImports :: ServiceName -> ServiceVersion -> [Ref] -> Text
-createImports = undefined
+createImports svcName svcVersion = T.intercalate "\n"
+  . fmap (\ref -> "import " <> svcName <> "." <> svcVersion <> "." <> ref)
