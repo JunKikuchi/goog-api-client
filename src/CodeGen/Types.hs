@@ -17,7 +17,7 @@ type RecordName     = Text
 
 type GenRecord  = WriterT [Gen] IO
 type GenRef     = WriterT [Ref] IO
-data Gen        = GenObject Object | GenRef Ref
+data Gen        = GenObject Object | GenRef Ref deriving Show
 type Object     = (ObjectName, JSON.Object)
 type ObjectName = Text
 type Ref        = Text

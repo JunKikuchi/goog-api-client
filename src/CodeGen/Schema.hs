@@ -21,6 +21,9 @@ schemaName = "Schema"
 schemaDir :: SchemaDir
 schemaDir = T.unpack schemaName
 
+defaultImports :: [Text]
+defaultImports = ["import RIO"]
+
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
   dir <- Dir.getCurrentDirectory
@@ -43,9 +46,16 @@ createFile svcName svcVer schema = do
         flip T.snoc '\n'
           . T.intercalate "\n\n"
           . filter (not . T.null)
-          $ ["module " <> moduleName <> " where", imports, record, records]
+          $ [ "module " <> moduleName <> " where"
+            , T.intercalate "\n" defaultImports
+            , T.intercalate "\n" imports
+            , record
+            , records
+            ]
   B.writeFile path (T.encodeUtf8 content)
 
-createImports :: ServiceName -> ServiceVersion -> [Ref] -> Text
-createImports svcName svcVersion = T.intercalate "\n"
-  . fmap (\ref -> "import " <> svcName <> "." <> svcVersion <> "." <> ref)
+createImports :: ServiceName -> ServiceVersion -> [Ref] -> [Text]
+createImports svcName svcVersion = fmap
+  (\ref ->
+    "import " <> svcName <> "." <> svcVersion <> "." <> schemaName <> "." <> ref
+  )
