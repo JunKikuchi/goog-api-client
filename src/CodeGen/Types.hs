@@ -13,6 +13,7 @@ type SchemaDir  = FilePath
 type ProjectName    = Text
 type ServiceName    = Text
 type ServiceVersion = Text
+type ModuleName     = Text
 type RecordName     = Text
 
 type GenRecord  = WriterT [Gen] IO

@@ -22,9 +22,6 @@ schemaName = "Schema"
 schemaDir :: SchemaDir
 schemaDir = T.unpack schemaName
 
-defaultImports :: [Text]
-defaultImports = []
-
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
   dir <- Dir.getCurrentDirectory
@@ -35,9 +32,20 @@ gen svcName svcVer schemas = withDir schemaDir $ do
 createFile :: ServiceName -> ServiceVersion -> Schema -> IO ()
 createFile svcName svcVer schema = do
   name <- get schemaId "schemaId" schema
+
   let moduleName = T.intercalate "." [svcName, svcVer, schemaName, name]
   print moduleName
 
+  createHsFile svcName svcVer name moduleName schema
+
+createHsFile
+  :: ServiceName
+  -> ServiceVersion
+  -> RecordName
+  -> ModuleName
+  -> Schema
+  -> IO ()
+createHsFile svcName svcVer name moduleName schema = do
   (record , jsonObjs) <- runWriterT $ Record.createRecord schema
   (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
 
@@ -48,7 +56,6 @@ createFile svcName svcVer schema = do
           . T.intercalate "\n\n"
           . filter (not . T.null)
           $ [ "module " <> moduleName <> " where"
-            , T.intercalate "\n" defaultImports
             , T.intercalate "\n" imports
             , record
             , records
