@@ -57,7 +57,7 @@ createHsFile svcName svcVer name moduleName refRecs schema = do
   (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
 
   let path    = FP.addExtension (T.unpack name) "hs"
-  let imports = createImports svcName svcVer refs
+  let imports = createImports svcName svcVer name refRecs refs
   let content =
         flip T.snoc '\n'
           . unLines
@@ -93,11 +93,26 @@ createHsBootFile name moduleName schema = do
           $ ["module " <> moduleName <> " where", record]
   B.writeFile path (T.encodeUtf8 content)
 
-createImports :: ServiceName -> ServiceVersion -> Set Ref -> [Text]
-createImports svcName svcVersion = fmap f . Set.toList
+createImports
+  :: ServiceName
+  -> ServiceVersion
+  -> RecordName
+  -> RefRecords
+  -> Set Ref
+  -> [Text]
+createImports svcName svcVersion name refRecs = fmap f . Set.toList
  where
-  -- 循環インポート時に {-# SOURCE #-} を追加
   f (Ref ref) =
-    "import " <> svcName <> "." <> svcVersion <> "." <> schemaName <> "." <> ref
+    let t = maybe False (Set.member name) $ Map.lookup ref refRecs
+        s = if t then "{-# SOURCE #-} " else ""
+    in  "import "
+        <> s
+        <> svcName
+        <> "."
+        <> svcVersion
+        <> "."
+        <> schemaName
+        <> "."
+        <> ref
   f RefGAC     = "import qualified GoogApiClient as GAC"
   f RefPrelude = "import RIO"
