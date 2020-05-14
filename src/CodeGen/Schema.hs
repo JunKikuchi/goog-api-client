@@ -28,26 +28,31 @@ gen svcName svcVer schemas = withDir schemaDir $ do
   dir <- Dir.getCurrentDirectory
   print dir
 
-  mapM_ (createFile svcName svcVer) schemas
+  foldM_ (createFile svcName svcVer) Map.empty schemas
 
-createFile :: ServiceName -> ServiceVersion -> Schema -> IO ()
-createFile svcName svcVer schema = do
+type RefRecords = Map RecordName (Set RecordName)
+
+createFile
+  :: ServiceName -> ServiceVersion -> RefRecords -> Schema -> IO RefRecords
+createFile svcName svcVer refRecs schema = do
   name <- get schemaId "schemaId" schema
 
   let moduleName = T.intercalate "." [svcName, svcVer, schemaName, name]
   print moduleName
 
-  _ <- createHsFile svcName svcVer name moduleName schema
+  refs <- createHsFile svcName svcVer name moduleName refRecs schema
   createHsBootFile name moduleName schema
+  pure refs
 
 createHsFile
   :: ServiceName
   -> ServiceVersion
   -> RecordName
   -> ModuleName
+  -> RefRecords
   -> Schema
-  -> IO (Map RecordName (Set RecordName))
-createHsFile svcName svcVer name moduleName schema = do
+  -> IO RefRecords
+createHsFile svcName svcVer name moduleName refRecs schema = do
   (record , jsonObjs) <- runWriterT $ Record.createRecord schema
   (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
 
@@ -62,8 +67,13 @@ createHsFile svcName svcVer name moduleName schema = do
             , records
             ]
   B.writeFile path (T.encodeUtf8 content)
+
   let names = Set.map unRef . Set.filter filterRecord $ refs
-  pure $ Map.singleton name names
+  pure $ if Set.null names
+    then refRecs
+    else do
+      let refRec = Map.singleton name names
+      Map.union refRec refRecs
  where
   unRef :: Ref -> Text
   unRef (Ref ref) = ref
