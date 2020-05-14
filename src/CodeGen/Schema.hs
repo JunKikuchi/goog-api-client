@@ -55,7 +55,8 @@ createFile svcName svcVer schema = do
   B.writeFile path (T.encodeUtf8 content)
 
 createImports :: ServiceName -> ServiceVersion -> [Ref] -> [Text]
-createImports svcName svcVersion = fmap
-  (\ref ->
+createImports svcName svcVersion = fmap f
+ where
+  f (Ref ref) =
     "import " <> svcName <> "." <> svcVersion <> "." <> schemaName <> "." <> ref
-  )
+  f RefGAC = "import qualified GoogAppClient as GAC"

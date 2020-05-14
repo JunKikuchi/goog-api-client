@@ -20,4 +20,4 @@ type GenRef     = WriterT [Ref] IO
 data Gen        = GenObject Object | GenRef Ref deriving Show
 type Object     = (ObjectName, JSON.Object)
 type ObjectName = Text
-type Ref        = Text
+data Ref        = Ref Text | RefGAC deriving Show

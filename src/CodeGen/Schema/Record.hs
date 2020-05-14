@@ -46,7 +46,7 @@ createType name schema = do
     (JSON.ArrayType   array) -> createArrayType name array
     (JSON.RefType     ref  ) -> createRefType ref
     JSON.BooleanType         -> pure "Bool"
-    JSON.AnyType             -> undefined
+    JSON.AnyType             -> createAnyType
     JSON.NullType            -> undefined
 
 createObjectType :: ObjectName -> JSON.Object -> GenRecord Text
@@ -63,8 +63,13 @@ createArrayType name array = case JSON.arrayItems array of
 
 createRefType :: Text -> GenRecord Text
 createRefType ref = do
-  tell [GenRef ref]
+  tell [GenRef (Ref ref)]
   pure ref
+
+createAnyType :: GenRecord Text
+createAnyType = do
+  tell [GenRef RefGAC]
+  pure "GAC.Any"
 
 createRecordContent :: RecordName -> Text -> Int -> Text
 createRecordContent name field size =
