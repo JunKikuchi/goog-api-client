@@ -37,6 +37,7 @@ createFile svcName svcVer schema = do
   print moduleName
 
   createHsFile svcName svcVer name moduleName schema
+  createHsBootFile name moduleName schema
 
 createHsFile
   :: ServiceName
@@ -60,6 +61,18 @@ createHsFile svcName svcVer name moduleName schema = do
             , record
             , records
             ]
+  B.writeFile path (T.encodeUtf8 content)
+
+createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
+createHsBootFile name moduleName schema = do
+  (record, _) <- runWriterT $ Record.createBootRecord schema
+
+  let path = FP.addExtension (T.unpack name) "hs-boot"
+  let content =
+        flip T.snoc '\n'
+          . T.intercalate "\n\n"
+          . filter (not . T.null)
+          $ ["module " <> moduleName <> " where", record]
   B.writeFile path (T.encodeUtf8 content)
 
 createImports :: ServiceName -> ServiceVersion -> Set Ref -> [Text]

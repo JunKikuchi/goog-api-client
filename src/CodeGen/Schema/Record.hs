@@ -22,6 +22,13 @@ createRecord schema = case schemaType schema of
     pure $ createRecordContent name field (Map.size props)
   _ -> undefined
 
+createBootRecord :: Schema -> GenRecord Text
+createBootRecord schema = case schemaType schema of
+  (Just (ObjectType _)) -> do
+    name <- lift $ get schemaId "schema id" schema
+    pure $ "data " <> name
+  _ -> undefined
+
 createField :: RecordName -> ObjectProperties -> GenRecord Text
 createField name props = do
   fields <- Map.foldrWithKey cons (pure []) props
