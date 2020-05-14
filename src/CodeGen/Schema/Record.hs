@@ -3,6 +3,7 @@ module CodeGen.Schema.Record where
 
 import           RIO
 import qualified RIO.Map                       as Map
+import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT
                                                 , tell
@@ -85,7 +86,7 @@ createFieldRecords = fmap (T.intercalate "\n\n") . foldr f (pure [])
  where
   f :: Gen -> GenRef [Text] -> GenRef [Text]
   f (GenRef ref) acc = do
-    tell [ref]
+    tell $ Set.singleton ref
     acc
   f (GenObject obj) acc = do
     (a, objs) <- lift $ runWriterT $ createFieldRecord obj

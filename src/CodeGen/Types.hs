@@ -16,8 +16,8 @@ type ServiceVersion = Text
 type RecordName     = Text
 
 type GenRecord  = WriterT [Gen] IO
-type GenRef     = WriterT [Ref] IO
+type GenRef     = WriterT (Set Ref) IO
 data Gen        = GenObject Object | GenRef Ref deriving Show
 type Object     = (ObjectName, JSON.Object)
 type ObjectName = Text
-data Ref        = Ref Text | RefGAC deriving Show
+data Ref        = Ref Text | RefGAC deriving (Eq, Ord, Show)

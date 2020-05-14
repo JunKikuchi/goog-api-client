@@ -7,6 +7,7 @@ import qualified RIO.Directory                 as Dir
 import           RIO
 import qualified RIO.ByteString                as B
 import qualified RIO.FilePath                  as FP
+import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
@@ -54,9 +55,9 @@ createFile svcName svcVer schema = do
             ]
   B.writeFile path (T.encodeUtf8 content)
 
-createImports :: ServiceName -> ServiceVersion -> [Ref] -> [Text]
-createImports svcName svcVersion = fmap f
+createImports :: ServiceName -> ServiceVersion -> Set Ref -> [Text]
+createImports svcName svcVersion = fmap f . Set.toList
  where
   f (Ref ref) =
     "import " <> svcName <> "." <> svcVersion <> "." <> schemaName <> "." <> ref
-  f RefGAC = "import qualified GoogAppClient as GAC"
+  f RefGAC = "import qualified GoogApiClient as GAC"
