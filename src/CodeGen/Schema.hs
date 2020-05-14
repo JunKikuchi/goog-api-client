@@ -54,8 +54,7 @@ createHsFile svcName svcVer name moduleName schema = do
   let imports = createImports svcName svcVer refs
   let content =
         flip T.snoc '\n'
-          . T.intercalate "\n\n"
-          . filter (not . T.null)
+          . unLines
           $ [ "module " <> moduleName <> " where"
             , T.intercalate "\n" imports
             , record
@@ -70,14 +69,14 @@ createHsBootFile name moduleName schema = do
   let path = FP.addExtension (T.unpack name) "hs-boot"
   let content =
         flip T.snoc '\n'
-          . T.intercalate "\n\n"
-          . filter (not . T.null)
+          . unLines
           $ ["module " <> moduleName <> " where", record]
   B.writeFile path (T.encodeUtf8 content)
 
 createImports :: ServiceName -> ServiceVersion -> Set Ref -> [Text]
 createImports svcName svcVersion = fmap f . Set.toList
  where
+  -- 循環インポート時に {-# SOURCE #-} を追加
   f (Ref ref) =
     "import " <> svcName <> "." <> svcVersion <> "." <> schemaName <> "." <> ref
   f RefGAC     = "import qualified GoogApiClient as GAC"

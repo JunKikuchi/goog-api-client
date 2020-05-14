@@ -73,7 +73,7 @@ createRecordContent name field size =
     <> (if size == 0 then "" else "\n  { " <> field <> "\n  }")
 
 createFieldRecords :: [Gen] -> GenRef Text
-createFieldRecords = fmap (T.intercalate "\n\n") . foldr f (pure [])
+createFieldRecords = fmap unLines . foldr f (pure [])
  where
   f :: Gen -> GenRef [Text] -> GenRef [Text]
   f (GenRef ref) acc = do

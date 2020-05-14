@@ -23,3 +23,6 @@ withDir :: FilePath -> IO a -> IO a
 withDir dir action = do
   Dir.createDirectoryIfMissing True dir
   Dir.withCurrentDirectory dir action
+
+unLines :: [Text] -> Text
+unLines = T.intercalate "\n\n" . filter (not . T.null)
