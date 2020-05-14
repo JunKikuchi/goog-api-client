@@ -7,6 +7,7 @@ import qualified RIO.Directory                 as Dir
 import           RIO
 import qualified RIO.ByteString                as B
 import qualified RIO.FilePath                  as FP
+import qualified RIO.Map                       as Map
 import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
@@ -36,7 +37,7 @@ createFile svcName svcVer schema = do
   let moduleName = T.intercalate "." [svcName, svcVer, schemaName, name]
   print moduleName
 
-  createHsFile svcName svcVer name moduleName schema
+  _ <- createHsFile svcName svcVer name moduleName schema
   createHsBootFile name moduleName schema
 
 createHsFile
@@ -45,7 +46,7 @@ createHsFile
   -> RecordName
   -> ModuleName
   -> Schema
-  -> IO ()
+  -> IO (Map RecordName (Set RecordName))
 createHsFile svcName svcVer name moduleName schema = do
   (record , jsonObjs) <- runWriterT $ Record.createRecord schema
   (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
@@ -61,6 +62,15 @@ createHsFile svcName svcVer name moduleName schema = do
             , records
             ]
   B.writeFile path (T.encodeUtf8 content)
+  let names = Set.map unRef . Set.filter filterRecord $ refs
+  pure $ Map.singleton name names
+ where
+  unRef :: Ref -> Text
+  unRef (Ref ref) = ref
+  unRef _         = undefined
+  filterRecord :: Ref -> Bool
+  filterRecord (Ref _) = True
+  filterRecord _       = False
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
