@@ -40,20 +40,15 @@ createType :: ObjectName -> JSON.Schema -> GenRecord Text
 createType name schema = do
   jsonType <- get JSON.schemaType "schemaType" schema
   case jsonType of
-    (JSON.StringType  _    ) -> pure "Text"
-    (JSON.IntegerType _    ) -> pure "Int"
-    (JSON.NumberType  _    ) -> pure "Float"
-    (JSON.ObjectType  obj  ) -> createObjectType name obj
+    (JSON.StringType  _    ) -> tell [GenRef RefPrelude] >> pure "Text"
+    (JSON.IntegerType _    ) -> tell [GenRef RefPrelude] >> pure "Int"
+    (JSON.NumberType  _    ) -> tell [GenRef RefPrelude] >> pure "Float"
+    (JSON.ObjectType  obj  ) -> tell [GenObject (name, obj)] >> pure name
+    (JSON.RefType     ref  ) -> tell [GenRef (Ref ref)] >> pure ref
     (JSON.ArrayType   array) -> createArrayType name array
-    (JSON.RefType     ref  ) -> createRefType ref
-    JSON.BooleanType         -> pure "Bool"
-    JSON.AnyType             -> createAnyType
+    JSON.BooleanType         -> tell [GenRef RefPrelude] >> pure "Bool"
+    JSON.AnyType             -> tell [GenRef RefGAC] >> pure "GAC.Any"
     JSON.NullType            -> undefined
-
-createObjectType :: ObjectName -> JSON.Object -> GenRecord Text
-createObjectType name obj = do
-  tell [GenObject (name, obj)]
-  pure name
 
 createArrayType :: ObjectName -> JSON.Array -> GenRecord Text
 createArrayType name array = case JSON.arrayItems array of
@@ -62,16 +57,6 @@ createArrayType name array = case JSON.arrayItems array of
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
-createRefType :: Text -> GenRecord Text
-createRefType ref = do
-  tell [GenRef (Ref ref)]
-  pure ref
-
-createAnyType :: GenRecord Text
-createAnyType = do
-  tell [GenRef RefGAC]
-  pure "GAC.Any"
-
 createRecordContent :: RecordName -> Text -> Int -> Text
 createRecordContent name field size =
   (if size == 1 then "newtype " else "data ")
@@ -79,7 +64,6 @@ createRecordContent name field size =
     <> " = "
     <> name
     <> (if size == 0 then "" else "\n  { " <> field <> "\n  }")
-    <> " deriving Show"
 
 createFieldRecords :: [Gen] -> GenRef Text
 createFieldRecords = fmap (T.intercalate "\n\n") . foldr f (pure [])
@@ -117,6 +101,7 @@ createFieldRecordField (name, obj) =
     (Just (JSON.AdditionalPropertiesSchema schema)) -> do
       fieldType <- createType name schema
       let field = T.concat ["un", name] <> " :: Map Text " <> fieldType
+      tell [GenRef RefPrelude]
       pure . pure $ createRecordContent name field 1
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing
