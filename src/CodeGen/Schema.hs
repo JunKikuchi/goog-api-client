@@ -57,8 +57,8 @@ createHsFile svcName svcVer name moduleName refRecs schema = do
   (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
 
   let path    = FP.addExtension (T.unpack name) "hs"
-  let imports = createImports svcName svcVer name refRecs refs
-  let content =
+      imports = createImports svcName svcVer name refRecs refs
+      content =
         flip T.snoc '\n'
           . unLines
           $ [ "module " <> moduleName <> " where"
@@ -87,7 +87,7 @@ createHsBootFile name moduleName schema = do
   record <- Record.createBootRecord schema
 
   let path = FP.addExtension (T.unpack name) "hs-boot"
-  let content =
+      content =
         flip T.snoc '\n'
           . unLines
           $ ["module " <> moduleName <> " where", record]
