@@ -84,7 +84,7 @@ createHsFile svcName svcVer name moduleName refRecs schema = do
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
-  (record, _) <- runWriterT $ Record.createBootRecord schema
+  record <- Record.createBootRecord schema
 
   let path = FP.addExtension (T.unpack name) "hs-boot"
   let content =
