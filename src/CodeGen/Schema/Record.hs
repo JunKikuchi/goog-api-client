@@ -9,11 +9,12 @@ import           RIO.Writer                     ( runWriterT
                                                 , tell
                                                 )
 import           Discovery.RestDescription.Schema
+                                               as Desc
 import qualified JSON.Schema                   as JSON
 import           CodeGen.Types
 import           CodeGen.Util
 
-createRecord :: Schema -> GenRecord Text
+createRecord :: Desc.Schema -> GenRecord Text
 createRecord schema = case schemaType schema of
   (Just (ObjectType obj)) -> do
     name  <- lift $ get schemaId "schema id" schema
@@ -23,7 +24,7 @@ createRecord schema = case schemaType schema of
     pure $ createRecordContent name field (Map.size props) desc
   _ -> undefined
 
-createBootRecord :: Schema -> IO Text
+createBootRecord :: Desc.Schema -> IO Text
 createBootRecord schema = case schemaType schema of
   (Just (ObjectType _)) -> do
     name <- get schemaId "schema id" schema
@@ -42,21 +43,21 @@ createField name props = do
     let field = fieldName <> " :: " <> fieldType
     (field :) <$> acc
 
-createType :: ObjectName -> JSON.Schema -> GenRecord Text
+createType :: SchemaName -> JSON.Schema -> GenRecord Text
 createType name schema = do
   jsonType <- get JSON.schemaType "schemaType" schema
   case jsonType of
     (JSON.StringType  _    ) -> tell [GenRef RefPrelude] >> pure "Text"
     (JSON.IntegerType _    ) -> tell [GenRef RefPrelude] >> pure "Int"
     (JSON.NumberType  _    ) -> tell [GenRef RefPrelude] >> pure "Float"
-    (JSON.ObjectType  obj  ) -> tell [GenObject (name, obj)] >> pure name
+    (JSON.ObjectType  _    ) -> tell [Gen (name, schema)] >> pure name
     (JSON.RefType     ref  ) -> tell [GenRef (Ref ref)] >> pure ref
     (JSON.ArrayType   array) -> createArrayType name array
     JSON.BooleanType         -> tell [GenRef RefPrelude] >> pure "Bool"
     JSON.AnyType             -> tell [GenRef RefGAC] >> pure "GAC.Any"
     JSON.NullType            -> undefined
 
-createArrayType :: ObjectName -> JSON.Array -> GenRecord Text
+createArrayType :: SchemaName -> JSON.Array -> GenRecord Text
 createArrayType name array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem schema)) -> do
     fieldType <- createType name schema
@@ -79,15 +80,15 @@ createFieldRecords = fmap unLines . foldr f (pure [])
   f (GenRef ref) acc = do
     tell $ Set.singleton ref
     acc
-  f (GenObject obj) acc = do
-    (a, objs) <- lift $ runWriterT $ createFieldRecord obj
-    if null objs
+  f (Gen schema) acc = do
+    (a, schemas) <- lift $ runWriterT $ createFieldRecord schema
+    if null schemas
       then (a :) <$> acc
       else do
-        b <- createFieldRecords objs
+        b <- createFieldRecords schemas
         (a :) <$> ((b :) <$> acc)
 
-createFieldRecord :: CodeGen.Types.Object -> GenRecord Text
+createFieldRecord :: CodeGen.Types.Schema -> GenRecord Text
 createFieldRecord obj = do
   fields <- createFieldRecordFields obj
   field  <- createFieldRecordField obj
@@ -95,20 +96,27 @@ createFieldRecord obj = do
         pure
         (fields <|> field)
 
-createFieldRecordFields :: CodeGen.Types.Object -> GenRecord (Maybe Text)
-createFieldRecordFields (name, obj) = case JSON.objectProperties obj of
-  (Just props) -> do
-    field <- createField name props
-    pure . pure $ createRecordContent name field (Map.size props) Nothing
-  Nothing -> pure Nothing
+createFieldRecordFields :: CodeGen.Types.Schema -> GenRecord (Maybe Text)
+createFieldRecordFields (name, schema) = case JSON.schemaType schema of
+  (Just (JSON.ObjectType obj)) -> case JSON.objectProperties obj of
+    (Just props) -> do
+      field <- createField name props
+      let desc = JSON.schemaDescription schema
+      pure . pure $ createRecordContent name field (Map.size props) desc
+    Nothing -> pure Nothing
+  (Just _) -> undefined
+  Nothing  -> pure Nothing
 
-createFieldRecordField :: CodeGen.Types.Object -> GenRecord (Maybe Text)
-createFieldRecordField (name, obj) =
-  case JSON.objectAdditionalProperties obj of
-    (Just (JSON.AdditionalPropertiesSchema schema)) -> do
-      fieldType <- createType name schema
+createFieldRecordField :: CodeGen.Types.Schema -> GenRecord (Maybe Text)
+createFieldRecordField (name, schema) = case JSON.schemaType schema of
+  (Just (JSON.ObjectType obj)) -> case JSON.objectAdditionalProperties obj of
+    (Just (JSON.AdditionalPropertiesSchema schema')) -> do
+      fieldType <- createType name schema'
       let field = T.concat ["un", name] <> " :: Map Text " <> fieldType
       tell [GenRef RefPrelude]
-      pure . pure $ createRecordContent name field 1 Nothing
+      let desc = JSON.schemaDescription schema'
+      pure . pure $ createRecordContent name field 1 desc
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing
+  (Just _) -> undefined
+  Nothing  -> pure Nothing
