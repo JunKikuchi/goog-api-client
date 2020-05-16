@@ -37,9 +37,9 @@ createField name props = do
   pure $ T.intercalate "\n  , " fields
  where
   cons s schema acc = do
-    let camelName = T.concat . fmap toTitle . T.split (== '_') $ s
-        fieldName = unTitle name <> toTitle camelName
-    fieldType <- createType (toTitle fieldName) schema
+    let camelName = toTitle . T.concat . fmap toTitle . T.split (== '_') $ s
+        fieldName = unTitle name <> camelName
+    fieldType <- createType camelName schema
     let field = fieldName <> " :: " <> fieldType
     (field :) <$> acc
 
