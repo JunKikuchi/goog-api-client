@@ -38,11 +38,9 @@ createField name props = do
   cons s schema acc = do
     let camelName = T.concat . fmap toTitle . T.split (== '_') $ s
         fieldName = unTitle name <> toTitle camelName
-    field <- createContent fieldName schema
-    (field :) <$> acc
-  createContent fieldName schema = do
     fieldType <- createType (toTitle fieldName) schema
-    pure $ fieldName <> " :: " <> fieldType
+    let field = fieldName <> " :: " <> fieldType
+    (field :) <$> acc
 
 createType :: ObjectName -> JSON.Schema -> GenRecord Text
 createType name schema = do
