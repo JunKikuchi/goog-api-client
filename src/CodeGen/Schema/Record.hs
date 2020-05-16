@@ -19,7 +19,8 @@ createRecord schema = case schemaType schema of
     name  <- lift $ get schemaId "schema id" schema
     props <- lift $ get objectProperties "object properties" obj
     field <- createField name props
-    pure $ createRecordContent name field (Map.size props)
+    let desc = schemaDescription schema
+    pure $ createRecordContent name field (Map.size props) desc
   _ -> undefined
 
 createBootRecord :: Schema -> IO Text
@@ -64,9 +65,10 @@ createArrayType name array = case JSON.arrayItems array of
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
-createRecordContent :: RecordName -> Text -> Int -> Text
-createRecordContent name field size =
-  (if size == 1 then "newtype " else "data ")
+createRecordContent :: RecordName -> Text -> Int -> Maybe Text -> Text
+createRecordContent name field size desc =
+  maybe "" (\s -> "-- " <> s <> "\n") desc
+    <> (if size == 1 then "newtype " else "data ")
     <> name
     <> " = "
     <> name
@@ -99,7 +101,7 @@ createFieldRecordFields :: CodeGen.Types.Object -> GenRecord (Maybe Text)
 createFieldRecordFields (name, obj) = case JSON.objectProperties obj of
   (Just props) -> do
     field <- createField name props
-    pure . pure $ createRecordContent name field (Map.size props)
+    pure . pure $ createRecordContent name field (Map.size props) Nothing
   Nothing -> pure Nothing
 
 createFieldRecordField :: CodeGen.Types.Object -> GenRecord (Maybe Text)
@@ -109,6 +111,6 @@ createFieldRecordField (name, obj) =
       fieldType <- createType name schema
       let field = T.concat ["un", name] <> " :: Map Text " <> fieldType
       tell [GenRef RefPrelude]
-      pure . pure $ createRecordContent name field 1
+      pure . pure $ createRecordContent name field 1 Nothing
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing
