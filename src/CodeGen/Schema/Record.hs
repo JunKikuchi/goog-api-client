@@ -67,7 +67,7 @@ createArrayType name schema array = case JSON.arrayItems array of
 
 createRecordContent :: RecordName -> Text -> Int -> Maybe Text -> Text
 createRecordContent name field size desc =
-  maybe "" (\s -> "-- " <> s <> "\n") desc
+  maybe "" (T.unlines . fmap ("-- " <>) . T.lines) desc
     <> (if size == 1 then "newtype " else "data ")
     <> name
     <> " = "
