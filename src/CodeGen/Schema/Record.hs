@@ -52,15 +52,16 @@ createType name schema = do
     (JSON.NumberType  _    ) -> tell [GenRef RefPrelude] >> pure "Float"
     (JSON.ObjectType  _    ) -> tell [Gen (name, schema)] >> pure name
     (JSON.RefType     ref  ) -> tell [GenRef (Ref ref)] >> pure ref
-    (JSON.ArrayType   array) -> createArrayType name array
+    (JSON.ArrayType   array) -> createArrayType name schema array
     JSON.BooleanType         -> tell [GenRef RefPrelude] >> pure "Bool"
     JSON.AnyType             -> tell [GenRef RefGAC] >> pure "GAC.Any"
     JSON.NullType            -> undefined
 
-createArrayType :: SchemaName -> JSON.Array -> GenRecord Text
-createArrayType name array = case JSON.arrayItems array of
-  (Just (JSON.ArrayItemsItem schema)) -> do
-    fieldType <- createType name schema
+createArrayType :: SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
+createArrayType name schema array = case JSON.arrayItems array of
+  (Just (JSON.ArrayItemsItem schema')) -> do
+    let desc = JSON.schemaDescription schema
+    fieldType <- createType name (schema' { JSON.schemaDescription = desc })
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
