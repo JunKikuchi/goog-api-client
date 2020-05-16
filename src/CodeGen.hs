@@ -5,7 +5,7 @@ import           RIO
 import           Discovery.RestDescription      ( RestDescription )
 import qualified Discovery.RestDescription     as Desc
 import           CodeGen.Types
-import           CodeGen.Util                  ( get
+import           CodeGen.Util                   ( get
                                                 , toTitle
                                                 , withDir
                                                 )
