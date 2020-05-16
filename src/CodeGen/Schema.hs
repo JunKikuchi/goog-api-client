@@ -13,9 +13,8 @@ import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
 import           Discovery.RestDescription.Schema
-                                               as Desc
 import           CodeGen.Schema.Record         as Record
-import           CodeGen.Types
+import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
 
 schemaName :: Text
@@ -34,7 +33,7 @@ gen svcName svcVer schemas = withDir schemaDir $ do
 type RefRecords = Map RecordName (Set RecordName)
 
 createFile
-  :: ServiceName -> ServiceVersion -> RefRecords -> Desc.Schema -> IO RefRecords
+  :: ServiceName -> ServiceVersion -> RefRecords -> Schema -> IO RefRecords
 createFile svcName svcVer refRecs schema = do
   name <- get schemaId "schemaId" schema
 
@@ -51,7 +50,7 @@ createHsFile
   -> RecordName
   -> ModuleName
   -> RefRecords
-  -> Desc.Schema
+  -> Schema
   -> IO RefRecords
 createHsFile svcName svcVer name moduleName refRecs schema = do
   (record , jsonObjs) <- runWriterT $ Record.createRecord schema
@@ -83,7 +82,7 @@ createHsFile svcName svcVer name moduleName refRecs schema = do
   filterRecord (Ref _) = True
   filterRecord _       = False
 
-createHsBootFile :: RecordName -> ModuleName -> Desc.Schema -> IO ()
+createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
   record <- Record.createBootRecord schema
 

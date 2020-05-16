@@ -8,30 +8,30 @@ import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT
                                                 , tell
                                                 )
-import           Discovery.RestDescription.Schema
+import qualified Discovery.RestDescription.Schema
                                                as Desc
 import qualified JSON.Schema                   as JSON
 import           CodeGen.Types
 import           CodeGen.Util
 
 createRecord :: Desc.Schema -> GenRecord Text
-createRecord schema = case schemaType schema of
-  (Just (ObjectType obj)) -> do
-    name  <- lift $ get schemaId "schema id" schema
-    props <- lift $ get objectProperties "object properties" obj
+createRecord schema = case Desc.schemaType schema of
+  (Just (Desc.ObjectType obj)) -> do
+    name  <- lift $ get Desc.schemaId "schema id" schema
+    props <- lift $ get Desc.objectProperties "object properties" obj
     field <- createField name props
-    let desc = schemaDescription schema
+    let desc = Desc.schemaDescription schema
     pure $ createRecordContent name field (Map.size props) desc
   _ -> undefined
 
 createBootRecord :: Desc.Schema -> IO Text
-createBootRecord schema = case schemaType schema of
-  (Just (ObjectType _)) -> do
-    name <- get schemaId "schema id" schema
+createBootRecord schema = case Desc.schemaType schema of
+  (Just (Desc.ObjectType _)) -> do
+    name <- get Desc.schemaId "schema id" schema
     pure $ "data " <> name
   _ -> undefined
 
-createField :: RecordName -> ObjectProperties -> GenRecord Text
+createField :: RecordName -> Desc.ObjectProperties -> GenRecord Text
 createField name props = do
   fields <- Map.foldrWithKey cons (pure []) props
   pure $ T.intercalate "\n  , " fields
@@ -89,7 +89,7 @@ createFieldRecords = fmap unLines . foldr f (pure [])
         b <- createFieldRecords schemas
         (a :) <$> ((b :) <$> acc)
 
-createFieldRecord :: CodeGen.Types.Schema -> GenRecord Text
+createFieldRecord :: Schema -> GenRecord Text
 createFieldRecord obj = do
   fields <- createFieldRecordFields obj
   field  <- createFieldRecordField obj
@@ -97,7 +97,7 @@ createFieldRecord obj = do
         pure
         (fields <|> field)
 
-createFieldRecordFields :: CodeGen.Types.Schema -> GenRecord (Maybe Text)
+createFieldRecordFields :: Schema -> GenRecord (Maybe Text)
 createFieldRecordFields (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectProperties obj of
     (Just props) -> do
@@ -108,7 +108,7 @@ createFieldRecordFields (name, schema) = case JSON.schemaType schema of
   (Just _) -> undefined
   Nothing  -> pure Nothing
 
-createFieldRecordField :: CodeGen.Types.Schema -> GenRecord (Maybe Text)
+createFieldRecordField :: Schema -> GenRecord (Maybe Text)
 createFieldRecordField (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectAdditionalProperties obj of
     (Just (JSON.AdditionalPropertiesSchema schema')) -> do
