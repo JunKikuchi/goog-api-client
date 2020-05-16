@@ -115,7 +115,7 @@ createFieldRecordField (name, schema) = case JSON.schemaType schema of
       fieldType <- createType name schema'
       let field = T.concat ["un", name] <> " :: Map Text " <> fieldType
       tell [GenRef RefPrelude]
-      let desc = JSON.schemaDescription schema'
+      let desc = JSON.schemaDescription schema
       pure . pure $ createRecordContent name field 1 desc
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing
