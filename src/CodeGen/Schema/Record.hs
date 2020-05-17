@@ -46,9 +46,9 @@ createField name required props = do
             . T.split (\c -> c == '_' || c == '-')
             $ s
         fieldName = unTitle name <> camelName
-        desc      = descContent 0 $ JSON.schemaDescription schema
+        desc      = descContent 4 $ JSON.schemaDescription schema
     fieldType <- createType camelName schema required
-    let field = fieldName <> " :: " <> fieldType
+    let field = "    " <> fieldName <> " :: " <> fieldType
     ((desc <> field) :) <$> acc
 
 descContent :: Int -> Maybe Text -> Text
@@ -167,8 +167,9 @@ createFieldRecordField (name, schema) = case JSON.schemaType schema of
       let desc = JSON.schemaDescription schema
 
       fieldType <- createType name fieldSchema True
-      let fieldDesc = descContent 0 (JSON.schemaDescription fieldSchema)
-      let field     = T.concat ["un", name] <> " :: Map Text " <> fieldType
+      let fieldDesc = descContent 4 (JSON.schemaDescription fieldSchema)
+      let field =
+            "    " <> T.concat ["un", name] <> " :: Map Text " <> fieldType
 
       pure . pure $ createRecordContent name (fieldDesc <> field) 1 desc
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
