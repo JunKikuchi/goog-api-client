@@ -38,7 +38,12 @@ createField name props = do
   pure $ T.intercalate ",\n\n" fields
  where
   cons s schema acc = do
-    let camelName = toTitle . T.concat . fmap toTitle . T.split (== '_') $ s
+    let camelName =
+          toTitle
+            . T.concat
+            . fmap toTitle
+            . T.split (\c -> c == '_' || c == '-')
+            $ s
         fieldName = unTitle name <> camelName
         desc      = descContent 0 $ JSON.schemaDescription schema
     fieldType <- createType camelName schema
