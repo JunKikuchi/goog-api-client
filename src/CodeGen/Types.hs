@@ -16,6 +16,8 @@ type ServiceVersion = Text
 type ModuleName     = Text
 type RecordName     = Text
 
+type Required = Bool
+
 type GenRecord  = WriterT [Gen] IO
 type GenRef     = WriterT (Set Ref) IO
 data Gen        = Gen Schema | GenEnum Enum | GenRef Ref deriving Show

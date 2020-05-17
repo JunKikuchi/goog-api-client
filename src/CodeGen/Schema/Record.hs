@@ -20,7 +20,8 @@ createRecord schema = case Desc.schemaType schema of
   (Just (Desc.ObjectType obj)) -> do
     name  <- lift $ get Desc.schemaId "schema id" schema
     props <- lift $ get Desc.objectProperties "object properties" obj
-    field <- createField name props
+    let required = fromMaybe False $ Desc.schemaRequired schema
+    field <- createField name required props
     let desc = Desc.schemaDescription schema
     pure $ createRecordContent name field (Map.size props) desc
   _ -> undefined
@@ -32,8 +33,8 @@ createBootRecord schema = case Desc.schemaType schema of
     pure $ "data " <> name
   _ -> undefined
 
-createField :: RecordName -> Desc.ObjectProperties -> GenRecord Text
-createField name props = do
+createField :: RecordName -> Required -> Desc.ObjectProperties -> GenRecord Text
+createField name required props = do
   fields <- Map.foldrWithKey cons (pure []) props
   pure $ T.intercalate ",\n\n" fields
  where
@@ -41,7 +42,7 @@ createField name props = do
     let camelName = toTitle . T.concat . fmap toTitle . T.split (== '_') $ s
         fieldName = unTitle name <> camelName
         desc      = descContent 0 $ JSON.schemaDescription schema
-    fieldType <- createType camelName schema
+    fieldType <- createType camelName schema required
     let field = fieldName <> " :: " <> fieldType
     ((desc <> field) :) <$> acc
 
@@ -57,10 +58,10 @@ descContent n = maybe
   )
   where indent = T.concat $ take n $ L.repeat " "
 
-createType :: SchemaName -> JSON.Schema -> GenRecord Text
-createType name schema = do
+createType :: SchemaName -> JSON.Schema -> Required -> GenRecord Text
+createType name schema required = do
   jsonType <- get JSON.schemaType "schemaType" schema
-  case jsonType of
+  _type    <- case jsonType of
     (JSON.StringType  _    ) -> createEnumType "Text" name schema
     (JSON.IntegerType _    ) -> tell [GenRef RefPrelude] >> pure "Int"
     (JSON.NumberType  _    ) -> tell [GenRef RefPrelude] >> pure "Float"
@@ -70,6 +71,11 @@ createType name schema = do
     JSON.BooleanType         -> tell [GenRef RefPrelude] >> pure "Bool"
     JSON.AnyType             -> tell [GenRef RefGAC] >> pure "GAC.Any"
     JSON.NullType            -> undefined
+  if required
+    then pure _type
+    else do
+      tell [GenRef RefPrelude]
+      pure $ "Maybe " <> _type
 
 createEnumType :: Text -> SchemaName -> JSON.Schema -> GenRecord Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
@@ -83,7 +89,9 @@ createArrayType :: SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
 createArrayType name schema array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem fieldSchema)) -> do
     let desc = JSON.schemaDescription schema
-    fieldType <- createType name (fieldSchema { JSON.schemaDescription = desc })
+    fieldType <- createType name
+                            (fieldSchema { JSON.schemaDescription = desc })
+                            True
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
@@ -134,7 +142,7 @@ createFieldRecordFields :: Schema -> GenRecord (Maybe Text)
 createFieldRecordFields (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectProperties obj of
     (Just props) -> do
-      field <- createField name props
+      field <- createField name True props
       let desc = JSON.schemaDescription schema
       pure . pure $ createRecordContent name field (Map.size props) desc
     Nothing -> pure Nothing
@@ -148,7 +156,7 @@ createFieldRecordField (name, schema) = case JSON.schemaType schema of
       tell [GenRef RefPrelude]
       let desc = JSON.schemaDescription schema
 
-      fieldType <- createType name fieldSchema
+      fieldType <- createType name fieldSchema True
       let fieldDesc = descContent 0 (JSON.schemaDescription fieldSchema)
       let field     = T.concat ["un", name] <> " :: Map Text " <> fieldType
 

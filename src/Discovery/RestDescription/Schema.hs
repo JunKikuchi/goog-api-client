@@ -16,6 +16,7 @@ data Schema
   , schemaRef :: Maybe Text
   , schemaDescription :: Maybe Text
   , schemaDefault :: Maybe Text
+  , schemaRequired :: Maybe Bool
   , schemaEnum :: Maybe [Text]
   , schemaEnumDescriptions :: Maybe [Text]
   , schemaRepeated :: Maybe Bool
@@ -30,6 +31,7 @@ instance Aeson.FromJSON Schema where
     <*> v .:? "$ref"
     <*> v .:? "description"
     <*> v .:? "default"
+    <*> v .:? "required"
     <*> v .:? "enum"
     <*> v .:? "enumDescriptions"
     <*> v .:? "repeated"
@@ -93,20 +95,12 @@ data Object
   = Object
   { objectProperties :: Maybe ObjectProperties
   , objectAdditionalProperties :: Maybe JSON.AdditionalProperties
-  , objectRequired :: Maybe Bool
   } deriving Show
 
 type ObjectProperties = Map Text JSON.Schema
 
 parseObject :: Aeson.Object -> Aeson.Parser Object
-parseObject v =
-  Object
-    <$> v
-    .:? "properties"
-    <*> v
-    .:? "additionalProperties"
-    <*> v
-    .:? "required"
+parseObject v = Object <$> v .:? "properties" <*> v .:? "additionalProperties"
 
 newtype Array
   = Array
