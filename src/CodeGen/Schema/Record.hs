@@ -75,7 +75,7 @@ createEnumType :: Text -> SchemaName -> JSON.Schema -> GenRecord Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
     let descs = fromMaybe [] $ JSON.schemaEnumDescriptions schema
-    tell [GenEnum (name, zip jsonEnum descs) schema]
+    tell [GenEnum (name, zip jsonEnum descs)]
     pure name
   _ -> tell [GenRef RefPrelude] >> pure defaultType
 
@@ -106,8 +106,8 @@ createFieldRecords = fmap unLines . foldr f (pure [])
   f (GenRef ref) acc = do
     tell $ Set.singleton ref
     acc
-  f (GenEnum (name, enums) schema) acc = do
-    let a = createFieldEnum name enums schema
+  f (GenEnum (name, enums)) acc = do
+    let a = createFieldEnum name enums
     (a :) <$> acc
   f (Gen schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldRecord schema
@@ -117,12 +117,10 @@ createFieldRecords = fmap unLines . foldr f (pure [])
         b <- createFieldRecords schemas
         (a :) <$> ((b :) <$> acc)
 
-createFieldEnum :: SchemaName -> Enums -> JSON.Schema -> Text
-createFieldEnum name enums schema =
-  desc <> "data " <> name <> "\n  =\n" <> T.intercalate
-    "\n  |\n"
-    (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> e) enums)
-  where desc = descContent 0 $ JSON.schemaDescription schema
+createFieldEnum :: SchemaName -> Enums -> Text
+createFieldEnum name enums = "data " <> name <> "\n  =\n" <> T.intercalate
+  "\n  |\n"
+  (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> e) enums)
 
 createFieldRecord :: Schema -> GenRecord Text
 createFieldRecord obj = do
