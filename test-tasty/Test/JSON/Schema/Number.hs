@@ -17,13 +17,14 @@ spec_Test_JSON_Schema_Number = describe "number" $ do
   describe "Multiples" $ do
     let json   = [r|{ "type": "number", "multipleOf": 10 }|]
         schema = Schema
-          { schemaType        = Just (NumberType numberType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (NumberType numberType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         numberType = Number
           { numberMultipleOf       = Just 10
@@ -39,13 +40,14 @@ spec_Test_JSON_Schema_Number = describe "number" $ do
       json
         = [r|{ "type": "number", "minimum": 0, "maximum": 100, "exclusiveMinimum": true, "exclusiveMaximum": true }|]
       schema = Schema
-        { schemaType        = Just (NumberType numberType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (NumberType numberType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       numberType = Number
         { numberMultipleOf       = Nothing
@@ -59,13 +61,14 @@ spec_Test_JSON_Schema_Number = describe "number" $ do
   describe "Format" $ do
     let json   = [r|{ "type": "number", "format": "double" }|]
         schema = Schema
-          { schemaType        = Just (NumberType numberType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (NumberType numberType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         numberType = Number
           { numberMultipleOf       = Nothing

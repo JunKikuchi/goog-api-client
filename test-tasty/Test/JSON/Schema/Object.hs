@@ -19,13 +19,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
       json
         = [r|{ "type": "object", "properties": { "number": { "type": "number" }, "street_name": { "type": "string" }, "street_type": { "type": "string", "enum": ["Street", "Avenue", "Boulevard"] } } }|]
       schema = Schema
-        { schemaType        = Just (ObjectType objectType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (ObjectType objectType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       objectType = Object
         { objectProperties           = Just propertiess
@@ -51,10 +52,12 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
             Nothing
             Nothing
             Nothing
+            Nothing
           )
         , ( "street_name"
           , Schema
             (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
             Nothing
             Nothing
             Nothing
@@ -71,6 +74,7 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
             Nothing
             (Just ["Street", "Avenue", "Boulevard"])
             Nothing
+            Nothing
           )
         ]
     it "Schema にエンコード" $ decode json `shouldBe` Just schema
@@ -80,13 +84,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
         json
           = [r|{ "type": "object", "properties": { "number": { "type": "number" }, "street_name": { "type": "string" }, "street_type": { "type": "string", "enum": ["Street", "Avenue", "Boulevard"] } }, "additionalProperties": false }|]
         schema = Schema
-          { schemaType        = Just (ObjectType objectType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ObjectType objectType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         objectType = Object
           { objectProperties           = Just propertiess
@@ -112,10 +117,12 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
               Nothing
               Nothing
               Nothing
+              Nothing
             )
           , ( "street_name"
             , Schema
               (Just (StringType (String Nothing Nothing Nothing Nothing)))
+              Nothing
               Nothing
               Nothing
               Nothing
@@ -132,6 +139,7 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
               Nothing
               (Just ["Street", "Avenue", "Boulevard"])
               Nothing
+              Nothing
             )
           ]
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
@@ -140,13 +148,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
         json
           = [r|{ "type": "object", "properties": { "number": { "type": "number" }, "street_name": { "type": "string" }, "street_type": { "type": "string", "enum": ["Street", "Avenue", "Boulevard"] } }, "additionalProperties":  { "type": "string" } }|]
         schema = Schema
-          { schemaType        = Just (ObjectType objectType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ObjectType objectType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         objectType = Object
           { objectProperties           = Just propertiess
@@ -172,10 +181,12 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
               Nothing
               Nothing
               Nothing
+              Nothing
             )
           , ( "street_name"
             , Schema
               (Just (StringType (String Nothing Nothing Nothing Nothing)))
+              Nothing
               Nothing
               Nothing
               Nothing
@@ -192,10 +203,12 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
               Nothing
               (Just ["Street", "Avenue", "Boulevard"])
               Nothing
+              Nothing
             )
           ]
         additionalPropertiesSchema = AdditionalPropertiesSchema
           (Schema (Just (StringType (String Nothing Nothing Nothing Nothing)))
+                  Nothing
                   Nothing
                   Nothing
                   Nothing
@@ -209,13 +222,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
       json
         = [r|{ "type": "object", "properties": { "name": { "type": "string" }, "email": { "type": "string" }, "address": { "type": "string" }, "telephone": { "type": "string" } }, "required": ["name", "email"] }|]
       schema = Schema
-        { schemaType        = Just (ObjectType objectType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (ObjectType objectType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       objectType = Object
         { objectProperties           = Just propertiess
@@ -237,10 +251,12 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
             Nothing
             Nothing
             Nothing
+            Nothing
           )
         , ( "email"
           , Schema
             (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
             Nothing
             Nothing
             Nothing
@@ -257,10 +273,12 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
             Nothing
             Nothing
             Nothing
+            Nothing
           )
         , ( "telephone"
           , Schema
             (Just (StringType (String Nothing Nothing Nothing Nothing)))
+            Nothing
             Nothing
             Nothing
             Nothing
@@ -275,13 +293,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
       json
         = [r| { "type": "object", "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" } }|]
       schema = Schema
-        { schemaType        = Just (ObjectType objectType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (ObjectType objectType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       objectType = Object
         { objectProperties           = Nothing
@@ -298,13 +317,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
     let json =
           [r|{ "type": "object", "minProperties": 2, "maxProperties": 3 }|]
         schema = Schema
-          { schemaType        = Just (ObjectType objectType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ObjectType objectType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         objectType = Object
           { objectProperties           = Nothing
@@ -323,13 +343,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
         json
           = [r|{ "type": "object", "properties": { "name": { "type": "string" }, "credit_card": { "type": "number" }, "billing_address": { "type": "string" } }, "required": ["name"], "dependencies": { "credit_card": ["billing_address"] } }|]
         schema = Schema
-          { schemaType        = Just (ObjectType objectType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ObjectType objectType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         objectType = Object
           { objectProperties           = Just propertiess
@@ -339,13 +360,16 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
           , objectMinProperties        = Nothing
           , objectMaxProperties        = Nothing
           , objectDependencies         = Just
-            (Map.fromList [("credit_card", DependenciesList ["billing_address"])])
+            (Map.fromList
+              [("credit_card", DependenciesList ["billing_address"])]
+            )
           , objectPatternProperties    = Nothing
           }
         propertiess = Map.fromList
           [ ( "name"
             , Schema
               (Just (StringType (String Nothing Nothing Nothing Nothing)))
+              Nothing
               Nothing
               Nothing
               Nothing
@@ -366,10 +390,12 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
               Nothing
               Nothing
               Nothing
+              Nothing
             )
           , ( "billing_address"
             , Schema
               (Just (StringType (String Nothing Nothing Nothing Nothing)))
+              Nothing
               Nothing
               Nothing
               Nothing
@@ -384,13 +410,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
         json
           = [r|{ "type": "object", "properties": { "name": { "type": "string" }, "credit_card": { "type": "number" } }, "required": ["name"], "dependencies": { "credit_card": { "properties": { "billing_address": { "type": "string" } }, "required": ["billing_address"] } } }|]
         schema = Schema
-          { schemaType        = Just (ObjectType objectType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ObjectType objectType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         objectType = Object
           { objectProperties           = Just propertiess
@@ -412,6 +439,7 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
               Nothing
               Nothing
               Nothing
+              Nothing
             )
           , ( "credit_card"
             , Schema
@@ -420,6 +448,7 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
                   (Number Nothing Nothing Nothing Nothing Nothing Nothing)
                 )
               )
+              Nothing
               Nothing
               Nothing
               Nothing
@@ -439,6 +468,7 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
                         (Just
                           (StringType (String Nothing Nothing Nothing Nothing))
                         )
+                        Nothing
                         Nothing
                         Nothing
                         Nothing
@@ -465,13 +495,14 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
       json
         = [r|{ "type": "object", "patternProperties": { "^S_": { "type": "string" }, "^I_": { "type": "integer" } }, "additionalProperties": false }|]
       schema = Schema
-        { schemaType        = Just (ObjectType objectType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (ObjectType objectType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       objectType = Object
         { objectProperties           = Nothing
@@ -493,6 +524,7 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
             Nothing
             Nothing
             Nothing
+            Nothing
           )
         , ( "^I_"
           , Schema
@@ -501,6 +533,7 @@ spec_Test_JSON_Schema_Object = describe "object" $ do
                 (Integer Nothing Nothing Nothing Nothing Nothing Nothing)
               )
             )
+            Nothing
             Nothing
             Nothing
             Nothing

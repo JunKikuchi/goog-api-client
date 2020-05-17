@@ -18,13 +18,14 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
     let
       json   = [r|{ "type": "array", "items": { "type": "number" } }|]
       schema = Schema
-        { schemaType        = Just (ArrayType arrayType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (ArrayType arrayType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       arrayType = Array
         { arrayItems           = Just
@@ -35,6 +36,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
                   (Number Nothing Nothing Nothing Nothing Nothing Nothing)
                 )
               )
+              Nothing
               Nothing
               Nothing
               Nothing
@@ -55,13 +57,14 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
       json
         = [r|{ "type": "array", "items": [{ "type": "number" }, { "type": "string" }, { "type": "string", "enum": ["Street", "Avenue", "Boulevard"] }, { "type": "string", "enum": ["NW", "NE", "SW", "SE"] }] }|]
       schema = Schema
-        { schemaType        = Just (ArrayType arrayType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (ArrayType arrayType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       arrayType = Array
         { arrayItems           = Just
@@ -78,8 +81,10 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
               Nothing
               Nothing
               Nothing
+              Nothing
             , Schema
               (Just (StringType (String Nothing Nothing Nothing Nothing)))
+              Nothing
               Nothing
               Nothing
               Nothing
@@ -94,6 +99,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
               Nothing
               (Just ["Street", "Avenue", "Boulevard"])
               Nothing
+              Nothing
             , Schema
               (Just (StringType (String Nothing Nothing Nothing Nothing)))
               Nothing
@@ -101,6 +107,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
               Nothing
               Nothing
               (Just ["NW", "NE", "SW", "SE"])
+              Nothing
               Nothing
             ]
           )
@@ -116,13 +123,14 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
         json
           = [r|{ "type": "array", "items": [{ "type": "number" }, { "type": "string" }, { "type": "string", "enum": ["Street", "Avenue", "Boulevard"] }, { "type": "string", "enum": ["NW", "NE", "SW", "SE"] }], "additionalItems": false }|]
         schema = Schema
-          { schemaType        = Just (ArrayType arrayType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ArrayType arrayType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         arrayType = Array
           { arrayItems           = Just
@@ -139,8 +147,10 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
                 Nothing
                 Nothing
                 Nothing
+                Nothing
               , Schema
                 (Just (StringType (String Nothing Nothing Nothing Nothing)))
+                Nothing
                 Nothing
                 Nothing
                 Nothing
@@ -155,6 +165,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
                 Nothing
                 (Just ["Street", "Avenue", "Boulevard"])
                 Nothing
+                Nothing
               , Schema
                 (Just (StringType (String Nothing Nothing Nothing Nothing)))
                 Nothing
@@ -162,6 +173,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
                 Nothing
                 Nothing
                 (Just ["NW", "NE", "SW", "SE"])
+                Nothing
                 Nothing
               ]
             )
@@ -177,13 +189,14 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
         json
           = [r|{ "type": "array", "items": [{ "type": "number" }, { "type": "string" }, { "type": "string", "enum": ["Street", "Avenue", "Boulevard"] }, { "type": "string", "enum": ["NW", "NE", "SW", "SE"] }], "additionalItems": { "type": "string" } }|]
         schema = Schema
-          { schemaType        = Just (ArrayType arrayType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ArrayType arrayType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         arrayType = Array
           { arrayItems           = Just
@@ -200,8 +213,10 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
                 Nothing
                 Nothing
                 Nothing
+                Nothing
               , Schema
                 (Just (StringType (String Nothing Nothing Nothing Nothing)))
+                Nothing
                 Nothing
                 Nothing
                 Nothing
@@ -216,6 +231,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
                 Nothing
                 (Just ["Street", "Avenue", "Boulevard"])
                 Nothing
+                Nothing
               , Schema
                 (Just (StringType (String Nothing Nothing Nothing Nothing)))
                 Nothing
@@ -224,6 +240,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
                 Nothing
                 (Just ["NW", "NE", "SW", "SE"])
                 Nothing
+                Nothing
               ]
             )
           , arrayContains        = Nothing
@@ -231,6 +248,7 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
             (ArrayAdditionalItemsSchema
               (Schema
                 (Just (StringType (String Nothing Nothing Nothing Nothing)))
+                Nothing
                 Nothing
                 Nothing
                 Nothing
@@ -247,13 +265,14 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
   describe "Length" $ do
     let json   = [r|{ "type": "array", "minItems": 2, "maxItems": 3 }|]
         schema = Schema
-          { schemaType        = Just (ArrayType arrayType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ArrayType arrayType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         arrayType = Array
           { arrayItems           = Nothing
@@ -267,13 +286,14 @@ spec_Test_JSON_Schema_Array = describe "array" $ do
   describe "Uniqueness" $ do
     let json   = [r|{ "type": "array", "uniqueItems": true }|]
         schema = Schema
-          { schemaType        = Just (ArrayType arrayType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (ArrayType arrayType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         arrayType = Array
           { arrayItems           = Nothing

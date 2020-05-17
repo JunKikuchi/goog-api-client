@@ -18,13 +18,14 @@ spec_Test_JSON_Schema =
     describe "string" $ do
       let json   = [r|{ "type": "string" }|]
           schema = Schema
-            { schemaType        = Just (StringType stringType)
-            , schemaTitle       = Nothing
-            , schemaDescription = Nothing
-            , schemaExamples    = Nothing
-            , schemaComment     = Nothing
-            , schemaEnum        = Nothing
-            , schemaConst       = Nothing
+            { schemaType             = Just (StringType stringType)
+            , schemaTitle            = Nothing
+            , schemaDescription      = Nothing
+            , schemaExamples         = Nothing
+            , schemaComment          = Nothing
+            , schemaEnum             = Nothing
+            , schemaEnumDescriptions = Nothing
+            , schemaConst            = Nothing
             }
           stringType = String
             { stringMinLength = Nothing
@@ -36,13 +37,14 @@ spec_Test_JSON_Schema =
     describe "integer" $ do
       let json   = [r|{ "type": "integer"}|]
           schema = Schema
-            { schemaType        = Just (IntegerType integerType)
-            , schemaTitle       = Nothing
-            , schemaDescription = Nothing
-            , schemaExamples    = Nothing
-            , schemaComment     = Nothing
-            , schemaEnum        = Nothing
-            , schemaConst       = Nothing
+            { schemaType             = Just (IntegerType integerType)
+            , schemaTitle            = Nothing
+            , schemaDescription      = Nothing
+            , schemaExamples         = Nothing
+            , schemaComment          = Nothing
+            , schemaEnum             = Nothing
+            , schemaEnumDescriptions = Nothing
+            , schemaConst            = Nothing
             }
           integerType = Integer
             { integerMultipleOf       = Nothing
@@ -56,13 +58,14 @@ spec_Test_JSON_Schema =
     describe "number" $ do
       let json   = [r|{ "type": "number"}|]
           schema = Schema
-            { schemaType        = Just (NumberType numberType)
-            , schemaTitle       = Nothing
-            , schemaDescription = Nothing
-            , schemaExamples    = Nothing
-            , schemaComment     = Nothing
-            , schemaEnum        = Nothing
-            , schemaConst       = Nothing
+            { schemaType             = Just (NumberType numberType)
+            , schemaTitle            = Nothing
+            , schemaDescription      = Nothing
+            , schemaExamples         = Nothing
+            , schemaComment          = Nothing
+            , schemaEnum             = Nothing
+            , schemaEnumDescriptions = Nothing
+            , schemaConst            = Nothing
             }
           numberType = Number
             { numberMultipleOf       = Nothing
@@ -76,13 +79,14 @@ spec_Test_JSON_Schema =
     describe "object" $ do
       let json   = [r|{ "type": "object"}|]
           schema = Schema
-            { schemaType        = Just (ObjectType objectType)
-            , schemaTitle       = Nothing
-            , schemaDescription = Nothing
-            , schemaExamples    = Nothing
-            , schemaComment     = Nothing
-            , schemaEnum        = Nothing
-            , schemaConst       = Nothing
+            { schemaType             = Just (ObjectType objectType)
+            , schemaTitle            = Nothing
+            , schemaDescription      = Nothing
+            , schemaExamples         = Nothing
+            , schemaComment          = Nothing
+            , schemaEnum             = Nothing
+            , schemaEnumDescriptions = Nothing
+            , schemaConst            = Nothing
             }
           objectType = Object
             { objectProperties           = Nothing
@@ -98,13 +102,14 @@ spec_Test_JSON_Schema =
     describe "array" $ do
       let json   = [r|{ "type": "array"}|]
           schema = Schema
-            { schemaType        = Just (ArrayType arrayType)
-            , schemaTitle       = Nothing
-            , schemaDescription = Nothing
-            , schemaExamples    = Nothing
-            , schemaComment     = Nothing
-            , schemaEnum        = Nothing
-            , schemaConst       = Nothing
+            { schemaType             = Just (ArrayType arrayType)
+            , schemaTitle            = Nothing
+            , schemaDescription      = Nothing
+            , schemaExamples         = Nothing
+            , schemaComment          = Nothing
+            , schemaEnum             = Nothing
+            , schemaEnumDescriptions = Nothing
+            , schemaConst            = Nothing
             }
           arrayType = Array
             { arrayItems           = Nothing
@@ -118,24 +123,26 @@ spec_Test_JSON_Schema =
     describe "boolean" $ do
       let json   = [r|{ "type": "boolean"}|]
           schema = Schema
-            { schemaType        = Just BooleanType
-            , schemaTitle       = Nothing
-            , schemaDescription = Nothing
-            , schemaExamples    = Nothing
-            , schemaComment     = Nothing
-            , schemaEnum        = Nothing
-            , schemaConst       = Nothing
+            { schemaType             = Just BooleanType
+            , schemaTitle            = Nothing
+            , schemaDescription      = Nothing
+            , schemaExamples         = Nothing
+            , schemaComment          = Nothing
+            , schemaEnum             = Nothing
+            , schemaEnumDescriptions = Nothing
+            , schemaConst            = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema
     describe "null" $ do
       let json   = [r|{ "type": "null"}|]
           schema = Schema
-            { schemaType        = Just NullType
-            , schemaTitle       = Nothing
-            , schemaDescription = Nothing
-            , schemaExamples    = Nothing
-            , schemaComment     = Nothing
-            , schemaEnum        = Nothing
-            , schemaConst       = Nothing
+            { schemaType             = Just NullType
+            , schemaTitle            = Nothing
+            , schemaDescription      = Nothing
+            , schemaExamples         = Nothing
+            , schemaComment          = Nothing
+            , schemaEnum             = Nothing
+            , schemaEnumDescriptions = Nothing
+            , schemaConst            = Nothing
             }
       it "Schema にエンコード" $ decode json `shouldBe` Just schema

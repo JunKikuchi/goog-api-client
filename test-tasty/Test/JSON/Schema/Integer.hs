@@ -17,13 +17,14 @@ spec_Test_JSON_Schema_Integer = describe "integer" $ do
   describe "Multiples" $ do
     let json   = [r|{ "type": "integer", "multipleOf": 10 }|]
         schema = Schema
-          { schemaType        = Just (IntegerType integerType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (IntegerType integerType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         integerType = Integer
           { integerMultipleOf       = Just 10
@@ -39,13 +40,14 @@ spec_Test_JSON_Schema_Integer = describe "integer" $ do
       json
         = [r|{ "type": "integer", "minimum": 0, "maximum": 100, "exclusiveMinimum": true, "exclusiveMaximum": true }|]
       schema = Schema
-        { schemaType        = Just (IntegerType integerType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (IntegerType integerType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       integerType = Integer
         { integerMultipleOf       = Nothing
@@ -59,13 +61,14 @@ spec_Test_JSON_Schema_Integer = describe "integer" $ do
   describe "Format" $ do
     let json   = [r|{ "type": "integer", "format": "int32" }|]
         schema = Schema
-          { schemaType        = Just (IntegerType integerType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (IntegerType integerType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         integerType = Integer
           { integerMultipleOf       = Nothing

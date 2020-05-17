@@ -17,13 +17,14 @@ spec_Test_JSON_Schema_String = describe "string" $ do
   describe "length" $ do
     let json   = [r|{ "type": "string", "minLength": 2, "maxLength": 3 }|]
         schema = Schema
-          { schemaType        = Just (StringType stringType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (StringType stringType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         stringType = String
           { stringMinLength = Just 2
@@ -37,13 +38,14 @@ spec_Test_JSON_Schema_String = describe "string" $ do
       json
         = [r|{ "type": "string", "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$" }|]
       schema = Schema
-        { schemaType        = Just (StringType stringType)
-        , schemaTitle       = Nothing
-        , schemaDescription = Nothing
-        , schemaExamples    = Nothing
-        , schemaComment     = Nothing
-        , schemaEnum        = Nothing
-        , schemaConst       = Nothing
+        { schemaType             = Just (StringType stringType)
+        , schemaTitle            = Nothing
+        , schemaDescription      = Nothing
+        , schemaExamples         = Nothing
+        , schemaComment          = Nothing
+        , schemaEnum             = Nothing
+        , schemaEnumDescriptions = Nothing
+        , schemaConst            = Nothing
         }
       stringType = String
         { stringMinLength = Nothing
@@ -55,13 +57,14 @@ spec_Test_JSON_Schema_String = describe "string" $ do
   describe "Format" $ do
     let json   = [r|{ "type": "string", "format": "byte" }|]
         schema = Schema
-          { schemaType        = Just (StringType stringType)
-          , schemaTitle       = Nothing
-          , schemaDescription = Nothing
-          , schemaExamples    = Nothing
-          , schemaComment     = Nothing
-          , schemaEnum        = Nothing
-          , schemaConst       = Nothing
+          { schemaType             = Just (StringType stringType)
+          , schemaTitle            = Nothing
+          , schemaDescription      = Nothing
+          , schemaExamples         = Nothing
+          , schemaComment          = Nothing
+          , schemaEnum             = Nothing
+          , schemaEnumDescriptions = Nothing
+          , schemaConst            = Nothing
           }
         stringType = String
           { stringMinLength = Nothing
