@@ -39,7 +39,12 @@ createField name required props = do
   pure $ T.intercalate ",\n\n" fields
  where
   cons s schema acc = do
-    let camelName = toTitle . T.concat . fmap toTitle . T.split (== '_') $ s
+    let camelName =
+          toTitle
+            . T.concat
+            . fmap toTitle
+            . T.split (\c -> c == '_' || c == '-')
+            $ s
         fieldName = unTitle name <> camelName
         desc      = descContent 0 $ JSON.schemaDescription schema
     fieldType <- createType camelName schema required
@@ -88,10 +93,15 @@ createEnumType defaultType name schema = case JSON.schemaEnum schema of
 createArrayType :: SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
 createArrayType name schema array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem fieldSchema)) -> do
-    let desc = JSON.schemaDescription schema
-    fieldType <- createType name
-                            (fieldSchema { JSON.schemaDescription = desc })
-                            True
+    let desc      = JSON.schemaDescription schema
+        enumDescs = JSON.schemaEnumDescriptions schema
+    fieldType <- createType
+      name
+      (fieldSchema { JSON.schemaDescription      = desc
+                   , JSON.schemaEnumDescriptions = enumDescs
+                   }
+      )
+      True
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
