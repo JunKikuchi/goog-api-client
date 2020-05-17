@@ -65,9 +65,9 @@ createType name schema = do
 
 createArrayType :: SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
 createArrayType name schema array = case JSON.arrayItems array of
-  (Just (JSON.ArrayItemsItem schema')) -> do
+  (Just (JSON.ArrayItemsItem fieldSchema)) -> do
     let desc = JSON.schemaDescription schema
-    fieldType <- createType name (schema' { JSON.schemaDescription = desc })
+    fieldType <- createType name (fieldSchema { JSON.schemaDescription = desc })
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
