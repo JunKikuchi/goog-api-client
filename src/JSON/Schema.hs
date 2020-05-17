@@ -22,7 +22,8 @@ data Schema
   , schemaDescription :: Maybe Text
   , schemaExamples :: Maybe [Aeson.Value]
   , schemaComment :: Maybe Text
-  , schemaEnum :: Maybe [Aeson.Value]
+  , schemaEnum :: Maybe [Text]
+  , schemaEnumDescriptions :: Maybe [Text]
   , schemaConst :: Maybe Aeson.Value
   } deriving (Show, Eq)
 
@@ -34,6 +35,7 @@ instance FromJSON Schema where
     <*> v .:? "examples"
     <*> v .:? "comment"
     <*> v .:? "enum"
+    <*> v .:? "enumDescriptions"
     <*> v .:? "const"
     where
       parseType v = do

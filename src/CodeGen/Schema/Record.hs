@@ -2,6 +2,7 @@
 module CodeGen.Schema.Record where
 
 import           RIO
+import qualified RIO.List                      as L
 import qualified RIO.Map                       as Map
 import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
@@ -39,21 +40,28 @@ createField name props = do
   cons s schema acc = do
     let camelName = toTitle . T.concat . fmap toTitle . T.split (== '_') $ s
         fieldName = unTitle name <> camelName
-        desc      = descContent $ JSON.schemaDescription schema
+        desc      = descContent 0 $ JSON.schemaDescription schema
     fieldType <- createType camelName schema
     let field = fieldName <> " :: " <> fieldType
     ((desc <> field) :) <$> acc
 
-descContent :: Maybe Text -> Text
-descContent = maybe
+descContent :: Int -> Maybe Text -> Text
+descContent n = maybe
   ""
-  (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
+  (\s ->
+    indent
+      <> "{-|\n"
+      <> (T.unlines . fmap ((indent <> "  ") <>) . T.lines $ s)
+      <> indent
+      <> "-}\n"
+  )
+  where indent = T.concat $ take n $ L.repeat " "
 
 createType :: SchemaName -> JSON.Schema -> GenRecord Text
 createType name schema = do
   jsonType <- get JSON.schemaType "schemaType" schema
   case jsonType of
-    (JSON.StringType  _    ) -> tell [GenRef RefPrelude] >> pure "Text"
+    (JSON.StringType  _    ) -> createEnumType "Text" name schema
     (JSON.IntegerType _    ) -> tell [GenRef RefPrelude] >> pure "Int"
     (JSON.NumberType  _    ) -> tell [GenRef RefPrelude] >> pure "Float"
     (JSON.ObjectType  _    ) -> tell [Gen (name, schema)] >> pure name
@@ -62,6 +70,14 @@ createType name schema = do
     JSON.BooleanType         -> tell [GenRef RefPrelude] >> pure "Bool"
     JSON.AnyType             -> tell [GenRef RefGAC] >> pure "GAC.Any"
     JSON.NullType            -> undefined
+
+createEnumType :: Text -> SchemaName -> JSON.Schema -> GenRecord Text
+createEnumType defaultType name schema = case JSON.schemaEnum schema of
+  (Just jsonEnum) -> do
+    let descs = fromMaybe [] $ JSON.schemaEnumDescriptions schema
+    tell [GenEnum (name, zip jsonEnum descs)]
+    pure name
+  _ -> tell [GenRef RefPrelude] >> pure defaultType
 
 createArrayType :: SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
 createArrayType name schema array = case JSON.arrayItems array of
@@ -90,6 +106,9 @@ createFieldRecords = fmap unLines . foldr f (pure [])
   f (GenRef ref) acc = do
     tell $ Set.singleton ref
     acc
+  f (GenEnum (name, enums)) acc = do
+    let a = createFieldEnum name enums
+    (a :) <$> acc
   f (Gen schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldRecord schema
     if null schemas
@@ -97,6 +116,11 @@ createFieldRecords = fmap unLines . foldr f (pure [])
       else do
         b <- createFieldRecords schemas
         (a :) <$> ((b :) <$> acc)
+
+createFieldEnum :: SchemaName -> Enums -> Text
+createFieldEnum name enums = "data " <> name <> "\n  =\n" <> T.intercalate
+  "\n  |\n"
+  (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> e) enums)
 
 createFieldRecord :: Schema -> GenRecord Text
 createFieldRecord obj = do
@@ -125,7 +149,7 @@ createFieldRecordField (name, schema) = case JSON.schemaType schema of
       let desc = JSON.schemaDescription schema
 
       fieldType <- createType name fieldSchema
-      let fieldDesc = descContent $ JSON.schemaDescription fieldSchema
+      let fieldDesc = descContent 0 (JSON.schemaDescription fieldSchema)
       let field     = T.concat ["un", name] <> " :: Map Text " <> fieldType
 
       pure . pure $ createRecordContent name (fieldDesc <> field) 1 desc
