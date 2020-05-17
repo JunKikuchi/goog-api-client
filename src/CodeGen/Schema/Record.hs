@@ -82,14 +82,20 @@ createEnumType defaultType name schema = case JSON.schemaEnum schema of
 createArrayType :: SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
 createArrayType name schema array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem fieldSchema)) -> do
-    let desc = JSON.schemaDescription schema
-    fieldType <- createType name (fieldSchema { JSON.schemaDescription = desc })
+    let desc      = JSON.schemaDescription schema
+        enumDescs = JSON.schemaEnumDescriptions schema
+    fieldType <- createType
+      name
+      (fieldSchema { JSON.schemaDescription      = desc
+                   , JSON.schemaEnumDescriptions = enumDescs
+                   }
+      )
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
 createRecordContent :: RecordName -> Text -> Int -> Maybe Text -> Text
-createRecordContent name field size desc
-  = maybe
+createRecordContent name field size desc =
+  maybe
       ""
       (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
       desc
