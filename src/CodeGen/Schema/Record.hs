@@ -34,14 +34,20 @@ createBootRecord schema = case Desc.schemaType schema of
 createField :: RecordName -> Desc.ObjectProperties -> GenRecord Text
 createField name props = do
   fields <- Map.foldrWithKey cons (pure []) props
-  pure $ T.intercalate "\n  , " fields
+  pure $ T.intercalate ",\n\n" fields
  where
   cons s schema acc = do
     let camelName = toTitle . T.concat . fmap toTitle . T.split (== '_') $ s
         fieldName = unTitle name <> camelName
+        desc      = descContent $ JSON.schemaDescription schema
     fieldType <- createType camelName schema
     let field = fieldName <> " :: " <> fieldType
-    (field :) <$> acc
+    ((desc <> field) :) <$> acc
+
+descContent :: Maybe Text -> Text
+descContent = maybe
+  ""
+  (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
 
 createType :: SchemaName -> JSON.Schema -> GenRecord Text
 createType name schema = do
@@ -66,13 +72,16 @@ createArrayType name schema array = case JSON.arrayItems array of
   _ -> undefined
 
 createRecordContent :: RecordName -> Text -> Int -> Maybe Text -> Text
-createRecordContent name field size desc =
-  maybe "" (T.unlines . fmap ("-- " <>) . T.lines) desc
+createRecordContent name field size desc
+  = maybe
+      ""
+      (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
+      desc
     <> (if size == 1 then "newtype " else "data ")
     <> name
     <> " = "
     <> name
-    <> (if size == 0 then "" else "\n  { " <> field <> "\n  }")
+    <> (if size == 0 then "" else "\n  {\n" <> field <> "\n  }")
 
 createFieldRecords :: [Gen] -> GenRef Text
 createFieldRecords = fmap unLines . foldr f (pure [])
@@ -111,12 +120,15 @@ createFieldRecordFields (name, schema) = case JSON.schemaType schema of
 createFieldRecordField :: Schema -> GenRecord (Maybe Text)
 createFieldRecordField (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectAdditionalProperties obj of
-    (Just (JSON.AdditionalPropertiesSchema schema')) -> do
-      fieldType <- createType name schema'
-      let field = T.concat ["un", name] <> " :: Map Text " <> fieldType
+    (Just (JSON.AdditionalPropertiesSchema fieldSchema)) -> do
       tell [GenRef RefPrelude]
       let desc = JSON.schemaDescription schema
-      pure . pure $ createRecordContent name field 1 desc
+
+      fieldType <- createType name fieldSchema
+      let fieldDesc = descContent $ JSON.schemaDescription fieldSchema
+      let field     = T.concat ["un", name] <> " :: Map Text " <> fieldType
+
+      pure . pure $ createRecordContent name (fieldDesc <> field) 1 desc
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing
   (Just _) -> undefined
