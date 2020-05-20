@@ -19,6 +19,10 @@ unTitle = applyHead C.toLower
 applyHead :: (Char -> Char) -> Text -> Text
 applyHead f text = maybe text (\(c, t) -> T.cons (f c) t) (T.uncons text)
 
+toCamelName :: Text -> Text
+toCamelName =
+  toTitle . T.concat . fmap toTitle . T.split (\c -> c == '_' || c == '-')
+
 withDir :: FilePath -> IO a -> IO a
 withDir dir action = do
   Dir.createDirectoryIfMissing True dir

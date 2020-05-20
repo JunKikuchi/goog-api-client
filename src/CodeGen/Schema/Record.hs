@@ -49,12 +49,7 @@ createField name props = do
   pure $ T.intercalate ",\n\n" fields
  where
   cons s schema acc = do
-    let camelName =
-          toTitle
-            . T.concat
-            . fmap toTitle
-            . T.split (\c -> c == '_' || c == '-')
-            $ s
+    let camelName = toCamelName s
         fieldName = unTitle name <> camelName
         desc      = descContent 4 $ JSON.schemaDescription schema
     fieldType <- createType camelName schema False
@@ -169,7 +164,7 @@ createToJSONContent name props
     <> "\n    ]"
  where
   names =
-    (\key -> (key, unTitle name <> toTitle key <> "'")) <$> Map.keys props
+    (\key -> (key, unTitle name <> toCamelName key <> "'")) <$> Map.keys props
   args = T.intercalate "\n      " (snd <$> names)
   obj  = T.intercalate
     "\n    , "
