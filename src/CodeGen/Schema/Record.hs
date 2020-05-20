@@ -20,8 +20,7 @@ createRecord schema = case Desc.schemaType schema of
   (Just (Desc.ObjectType obj)) -> do
     name  <- lift $ get Desc.schemaId "schema id" schema
     props <- lift $ get Desc.objectProperties "object properties" obj
-    let required = fromMaybe False $ Desc.schemaRequired schema
-    field <- createField name required props
+    field <- createField name props
     let desc = Desc.schemaDescription schema
     pure $ createRecordContent name field (Map.size props) desc
   _ -> undefined
@@ -33,8 +32,8 @@ createBootRecord schema = case Desc.schemaType schema of
     pure $ "data " <> name
   _ -> undefined
 
-createField :: RecordName -> Required -> Desc.ObjectProperties -> GenRecord Text
-createField name required props = do
+createField :: RecordName -> Desc.ObjectProperties -> GenRecord Text
+createField name props = do
   fields <- Map.foldrWithKey cons (pure []) props
   pure $ T.intercalate ",\n\n" fields
  where
@@ -47,7 +46,7 @@ createField name required props = do
             $ s
         fieldName = unTitle name <> camelName
         desc      = descContent 4 $ JSON.schemaDescription schema
-    fieldType <- createType camelName schema required
+    fieldType <- createType camelName schema False
     let field = "    " <> fieldName <> " :: " <> fieldType
     ((desc <> field) :) <$> acc
 
@@ -152,7 +151,7 @@ createFieldRecordFields :: Schema -> GenRecord (Maybe Text)
 createFieldRecordFields (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectProperties obj of
     (Just props) -> do
-      field <- createField name True props
+      field <- createField name props
       let desc = JSON.schemaDescription schema
       pure . pure $ createRecordContent name field (Map.size props) desc
     Nothing -> pure Nothing
