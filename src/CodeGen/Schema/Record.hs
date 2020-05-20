@@ -31,7 +31,16 @@ createBootRecord :: Desc.Schema -> IO Text
 createBootRecord schema = case Desc.schemaType schema of
   (Just (Desc.ObjectType _)) -> do
     name <- get Desc.schemaId "schema id" schema
-    pure $ "data " <> name
+    pure
+      $  "data "
+      <> name
+      <> "\n"
+      <> "instance FromJSON "
+      <> name
+      <> "\n"
+      <> "instance ToJSON "
+      <> name
+      <> "\n"
   _ -> undefined
 
 createField :: RecordName -> Desc.ObjectProperties -> GenRecord Text
@@ -174,8 +183,9 @@ createFieldRecords = fmap unLines . foldr f (pure [])
     tell $ Set.singleton ref
     acc
   f (GenEnum (name, enums)) acc = do
-    let a = createFieldEnum name enums
-    (a :) <$> acc
+    let a     = createFieldEnumContent name enums
+        aeson = createFieldEnumAesonContent name enums
+    ((a <> "\n\n" <> aeson) :) <$> acc
   f (Gen schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldRecord schema
     if null schemas
@@ -184,10 +194,27 @@ createFieldRecords = fmap unLines . foldr f (pure [])
         b <- createFieldRecords schemas
         (a :) <$> ((b :) <$> acc)
 
-createFieldEnum :: SchemaName -> Enums -> Text
-createFieldEnum name enums = "data " <> name <> "\n  =\n" <> T.intercalate
-  "\n  |\n"
-  (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> e) enums)
+createFieldEnumContent :: SchemaName -> Enums -> Text
+createFieldEnumContent name enums =
+  "data "
+    <> name
+    <> "\n  =\n"
+    <> T.intercalate
+         "\n  |\n"
+         (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> e) enums)
+    <> "\n  deriving Generic"
+
+createFieldEnumAesonContent :: SchemaName -> Enums -> Text
+createFieldEnumAesonContent name enum =
+  createFieldEnumFromJSONContent name enum
+    <> "\n\n"
+    <> createFieldEnumToJSONContent name enum
+
+createFieldEnumFromJSONContent :: SchemaName -> Enums -> Text
+createFieldEnumFromJSONContent name _enums = "instance Aeson.FromJSON " <> name
+
+createFieldEnumToJSONContent :: SchemaName -> Enums -> Text
+createFieldEnumToJSONContent name _enums = "instance Aeson.ToJSON " <> name
 
 createFieldRecord :: Schema -> GenRecord Text
 createFieldRecord obj = do

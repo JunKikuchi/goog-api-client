@@ -104,8 +104,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *~
 
 {-# START_FILE src/GoogApiClient.hs #-}
+{-# LANGUAGE DeriveGeneric #-}
 module GoogApiClient where
 
 import RIO
+import Data.Aeson
+import GHC.Generics
 
-data Any = Any deriving Show
+data Any = Any deriving (Generic, Show)
+instance FromJSON Any
+instance ToJSON Any

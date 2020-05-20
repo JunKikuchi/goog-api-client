@@ -24,7 +24,8 @@ schemaDir :: SchemaDir
 schemaDir = T.unpack schemaName
 
 defaultImports :: [Text]
-defaultImports = ["import RIO", "import qualified Data.Aeson as Aeson"]
+defaultImports =
+  ["import RIO", "import qualified Data.Aeson as Aeson", "import GHC.Generics"]
 
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
@@ -64,7 +65,7 @@ createHsFile svcName svcVer name moduleName refRecs schema = do
     content =
       flip T.snoc '\n'
         . unLines
-        $ [ "{-# LANGUAGE OverloadedStrings #-}\n{-# LANGUAGE GeneralizedNewtypeDeriving #-}"
+        $ [ "{-# LANGUAGE OverloadedStrings #-}\n{-# LANGUAGE GeneralizedNewtypeDeriving #-}\n{-# LANGUAGE DeriveGeneric #-}"
           , "module " <> moduleName <> " where"
           , T.intercalate "\n" defaultImports
           , T.intercalate "\n" imports
@@ -95,7 +96,7 @@ createHsBootFile name moduleName schema = do
       content =
         flip T.snoc '\n'
           . unLines
-          $ ["module " <> moduleName <> " where", record]
+          $ ["module " <> moduleName <> " where", "import Data.Aeson", record]
   B.writeFile path (T.encodeUtf8 content)
 
 createImports
@@ -119,4 +120,4 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
         <> schemaName
         <> "."
         <> ref
-  f RefGAC     = "import qualified GoogApiClient as GAC"
+  f RefGAC = "import qualified GoogApiClient as GAC"
