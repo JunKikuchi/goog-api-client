@@ -23,6 +23,13 @@ schemaName = "Schema"
 schemaDir :: SchemaDir
 schemaDir = T.unpack schemaName
 
+defaultExtentions :: [Text]
+defaultExtentions =
+  [ "{-# LANGUAGE DeriveGeneric #-}"
+  , "{-# LANGUAGE GeneralizedNewtypeDeriving #-}"
+  , "{-# LANGUAGE OverloadedStrings #-}"
+  ]
+
 defaultImports :: [Text]
 defaultImports = ["import RIO", "import qualified Data.Aeson as Aeson"]
 
@@ -58,19 +65,18 @@ createHsFile
 createHsFile svcName svcVer name moduleName refRecs schema = do
   (record , jsonObjs) <- runWriterT $ Record.createRecord schema
   (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
-  let
-    path    = FP.addExtension (T.unpack name) "hs"
-    imports = createImports svcName svcVer name refRecs refs
-    content =
-      flip T.snoc '\n'
-        . unLines
-        $ [ "{-# LANGUAGE OverloadedStrings #-}\n{-# LANGUAGE GeneralizedNewtypeDeriving #-}\n{-# LANGUAGE DeriveGeneric #-}"
-          , "module " <> moduleName <> " where"
-          , T.intercalate "\n" defaultImports
-          , T.intercalate "\n" imports
-          , record
-          , records
-          ]
+  let path    = FP.addExtension (T.unpack name) "hs"
+      imports = createImports svcName svcVer name refRecs refs
+      content =
+        flip T.snoc '\n'
+          . unLines
+          $ [ T.intercalate "\n" defaultExtentions
+            , "module " <> moduleName <> " where"
+            , T.intercalate "\n" defaultImports
+            , T.intercalate "\n" imports
+            , record
+            , records
+            ]
   B.writeFile path (T.encodeUtf8 content)
 
   let names = Set.map unRef . Set.filter filterRecord $ refs
