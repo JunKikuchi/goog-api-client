@@ -109,7 +109,7 @@ module GoogApiClient where
 
 import RIO
 import Data.Aeson
-import GHC.Generics
+import GHC.Generics()
 
 data Any = Any deriving (Generic, Show)
 instance FromJSON Any

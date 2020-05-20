@@ -24,8 +24,7 @@ schemaDir :: SchemaDir
 schemaDir = T.unpack schemaName
 
 defaultImports :: [Text]
-defaultImports =
-  ["import RIO", "import qualified Data.Aeson as Aeson", "import GHC.Generics"]
+defaultImports = ["import RIO", "import qualified Data.Aeson as Aeson"]
 
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
@@ -120,4 +119,5 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
         <> schemaName
         <> "."
         <> ref
-  f RefGAC = "import qualified GoogApiClient as GAC"
+  f RefGAC      = "import qualified GoogApiClient as GAC"
+  f RefGenerics = "import GHC.Generics()"

@@ -92,7 +92,7 @@ createEnumType :: Text -> SchemaName -> JSON.Schema -> GenRecord Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
     let descs = fromMaybe [] $ JSON.schemaEnumDescriptions schema
-    tell [GenEnum (name, zip jsonEnum descs)]
+    tell [GenEnum (name, zip jsonEnum descs), GenRef RefGenerics]
     pure name
   _ -> pure defaultType
 
