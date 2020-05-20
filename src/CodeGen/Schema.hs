@@ -24,7 +24,7 @@ schemaDir :: SchemaDir
 schemaDir = T.unpack schemaName
 
 defaultImports :: [Text]
-defaultImports = ["import qualified Data.Aeson as Aeson"]
+defaultImports = ["import RIO", "import qualified Data.Aeson as Aeson"]
 
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
@@ -58,20 +58,19 @@ createHsFile
 createHsFile svcName svcVer name moduleName refRecs schema = do
   (record , jsonObjs) <- runWriterT $ Record.createRecord schema
   (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
-
-  let path    = FP.addExtension (T.unpack name) "hs"
-      imports = createImports svcName svcVer name refRecs refs
-      content =
-        flip T.snoc '\n'
-          . unLines
-          $ [ "{-# LANGUAGE OverloadedStrings #-}"
-            , "{-# LANGUAGE GeneralizedNewtypeDeriving #-}"
-            , "module " <> moduleName <> " where"
-            , T.intercalate "\n" defaultImports
-            , T.intercalate "\n" imports
-            , record
-            , records
-            ]
+  let
+    path    = FP.addExtension (T.unpack name) "hs"
+    imports = createImports svcName svcVer name refRecs refs
+    content =
+      flip T.snoc '\n'
+        . unLines
+        $ [ "{-# LANGUAGE OverloadedStrings #-}\n{-# LANGUAGE GeneralizedNewtypeDeriving #-}"
+          , "module " <> moduleName <> " where"
+          , T.intercalate "\n" defaultImports
+          , T.intercalate "\n" imports
+          , record
+          , records
+          ]
   B.writeFile path (T.encodeUtf8 content)
 
   let names = Set.map unRef . Set.filter filterRecord $ refs
@@ -121,4 +120,4 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
         <> "."
         <> ref
   f RefGAC     = "import qualified GoogApiClient as GAC"
-  f RefPrelude = "import RIO"
+  f RefPrelude = ""

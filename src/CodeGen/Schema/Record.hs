@@ -21,11 +21,10 @@ createRecord schema = case Desc.schemaType schema of
     name  <- lift $ get Desc.schemaId "schema id" schema
     props <- lift $ get Desc.objectProperties "object properties" obj
     field <- createField name props
-    let desc     = Desc.schemaDescription schema
-        record   = createRecordContent name field (Map.size props) desc
-        fromJSON = createFromJSONContent name props
-        toJSON   = createToJSONContent name props
-    pure $ record <> "\n\n" <> fromJSON <> "\n\n" <> toJSON
+    let desc   = Desc.schemaDescription schema
+        record = createRecordContent name field (Map.size props) desc
+        aeson  = createAesonContent name props
+    pure $ record <> "\n\n" <> aeson
   _ -> undefined
 
 createBootRecord :: Desc.Schema -> IO Text
@@ -119,12 +118,24 @@ createRecordContent name field size desc
     <> name
     <> (if size == 0 then "" else "\n  {\n" <> field <> "\n  }")
 
+createAesonContent :: RecordName -> Desc.ObjectProperties -> Text
+createAesonContent name props =
+  createFromJSONContent name props <> "\n\n" <> createToJSONContent name props
+
 createFromJSONContent :: RecordName -> Desc.ObjectProperties -> Text
-createFromJSONContent name props =
-  "instance Aeson.FromJSON "
+createFromJSONContent name props
+  | Map.size props == 0
+  = "instance Aeson.FromJSON "
     <> name
-    <> " where\n"
-    <> "  parseJSON = Aeson.withObject \""
+    <> " where\n  parseJSON = Aeson.withObject \""
+    <> name
+    <> "\" (\\v -> if null v then pure "
+    <> name
+    <> " else mempty)"
+  | otherwise
+  = "instance Aeson.FromJSON "
+    <> name
+    <> " where\n  parseJSON = Aeson.withObject \""
     <> name
     <> "\" $ \\v -> "
     <> name
@@ -133,11 +144,18 @@ createFromJSONContent name props =
   where cons s _schema acc = ("v Aeson..:?" <> " \"" <> s <> "\"") : acc
 
 createToJSONContent :: RecordName -> Desc.ObjectProperties -> Text
-createToJSONContent name props =
-  "instance Aeson.ToJSON "
+createToJSONContent name props
+  | Map.size props == 0
+  = "instance Aeson.ToJSON "
     <> name
     <> " where\n"
-    <> "  toJSON(\n    "
+    <> "  toJSON "
+    <> name
+    <> " = Aeson.object []"
+  | otherwise
+  = "instance Aeson.ToJSON "
+    <> name
+    <> " where\n  toJSON(\n    "
     <> name
     <> "\n      "
     <> args
@@ -188,11 +206,10 @@ createFieldRecordFields (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectProperties obj of
     (Just props) -> do
       field <- createField name props
-      let desc     = JSON.schemaDescription schema
-          record   = createRecordContent name field (Map.size props) desc
-          fromJSON = createFromJSONContent name props
-          toJSON   = createToJSONContent name props
-      pure . pure $ record <> "\n\n" <> fromJSON <> "\n\n" <> toJSON
+      let desc   = JSON.schemaDescription schema
+          record = createRecordContent name field (Map.size props) desc
+          aeson  = createAesonContent name props
+      pure . pure $ record <> "\n\n" <> aeson
     Nothing -> pure Nothing
   (Just _) -> undefined
   Nothing  -> pure Nothing
