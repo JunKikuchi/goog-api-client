@@ -21,8 +21,10 @@ createRecord schema = case Desc.schemaType schema of
     name  <- lift $ get Desc.schemaId "schema id" schema
     props <- lift $ get Desc.objectProperties "object properties" obj
     field <- createField name props
-    let desc = Desc.schemaDescription schema
-    pure $ createRecordContent name field (Map.size props) desc
+    let desc     = Desc.schemaDescription schema
+        record   = createRecordContent name field (Map.size props) desc
+        fromJSON = createFromJSONContent name props
+    pure $ record <> "\n\n" <> fromJSON
   _ -> undefined
 
 createBootRecord :: Desc.Schema -> IO Text
@@ -116,6 +118,19 @@ createRecordContent name field size desc
     <> name
     <> (if size == 0 then "" else "\n  {\n" <> field <> "\n  }")
 
+createFromJSONContent :: RecordName -> Desc.ObjectProperties -> Text
+createFromJSONContent name props =
+  "instance Aeson.FromJSON "
+    <> name
+    <> " where\n"
+    <> "  parseJSON = Aeson.withObject \""
+    <> name
+    <> "\" $ \\v -> "
+    <> name
+    <> "\n    <$> "
+    <> T.intercalate "\n    <*> " (Map.foldrWithKey cons [] props)
+  where cons s _schema acc = ("v Aeson..:?" <> " \"" <> s <> "\"") : acc
+
 createFieldRecords :: [Gen] -> GenRef Text
 createFieldRecords = fmap unLines . foldr f (pure [])
  where
@@ -152,8 +167,10 @@ createFieldRecordFields (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectProperties obj of
     (Just props) -> do
       field <- createField name props
-      let desc = JSON.schemaDescription schema
-      pure . pure $ createRecordContent name field (Map.size props) desc
+      let desc     = JSON.schemaDescription schema
+          record   = createRecordContent name field (Map.size props) desc
+          fromJSON = createFromJSONContent name props
+      pure . pure $ record <> "\n\n" <> fromJSON
     Nothing -> pure Nothing
   (Just _) -> undefined
   Nothing  -> pure Nothing
@@ -164,13 +181,14 @@ createFieldRecordField (name, schema) = case JSON.schemaType schema of
     (Just (JSON.AdditionalPropertiesSchema fieldSchema)) -> do
       tell [GenRef RefPrelude]
       let desc = JSON.schemaDescription schema
-
       fieldType <- createType name fieldSchema True
       let fieldDesc = descContent 4 (JSON.schemaDescription fieldSchema)
       let field =
             "    " <> T.concat ["un", name] <> " :: Map Text " <> fieldType
-
-      pure . pure $ createRecordContent name (fieldDesc <> field) 1 desc
+      pure
+        .  pure
+        $  createRecordContent name (fieldDesc <> field) 1 desc
+        <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing
   (Just _) -> undefined

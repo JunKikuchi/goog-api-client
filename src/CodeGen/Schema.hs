@@ -23,6 +23,9 @@ schemaName = "Schema"
 schemaDir :: SchemaDir
 schemaDir = T.unpack schemaName
 
+defaultImports :: [Text]
+defaultImports = ["import qualified Data.Aeson as Aeson"]
+
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
   dir <- Dir.getCurrentDirectory
@@ -61,7 +64,10 @@ createHsFile svcName svcVer name moduleName refRecs schema = do
       content =
         flip T.snoc '\n'
           . unLines
-          $ [ "module " <> moduleName <> " where"
+          $ [ "{-# LANGUAGE OverloadedStrings #-}"
+            , "{-# LANGUAGE GeneralizedNewtypeDeriving #-}"
+            , "module " <> moduleName <> " where"
+            , T.intercalate "\n" defaultImports
             , T.intercalate "\n" imports
             , record
             , records
