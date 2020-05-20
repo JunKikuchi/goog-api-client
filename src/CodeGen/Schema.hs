@@ -120,4 +120,3 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
         <> "."
         <> ref
   f RefGAC     = "import qualified GoogApiClient as GAC"
-  f RefPrelude = ""

@@ -69,19 +69,15 @@ createType name schema required = do
   jsonType <- get JSON.schemaType "schemaType" schema
   _type    <- case jsonType of
     (JSON.StringType  _    ) -> createEnumType "Text" name schema
-    (JSON.IntegerType _    ) -> tell [GenRef RefPrelude] >> pure "Int"
-    (JSON.NumberType  _    ) -> tell [GenRef RefPrelude] >> pure "Float"
+    (JSON.IntegerType _    ) -> pure "Int"
+    (JSON.NumberType  _    ) -> pure "Float"
     (JSON.ObjectType  _    ) -> tell [Gen (name, schema)] >> pure name
     (JSON.RefType     ref  ) -> tell [GenRef (Ref ref)] >> pure ref
     (JSON.ArrayType   array) -> createArrayType name schema array
-    JSON.BooleanType         -> tell [GenRef RefPrelude] >> pure "Bool"
+    JSON.BooleanType         -> pure "Bool"
     JSON.AnyType             -> tell [GenRef RefGAC] >> pure "GAC.Any"
     JSON.NullType            -> undefined
-  if required
-    then pure _type
-    else do
-      tell [GenRef RefPrelude]
-      pure $ "Maybe " <> _type
+  if required then pure _type else pure $ "Maybe " <> _type
 
 createEnumType :: Text -> SchemaName -> JSON.Schema -> GenRecord Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
@@ -89,7 +85,7 @@ createEnumType defaultType name schema = case JSON.schemaEnum schema of
     let descs = fromMaybe [] $ JSON.schemaEnumDescriptions schema
     tell [GenEnum (name, zip jsonEnum descs)]
     pure name
-  _ -> tell [GenRef RefPrelude] >> pure defaultType
+  _ -> pure defaultType
 
 createArrayType :: SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
 createArrayType name schema array = case JSON.arrayItems array of
@@ -218,7 +214,6 @@ createFieldRecordField :: Schema -> GenRecord (Maybe Text)
 createFieldRecordField (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> case JSON.objectAdditionalProperties obj of
     (Just (JSON.AdditionalPropertiesSchema fieldSchema)) -> do
-      tell [GenRef RefPrelude]
       let desc = JSON.schemaDescription schema
       fieldType <- createType name fieldSchema True
       let fieldDesc = descContent 4 (JSON.schemaDescription fieldSchema)
