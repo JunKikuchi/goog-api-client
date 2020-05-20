@@ -24,7 +24,8 @@ createRecord schema = case Desc.schemaType schema of
     let desc     = Desc.schemaDescription schema
         record   = createRecordContent name field (Map.size props) desc
         fromJSON = createFromJSONContent name props
-    pure $ record <> "\n\n" <> fromJSON
+        toJSON   = createToJSONContent name props
+    pure $ record <> "\n\n" <> fromJSON <> "\n\n" <> toJSON
   _ -> undefined
 
 createBootRecord :: Desc.Schema -> IO Text
@@ -131,6 +132,26 @@ createFromJSONContent name props =
     <> T.intercalate "\n    <*> " (Map.foldrWithKey cons [] props)
   where cons s _schema acc = ("v Aeson..:?" <> " \"" <> s <> "\"") : acc
 
+createToJSONContent :: RecordName -> Desc.ObjectProperties -> Text
+createToJSONContent name props =
+  "instance Aeson.ToJSON "
+    <> name
+    <> " where\n"
+    <> "  toJSON(\n    "
+    <> name
+    <> "\n      "
+    <> args
+    <> "\n    ) = Aeson.object\n    [ "
+    <> obj
+    <> "\n    ]"
+ where
+  names =
+    (\key -> (key, unTitle name <> toTitle key <> "'")) <$> Map.keys props
+  args = T.intercalate "\n      " (snd <$> names)
+  obj  = T.intercalate
+    "\n    , "
+    ((\(key, argName) -> "\"" <> key <> "\" Aeson..= " <> argName) <$> names)
+
 createFieldRecords :: [Gen] -> GenRef Text
 createFieldRecords = fmap unLines . foldr f (pure [])
  where
@@ -170,7 +191,8 @@ createFieldRecordFields (name, schema) = case JSON.schemaType schema of
       let desc     = JSON.schemaDescription schema
           record   = createRecordContent name field (Map.size props) desc
           fromJSON = createFromJSONContent name props
-      pure . pure $ record <> "\n\n" <> fromJSON
+          toJSON   = createToJSONContent name props
+      pure . pure $ record <> "\n\n" <> fromJSON <> "\n\n" <> toJSON
     Nothing -> pure Nothing
   (Just _) -> undefined
   Nothing  -> pure Nothing
