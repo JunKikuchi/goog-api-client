@@ -261,7 +261,7 @@ createFieldRecords = fmap unLines . foldr f (pure [])
     acc
   f (GenEnum (name, enums)) acc = do
     let a     = createFieldEnumContent name enums
-        aeson = createFieldEnumAesonContent name enums
+        aeson = createFieldEnumAesonContent name
     ((a <> "\n\n" <> aeson) :) <$> acc
   f (Gen schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldRecord schema
@@ -281,28 +281,22 @@ createFieldEnumContent name enums =
          (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> e) enums)
     <> "\n  deriving (Show, Generic)"
 
-createFieldEnumAesonContent :: SchemaName -> Enums -> Text
-createFieldEnumAesonContent name enums =
-  createFieldEnumConstructorTagModifier name enums
+createFieldEnumAesonContent :: SchemaName -> Text
+createFieldEnumAesonContent name =
+  createFieldEnumConstructorTagModifier name
     <> "\n"
     <> createFieldEnumFromJSONContent name
     <> "\n"
     <> createFieldEnumToJSONContent name
 
-createFieldEnumConstructorTagModifier :: SchemaName -> Enums -> Text
-createFieldEnumConstructorTagModifier name enums = T.intercalate
-  "\n"
-  [ fn <> " :: String -> String"
-  , T.intercalate
-    "\n"
-    (fmap
-      (\(e, _) -> fn <> " \"" <> name <> e <> "\"" <> " = " <> "\"" <> e <> "\""
-      )
-      enums
-    )
-  , fn <> " s = s"
-  , ""
-  ]
+createFieldEnumConstructorTagModifier :: SchemaName -> Text
+createFieldEnumConstructorTagModifier name =
+  fn
+    <> " :: String -> String\n"
+    <> fn
+    <> " = drop "
+    <> (T.pack . show . T.length $ name)
+    <> "\n"
   where fn = "to" <> name
 
 createFieldEnumFromJSONContent :: SchemaName -> Text
