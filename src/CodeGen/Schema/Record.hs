@@ -278,20 +278,50 @@ createFieldEnumContent name enums =
     <> "\n  =\n"
     <> T.intercalate
          "\n  |\n"
-         (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> e) enums)
-    <> "\n  deriving Generic"
+         (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> e) enums)
+    <> "\n  deriving (Show, Generic)"
 
 createFieldEnumAesonContent :: SchemaName -> Enums -> Text
-createFieldEnumAesonContent name enum =
-  createFieldEnumFromJSONContent name enum
-    <> "\n\n"
-    <> createFieldEnumToJSONContent name enum
+createFieldEnumAesonContent name enums =
+  createFieldEnumConstructorTagModifier name enums
+    <> "\n"
+    <> createFieldEnumFromJSONContent name
+    <> "\n"
+    <> createFieldEnumToJSONContent name
 
-createFieldEnumFromJSONContent :: SchemaName -> Enums -> Text
-createFieldEnumFromJSONContent name _enums = "instance Aeson.FromJSON " <> name
+createFieldEnumConstructorTagModifier :: SchemaName -> Enums -> Text
+createFieldEnumConstructorTagModifier name enums = T.intercalate
+  "\n"
+  [ fn <> " :: String -> String"
+  , T.intercalate
+    "\n"
+    (fmap
+      (\(e, _) -> fn <> " \"" <> name <> e <> "\"" <> " = " <> "\"" <> e <> "\""
+      )
+      enums
+    )
+  , fn <> " s = s"
+  , ""
+  ]
+  where fn = "to" <> name
 
-createFieldEnumToJSONContent :: SchemaName -> Enums -> Text
-createFieldEnumToJSONContent name _enums = "instance Aeson.ToJSON " <> name
+createFieldEnumFromJSONContent :: SchemaName -> Text
+createFieldEnumFromJSONContent name =
+  "instance Aeson.FromJSON "
+    <> name
+    <> " where\n"
+    <> "  parseJSON = Aeson.genericParseJSON Aeson.defaultOptions { Aeson.constructorTagModifier = to"
+    <> name
+    <> " }\n"
+
+createFieldEnumToJSONContent :: SchemaName -> Text
+createFieldEnumToJSONContent name =
+  "instance Aeson.ToJSON "
+    <> name
+    <> " where\n"
+    <> "  toJSON = Aeson.genericToJSON Aeson.defaultOptions { Aeson.constructorTagModifier = to"
+    <> name
+    <> " }\n"
 
 createFieldRecord :: Schema -> GenRecord Text
 createFieldRecord (name, schema) = case JSON.schemaType schema of
