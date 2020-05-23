@@ -31,28 +31,36 @@ createRecord schema = case Desc.schemaType schema of
 createRecordProperties
   :: RecordName -> Maybe Desc -> Desc.Object -> GenRecord (Maybe Text)
 createRecordProperties name desc obj = case Desc.objectProperties obj of
-  (Just props) -> do
-    field <- createField name props
-    let record = createRecordContent name field (Map.size props) desc
-        aeson  = createAesonContent name props
-    pure . pure $ record <> "\n\n" <> aeson
-  _ -> pure Nothing
+  (Just props) -> createRecordPropertiesContent name desc props
+  _            -> pure Nothing
+
+createRecordPropertiesContent
+  :: RecordName -> Maybe Desc -> Desc.ObjectProperties -> GenRecord (Maybe Text)
+createRecordPropertiesContent name desc props = do
+  field <- createField name props
+  let record = createRecordContent name field (Map.size props) desc
+      aeson  = createAesonContent name props
+  pure . pure $ record <> "\n\n" <> aeson
 
 createRecordAdditionalProperties
   :: RecordName -> Maybe Desc -> Desc.Object -> GenRecord (Maybe Text)
 createRecordAdditionalProperties name desc obj =
   case Desc.objectAdditionalProperties obj of
-    (Just (JSON.AdditionalPropertiesSchema schema)) -> do
-      fieldType <- createType name schema True
-      let fieldDesc = descContent 4 (JSON.schemaDescription schema)
-      let field =
-            "    " <> T.concat ["un", name] <> " :: Map Text " <> fieldType
-      pure
-        .  pure
-        $  createRecordContent name (fieldDesc <> field) 1 desc
-        <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+    (Just (JSON.AdditionalPropertiesSchema schema)) ->
+      createRecordAdditionalPropertiesContent name desc schema
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     _ -> pure Nothing
+
+createRecordAdditionalPropertiesContent
+  :: RecordName -> Maybe Desc -> JSON.Schema -> GenRecord (Maybe Text)
+createRecordAdditionalPropertiesContent name desc schema = do
+  fieldType <- createType name schema True
+  let fieldDesc = descContent 4 (JSON.schemaDescription schema)
+  let field = "    " <> T.concat ["un", name] <> " :: Map Text " <> fieldType
+  pure
+    .  pure
+    $  createRecordContent name (fieldDesc <> field) 1 desc
+    <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
 
 createBootRecord :: Desc.Schema -> IO Text
 createBootRecord schema = case Desc.schemaType schema of
@@ -239,40 +247,29 @@ createFieldEnumToJSONContent :: SchemaName -> Enums -> Text
 createFieldEnumToJSONContent name _enums = "instance Aeson.ToJSON " <> name
 
 createFieldRecord :: Schema -> GenRecord Text
-createFieldRecord obj = do
-  fields <- createFieldRecordFields obj
-  field  <- createFieldRecordField obj
-  maybe (error "faild to get JSON object properties nor additionalProperties")
-        pure
-        (fields <|> field)
-
-createFieldRecordFields :: Schema -> GenRecord (Maybe Text)
-createFieldRecordFields (name, schema) = case JSON.schemaType schema of
-  (Just (JSON.ObjectType obj)) -> case JSON.objectProperties obj of
-    (Just props) -> do
-      field <- createField name props
-      let desc   = JSON.schemaDescription schema
-          record = createRecordContent name field (Map.size props) desc
-          aeson  = createAesonContent name props
-      pure . pure $ record <> "\n\n" <> aeson
-    Nothing -> pure Nothing
-  (Just _) -> undefined
-  Nothing  -> pure Nothing
-
-createFieldRecordField :: Schema -> GenRecord (Maybe Text)
-createFieldRecordField (name, schema) = case JSON.schemaType schema of
-  (Just (JSON.ObjectType obj)) -> case JSON.objectAdditionalProperties obj of
-    (Just (JSON.AdditionalPropertiesSchema fieldSchema)) -> do
-      let desc = JSON.schemaDescription schema
-      fieldType <- createType name fieldSchema True
-      let fieldDesc = descContent 4 (JSON.schemaDescription fieldSchema)
-      let field =
-            "    " <> T.concat ["un", name] <> " :: Map Text " <> fieldType
+createFieldRecord (name, schema) = case JSON.schemaType schema of
+  (Just (JSON.ObjectType obj)) -> do
+    let desc = JSON.schemaDescription schema
+    fields <- createFieldRecordFields name desc obj
+    field  <- createFieldRecordField name desc obj
+    maybe
+      (error "faild to get JSON object properties nor additionalProperties")
       pure
-        .  pure
-        $  createRecordContent name (fieldDesc <> field) 1 desc
-        <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+      (fields <|> field)
+  (Just _) -> undefined
+  Nothing  -> undefined
+
+createFieldRecordFields
+  :: SchemaName -> Maybe Desc -> JSON.Object -> GenRecord (Maybe Text)
+createFieldRecordFields name desc obj = case JSON.objectProperties obj of
+  (Just props) -> createRecordPropertiesContent name desc props
+  Nothing      -> pure Nothing
+
+createFieldRecordField
+  :: SchemaName -> Maybe Desc -> JSON.Object -> GenRecord (Maybe Text)
+createFieldRecordField name desc obj =
+  case JSON.objectAdditionalProperties obj of
+    (Just (JSON.AdditionalPropertiesSchema schema)) ->
+      createRecordAdditionalPropertiesContent name desc schema
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing
-  (Just _) -> undefined
-  Nothing  -> pure Nothing
