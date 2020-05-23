@@ -116,7 +116,7 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
   f (Ref ref) =
     let t = maybe False (Set.member name) $ Map.lookup ref refRecs
         s = if t then "{-# SOURCE #-} " else ""
-    in  "import "
+    in  "import qualified "
         <> s
         <> svcName
         <> "."
@@ -124,5 +124,7 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
         <> "."
         <> schemaName
         <> "."
+        <> ref
+        <> " as "
         <> ref
   f RefGenerics = "import GHC.Generics()"
