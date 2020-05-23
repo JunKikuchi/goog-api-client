@@ -16,17 +16,20 @@ import           CodeGen.Types
 import           CodeGen.Util
 
 createRecord :: Desc.Schema -> GenRecord Text
-createRecord schema = case Desc.schemaType schema of
-  (Just (Desc.ObjectType obj)) -> do
-    name <- lift $ get Desc.schemaId "schema id" schema
-    let desc = Desc.schemaDescription schema
-    props    <- createRecordProperties name desc obj
-    addProps <- createRecordAdditionalProperties name desc obj
-    maybe
-      (error "faild to get JSON object properties nor additionalProperties")
-      pure
-      (props <|> addProps)
-  _ -> undefined
+createRecord schema = do
+  name <- lift $ get Desc.schemaId "schema id" schema
+  let desc = Desc.schemaDescription schema
+  schemaType <- get Desc.schemaType "schema type" schema
+  case schemaType of
+    (Desc.ObjectType obj) -> do
+      props    <- createRecordProperties name desc obj
+      addProps <- createRecordAdditionalProperties name desc obj
+      maybe
+        (error "faild to get JSON object properties nor additionalProperties")
+        pure
+        (props <|> addProps)
+    Desc.AnyType -> createAnyRecord name desc
+    _            -> undefined
 
 createRecordProperties
   :: RecordName -> Maybe Desc -> Desc.Object -> GenRecord (Maybe Text)
@@ -62,21 +65,34 @@ createRecordAdditionalPropertiesContent name desc schema = do
     $  createRecordContent name (fieldDesc <> field) 1 desc
     <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
 
+createAnyRecord :: RecordName -> Maybe Desc -> GenRecord Text
+createAnyRecord name desc =
+  pure
+    $  maybe
+         ""
+         (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
+         desc
+    <> "type "
+    <> name
+    <> " = Aeson.Value"
+
 createBootRecord :: Desc.Schema -> IO Text
-createBootRecord schema = case Desc.schemaType schema of
-  (Just (Desc.ObjectType _)) -> do
-    name <- get Desc.schemaId "schema id" schema
-    pure
-      $  "data "
-      <> name
-      <> "\n"
-      <> "instance FromJSON "
-      <> name
-      <> "\n"
-      <> "instance ToJSON "
-      <> name
-      <> "\n"
-  _ -> undefined
+createBootRecord schema = do
+  schemaType <- get Desc.schemaType "schema type" schema
+  name       <- get Desc.schemaId "schema id" schema
+  pure $ case schemaType of
+    (Desc.ObjectType _) ->
+      "data "
+        <> name
+        <> "\n"
+        <> "instance FromJSON "
+        <> name
+        <> "\n"
+        <> "instance ToJSON "
+        <> name
+        <> "\n"
+    Desc.AnyType -> "type " <> name <> " = Aeson.Value"
+    _            -> undefined
 
 createField :: RecordName -> Desc.ObjectProperties -> GenRecord Text
 createField name props = do
