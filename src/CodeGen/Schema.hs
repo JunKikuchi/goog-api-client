@@ -63,8 +63,8 @@ createHsFile
   -> Schema
   -> IO RefRecords
 createHsFile svcName svcVer name moduleName refRecs schema = do
-  (record , jsonObjs) <- runWriterT $ Record.createRecord schema
-  (records, refs    ) <- runWriterT $ Record.createFieldRecords jsonObjs
+  (record, jsonObjs) <- runWriterT $ Record.createRecord moduleName schema
+  (records, refs) <- runWriterT $ Record.createFieldRecords moduleName jsonObjs
   let path    = FP.addExtension (T.unpack name) "hs"
       imports = createImports svcName svcVer name refRecs refs
       content =
