@@ -125,5 +125,4 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
         <> schemaName
         <> "."
         <> ref
-  f RefGAC      = "import qualified GoogApiClient as GAC"
   f RefGenerics = "import GHC.Generics()"

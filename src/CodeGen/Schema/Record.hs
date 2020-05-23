@@ -130,7 +130,7 @@ createType name schema required = do
     (JSON.RefType     ref  ) -> tell [GenRef (Ref ref)] >> pure ref
     (JSON.ArrayType   array) -> createArrayType name schema array
     JSON.BooleanType         -> pure "Bool"
-    JSON.AnyType             -> tell [GenRef RefGAC] >> pure "GAC.Any"
+    JSON.AnyType             -> pure "Aeson.Value"
     JSON.NullType            -> undefined
   if required then pure _type else pure $ "Maybe " <> _type
 
