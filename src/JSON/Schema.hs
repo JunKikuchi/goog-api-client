@@ -114,8 +114,8 @@ instance FromJSON StringFormat where
 data Integer
   = Integer
   { integerMultipleOf :: Maybe Int
-  , integerMinimum :: Maybe Int
-  , integerMaximum :: Maybe Int
+  , integerMinimum :: Maybe Text
+  , integerMaximum :: Maybe Text
   , integerExclusiveMinimum :: Maybe Bool
   , integerExclusiveMaximum :: Maybe Bool
   , integerFormat :: Maybe IntegerFormat

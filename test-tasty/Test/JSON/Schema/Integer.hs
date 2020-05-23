@@ -38,7 +38,7 @@ spec_Test_JSON_Schema_Integer = describe "integer" $ do
   describe "Range" $ do
     let
       json
-        = [r|{ "type": "integer", "minimum": 0, "maximum": 100, "exclusiveMinimum": true, "exclusiveMaximum": true }|]
+        = [r|{ "type": "integer", "minimum": "0", "maximum": "100", "exclusiveMinimum": true, "exclusiveMaximum": true }|]
       schema = Schema
         { schemaType             = Just (IntegerType integerType)
         , schemaTitle            = Nothing
@@ -51,8 +51,8 @@ spec_Test_JSON_Schema_Integer = describe "integer" $ do
         }
       integerType = Integer
         { integerMultipleOf       = Nothing
-        , integerMinimum          = Just 0
-        , integerMaximum          = Just 100
+        , integerMinimum          = Just "0"
+        , integerMaximum          = Just "100"
         , integerExclusiveMinimum = Just True
         , integerExclusiveMaximum = Just True
         , integerFormat           = Nothing
