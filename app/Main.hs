@@ -30,13 +30,7 @@ runCommand (Opts.GenAllCommand a) = do
   forM_ items $ \item -> do
     n <- get DL.directoryItemName "directoryItemName" item
     v <- get DL.directoryItemVersion "directoryItemVersion" item
-    putStrLn
-      .  T.unpack
-      $  "\n\nGenerate(name="
-      <> n
-      <> ", version="
-      <> v
-      <> ")\n"
+    putStrLn . T.unpack $ "\n\nGenerate(name=" <> n <> ", version=" <> v <> ")"
     r <- run $ getRest n v
     either (print . show) (gen dist) r
  where
