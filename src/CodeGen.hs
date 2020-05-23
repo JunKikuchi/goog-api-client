@@ -15,9 +15,8 @@ import qualified CodeGen.Schema                as Schema
 gen :: Dist -> RestDescription -> IO ()
 gen dist desc = withDir dist $ do
   projName <- Proj.projectName desc
-  let projDir = Proj.projectDir projName
-  Proj.clean projDir
   Proj.gen projName
+  let projDir = Proj.projectDir projName
   withDir projDir $ withDir Proj.srcDir $ do
     svcName <- toTitle <$> get Desc.restDescriptionName "name" desc
     svcVer  <- toTitle <$> get Desc.restDescriptionVersion "version" desc

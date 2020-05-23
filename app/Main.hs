@@ -23,6 +23,7 @@ main = do
 
 runCommand :: Opts.Commands -> IO ()
 runCommand (Opts.GenAllCommand a) = do
+  let dist = T.unpack $ Opts.genAllDist a
   ret   <- run $ list name preferred
   dl    <- either (error . show) pure ret
   items <- get DL.directoryListItems "directoryListItems" dl
@@ -37,7 +38,6 @@ runCommand (Opts.GenAllCommand a) = do
       <> v
       <> ")\n"
     r <- run $ getRest n v
-    let dist = T.unpack $ Opts.genAllDist a
     either (print . show) (gen dist) r
  where
   name = case Opts.name a of
@@ -45,6 +45,6 @@ runCommand (Opts.GenAllCommand a) = do
     n@_ -> Just n
   preferred = if Opts.preferred a then Just True else Nothing
 runCommand (Opts.GenApiCommand a) = do
-  ret <- run $ getRest (Opts.api a) (Opts.version a)
   let dist = T.unpack $ Opts.genApiDist a
+  ret <- run $ getRest (Opts.api a) (Opts.version a)
   either (print . show) (gen dist) ret
