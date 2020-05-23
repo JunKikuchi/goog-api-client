@@ -28,8 +28,9 @@ createRecord schema = do
         (error "faild to get JSON object properties nor additionalProperties")
         pure
         (props <|> addProps)
-    Desc.AnyType -> createAnyRecord name desc
-    _            -> undefined
+    (Desc.ArrayType array) -> createArrayRecord name schema array
+    Desc.AnyType           -> createAnyRecord name desc
+    _                      -> undefined
 
 createRecordProperties
   :: RecordName -> Maybe Desc -> Desc.Object -> GenRecord (Maybe Text)
@@ -65,6 +66,22 @@ createRecordAdditionalPropertiesContent name desc schema = do
     $  createRecordContent name (fieldDesc <> field) 1 desc
     <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
 
+createArrayRecord :: SchemaName -> Desc.Schema -> Desc.Array -> GenRecord Text
+createArrayRecord name schema array = case Desc.arrayItems array of
+  (Just (JSON.ArrayItemsItem fieldSchema)) -> do
+    let desc      = Desc.schemaDescription schema
+        enumDescs = Desc.schemaEnumDescriptions schema
+        arrayName = name <> "Item"
+    fieldType <- createType
+      arrayName
+      (fieldSchema { JSON.schemaDescription      = desc
+                   , JSON.schemaEnumDescriptions = enumDescs
+                   }
+      )
+      True
+    pure $ "type " <> name <> " = " <> "[" <> fieldType <> "]"
+  _ -> undefined
+
 createAnyRecord :: RecordName -> Maybe Desc -> GenRecord Text
 createAnyRecord name desc =
   pure
@@ -91,6 +108,8 @@ createBootRecord schema = do
         <> "instance ToJSON "
         <> name
         <> "\n"
+    (Desc.ArrayType _) ->
+      "type " <> name <> " = " <> "[" <> name <> "Item" <> "]"
     Desc.AnyType -> "type " <> name <> " = Aeson.Value"
     _            -> undefined
 
