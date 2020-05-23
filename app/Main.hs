@@ -6,7 +6,6 @@ import           RIO.Text                      as T
 import           Prelude                        ( print
                                                 , putStrLn
                                                 )
-import           Servant.Client                 ( ClientError )
 import           Discovery                      ( list
                                                 , getRest
                                                 , run
@@ -39,7 +38,7 @@ runCommand (Opts.GenAllCommand a) = do
       <> ")\n"
     r <- run $ getRest n v
     let dist = T.unpack $ Opts.genAllDist a
-    either (error . show) (gen dist) r
+    either (print . show) (gen dist) r
  where
   name = case Opts.name a of
     ""  -> Nothing
@@ -48,7 +47,4 @@ runCommand (Opts.GenAllCommand a) = do
 runCommand (Opts.GenApiCommand a) = do
   ret <- run $ getRest (Opts.api a) (Opts.version a)
   let dist = T.unpack $ Opts.genApiDist a
-  either (error . show) (gen dist) ret
-
-put :: (Show a) => Either ClientError a -> IO ()
-put = either (print . ("Error: " ++) . show) print
+  either (print . show) (gen dist) ret
