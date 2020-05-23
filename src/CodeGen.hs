@@ -18,11 +18,10 @@ gen dist desc = withDir dist $ do
   let projDir = Proj.projectDir projName
   Proj.clean projDir
   Proj.gen projName
-
   withDir projDir $ withDir Proj.srcDir $ do
     svcName <- toTitle <$> get Desc.restDescriptionName "name" desc
     svcVer  <- toTitle <$> get Desc.restDescriptionVersion "version" desc
     let svcDir = Proj.serviceDir svcName svcVer
-    withDir svcDir $ do
-      schemas <- get Desc.restDescriptionSchemas "schemas" desc
-      Schema.gen svcName svcVer schemas
+    withDir svcDir $ case Desc.restDescriptionSchemas desc of
+      (Just schemas) -> Schema.gen svcName svcVer schemas
+      _              -> pure ()
