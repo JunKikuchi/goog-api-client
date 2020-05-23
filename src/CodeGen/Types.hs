@@ -15,6 +15,7 @@ type ServiceName    = Text
 type ServiceVersion = Text
 type ModuleName     = Text
 type RecordName     = Text
+type Desc           = Text
 
 type Required = Bool
 

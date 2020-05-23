@@ -18,14 +18,41 @@ import           CodeGen.Util
 createRecord :: Desc.Schema -> GenRecord Text
 createRecord schema = case Desc.schemaType schema of
   (Just (Desc.ObjectType obj)) -> do
-    name  <- lift $ get Desc.schemaId "schema id" schema
-    props <- lift $ get Desc.objectProperties "object properties" obj
-    field <- createField name props
-    let desc   = Desc.schemaDescription schema
-        record = createRecordContent name field (Map.size props) desc
-        aeson  = createAesonContent name props
-    pure $ record <> "\n\n" <> aeson
+    name <- lift $ get Desc.schemaId "schema id" schema
+    let desc = Desc.schemaDescription schema
+    props    <- createRecordProperties name desc obj
+    addProps <- createRecordAdditionalProperties name desc obj
+    maybe
+      (error "faild to get JSON object properties nor additionalProperties")
+      pure
+      (props <|> addProps)
   _ -> undefined
+
+createRecordProperties
+  :: RecordName -> Maybe Desc -> Desc.Object -> GenRecord (Maybe Text)
+createRecordProperties name desc obj = case Desc.objectProperties obj of
+  (Just props) -> do
+    field <- createField name props
+    let record = createRecordContent name field (Map.size props) desc
+        aeson  = createAesonContent name props
+    pure . pure $ record <> "\n\n" <> aeson
+  _ -> pure Nothing
+
+createRecordAdditionalProperties
+  :: RecordName -> Maybe Desc -> Desc.Object -> GenRecord (Maybe Text)
+createRecordAdditionalProperties name desc obj =
+  case Desc.objectAdditionalProperties obj of
+    (Just (JSON.AdditionalPropertiesSchema schema)) -> do
+      fieldType <- createType name schema True
+      let fieldDesc = descContent 4 (JSON.schemaDescription schema)
+      let field =
+            "    " <> T.concat ["un", name] <> " :: Map Text " <> fieldType
+      pure
+        .  pure
+        $  createRecordContent name (fieldDesc <> field) 1 desc
+        <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+    (Just (JSON.AdditionalPropertiesBool _)) -> undefined
+    _ -> pure Nothing
 
 createBootRecord :: Desc.Schema -> IO Text
 createBootRecord schema = case Desc.schemaType schema of
