@@ -10,8 +10,9 @@ import           CodeGen.Types
 import           CodeGen.Util                   ( get )
 
 projectName :: RestDescription -> IO ProjectName
-projectName desc =
-  ("goog-api-client-" <>) <$> get restDescriptionName "name" desc
+projectName desc = do
+  name <- get restDescriptionName "name" desc
+  pure $ "goog-api-client-" <> T.intercalate "-" (T.split (== '_') name)
 
 projectDir :: ProjectName -> ProjectDir
 projectDir = T.unpack
