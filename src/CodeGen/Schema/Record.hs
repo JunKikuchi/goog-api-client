@@ -53,7 +53,19 @@ createRecordAdditionalProperties name desc obj =
     (Just (JSON.AdditionalPropertiesSchema schema)) ->
       createRecordAdditionalPropertiesContent name desc schema
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
-    _ -> pure Nothing
+    Nothing -> createRecordAdditionalPropertiesContent
+      name
+      desc
+      JSON.Schema
+        { JSON.schemaType             = Just JSON.AnyType
+        , JSON.schemaTitle            = Nothing
+        , JSON.schemaDescription      = Nothing
+        , JSON.schemaExamples         = Nothing
+        , JSON.schemaComment          = Nothing
+        , JSON.schemaEnum             = Nothing
+        , JSON.schemaEnumDescriptions = Nothing
+        , JSON.schemaConst            = Nothing
+        }
 
 createRecordAdditionalPropertiesContent
   :: RecordName -> Maybe Desc -> JSON.Schema -> GenRecord (Maybe Text)
