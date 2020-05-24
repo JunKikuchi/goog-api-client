@@ -114,18 +114,34 @@ createImports
 createImports svcName svcVersion name refRecs = fmap f . Set.toList
  where
   f (Ref ref) =
-    let t = maybe False (Set.member name) $ Map.lookup ref refRecs
+    let t = isCyclicImport name ref Set.empty refRecs
         s = if t then "{-# SOURCE #-} " else ""
     in  "import "
-        <> s
-        <> "qualified "
-        <> svcName
-        <> "."
-        <> svcVersion
-        <> "."
-        <> schemaName
-        <> "."
-        <> ref
-        <> " as "
-        <> ref
+          <> s
+          <> "qualified "
+          <> svcName
+          <> "."
+          <> svcVersion
+          <> "."
+          <> schemaName
+          <> "."
+          <> ref
+          <> " as "
+          <> ref
   f RefGenerics = "import GHC.Generics()"
+
+isCyclicImport
+  :: RecordName -> RecordName -> Set RecordName -> RefRecords -> Bool
+isCyclicImport name ref acc refRecs
+  | Set.member ref acc
+  = False
+  | otherwise
+  = maybe
+      False
+      (\rs -> Set.member name rs || any
+        (== True)
+        (fmap (\r -> isCyclicImport name r (Set.insert ref acc) refRecs)
+              (Set.toList rs)
+        )
+      )
+    $ Map.lookup ref refRecs
