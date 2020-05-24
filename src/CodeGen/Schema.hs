@@ -116,8 +116,9 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
   f (Ref ref) =
     let t = maybe False (Set.member name) $ Map.lookup ref refRecs
         s = if t then "{-# SOURCE #-} " else ""
-    in  "import qualified "
+    in  "import "
         <> s
+        <> "qualified "
         <> svcName
         <> "."
         <> svcVersion
