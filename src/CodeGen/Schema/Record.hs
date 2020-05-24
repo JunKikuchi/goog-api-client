@@ -148,7 +148,7 @@ createBootRecord schema = do
 createField
   :: ModuleName -> RecordName -> Desc.ObjectProperties -> GenRecord Text
 createField moduleName name props = do
-  fields <- Map.foldrWithKey cons (pure []) props
+  fields <- Map.foldrWithKey cons (pure mempty) props
   pure $ T.intercalate ",\n\n" fields
  where
   cons s schema acc = do
@@ -191,7 +191,7 @@ createType moduleName name schema required = do
 createEnumType :: Text -> SchemaName -> JSON.Schema -> GenRecord Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
-    let descs = fromMaybe [] $ JSON.schemaEnumDescriptions schema
+    let descs = fromMaybe mempty $ JSON.schemaEnumDescriptions schema
     tell [GenEnum (name, zip jsonEnum descs), GenRef RefGenerics]
     pure name
   _ -> pure defaultType
@@ -247,7 +247,7 @@ createFromJSONContent name props
     <> "\" $ \\v -> "
     <> name
     <> "\n    <$> "
-    <> T.intercalate "\n    <*> " (Map.foldrWithKey cons [] props)
+    <> T.intercalate "\n    <*> " (Map.foldrWithKey cons mempty props)
   where cons s _schema acc = ("v Aeson..:?" <> " \"" <> s <> "\"") : acc
 
 createToJSONContent :: RecordName -> Desc.ObjectProperties -> Text
@@ -258,7 +258,7 @@ createToJSONContent name props
     <> " where\n"
     <> "  toJSON "
     <> name
-    <> " = Aeson.object []"
+    <> " = Aeson.object mempty"
   | otherwise
   = "instance Aeson.ToJSON "
     <> name
@@ -278,7 +278,7 @@ createToJSONContent name props
     ((\(key, argName) -> "\"" <> key <> "\" Aeson..= " <> argName) <$> names)
 
 createFieldRecords :: ModuleName -> [Gen] -> GenRef Text
-createFieldRecords moduleName = fmap unLines . foldr f (pure [])
+createFieldRecords moduleName = fmap unLines . foldr f (pure mempty)
  where
   f :: Gen -> GenRef [Text] -> GenRef [Text]
   f (GenRef ref) acc = do
