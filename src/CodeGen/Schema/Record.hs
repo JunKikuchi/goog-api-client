@@ -52,7 +52,7 @@ createRecordPropertiesContent
 createRecordPropertiesContent moduleName name desc props = do
   field <- createField moduleName name props
   let record = createRecordContent name field (Map.size props) desc
-      aeson  = createAesonContent name props
+      aeson  = createAesonContent moduleName name props
   pure . pure $ record <> "\n\n" <> aeson
 
 createRecordAdditionalProperties
@@ -228,14 +228,19 @@ createRecordContent name field size desc
     <> name
     <> (if size == 0 then "" else "\n  {\n" <> field <> "\n  }")
 
-createAesonContent :: RecordName -> Desc.ObjectProperties -> Text
-createAesonContent name props =
-  createFromJSONContent name props <> "\n\n" <> createToJSONContent name props
+createAesonContent :: ModuleName -> RecordName -> Desc.ObjectProperties -> Text
+createAesonContent moduleName name props =
+  createFromJSONContent moduleName name props
+    <> "\n\n"
+    <> createToJSONContent moduleName name props
 
-createFromJSONContent :: RecordName -> Desc.ObjectProperties -> Text
-createFromJSONContent name props
+createFromJSONContent
+  :: ModuleName -> RecordName -> Desc.ObjectProperties -> Text
+createFromJSONContent moduleName name props
   | Map.size props == 0
   = "instance Aeson.FromJSON "
+    <> moduleName
+    <> "."
     <> name
     <> " where\n  parseJSON = Aeson.withObject \""
     <> name
@@ -244,6 +249,8 @@ createFromJSONContent name props
     <> " else mempty)"
   | otherwise
   = "instance Aeson.FromJSON "
+    <> moduleName
+    <> "."
     <> name
     <> " where\n  parseJSON = Aeson.withObject \""
     <> name
@@ -253,10 +260,12 @@ createFromJSONContent name props
     <> T.intercalate "\n    <*> " (Map.foldrWithKey cons mempty props)
   where cons s _schema acc = ("v Aeson..:?" <> " \"" <> s <> "\"") : acc
 
-createToJSONContent :: RecordName -> Desc.ObjectProperties -> Text
-createToJSONContent name props
+createToJSONContent :: ModuleName -> RecordName -> Desc.ObjectProperties -> Text
+createToJSONContent moduleName name props
   | Map.size props == 0
   = "instance Aeson.ToJSON "
+    <> moduleName
+    <> "."
     <> name
     <> " where\n"
     <> "  toJSON "
@@ -264,6 +273,8 @@ createToJSONContent name props
     <> " = Aeson.object mempty"
   | otherwise
   = "instance Aeson.ToJSON "
+    <> moduleName
+    <> "."
     <> name
     <> " where\n  toJSON(\n    "
     <> name
@@ -289,7 +300,7 @@ createFieldRecords moduleName = fmap unLines . foldr f (pure mempty)
     acc
   f (GenEnum (name, enums)) acc = do
     let a     = createFieldEnumContent name enums
-        aeson = createFieldEnumAesonContent name
+        aeson = createFieldEnumAesonContent moduleName name
     ((a <> "\n\n" <> aeson) :) <$> acc
   f (Gen schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldRecord moduleName schema
@@ -309,13 +320,13 @@ createFieldEnumContent name enums =
          (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> e) enums)
     <> "\n  deriving (Show, Generic)"
 
-createFieldEnumAesonContent :: SchemaName -> Text
-createFieldEnumAesonContent name =
+createFieldEnumAesonContent :: ModuleName -> SchemaName -> Text
+createFieldEnumAesonContent moduleName name =
   createFieldEnumConstructorTagModifier name
     <> "\n"
-    <> createFieldEnumFromJSONContent name
+    <> createFieldEnumFromJSONContent moduleName name
     <> "\n"
-    <> createFieldEnumToJSONContent name
+    <> createFieldEnumToJSONContent moduleName name
 
 createFieldEnumConstructorTagModifier :: SchemaName -> Text
 createFieldEnumConstructorTagModifier name =
@@ -327,18 +338,22 @@ createFieldEnumConstructorTagModifier name =
     <> "\n"
   where fn = "to" <> name
 
-createFieldEnumFromJSONContent :: SchemaName -> Text
-createFieldEnumFromJSONContent name =
+createFieldEnumFromJSONContent :: ModuleName -> SchemaName -> Text
+createFieldEnumFromJSONContent moduleName name =
   "instance Aeson.FromJSON "
+    <> moduleName
+    <> "."
     <> name
     <> " where\n"
     <> "  parseJSON = Aeson.genericParseJSON Aeson.defaultOptions { Aeson.constructorTagModifier = to"
     <> name
     <> " }\n"
 
-createFieldEnumToJSONContent :: SchemaName -> Text
-createFieldEnumToJSONContent name =
+createFieldEnumToJSONContent :: ModuleName -> SchemaName -> Text
+createFieldEnumToJSONContent moduleName name =
   "instance Aeson.ToJSON "
+    <> moduleName
+    <> "."
     <> name
     <> " where\n"
     <> "  toJSON = Aeson.genericToJSON Aeson.defaultOptions { Aeson.constructorTagModifier = to"
