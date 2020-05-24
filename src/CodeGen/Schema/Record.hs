@@ -152,8 +152,8 @@ createField moduleName name props = do
   pure $ T.intercalate ",\n\n" fields
  where
   cons s schema acc = do
-    let camelName = toCamelName s
-        fieldName = unTitle name <> camelName
+    let camelName = name <> toCamelName s
+        fieldName = unTitle camelName
         desc      = descContent 4 $ JSON.schemaDescription schema
     fieldType <- createType moduleName camelName schema False
     let field = "    " <> fieldName <> " :: " <> fieldType
