@@ -207,8 +207,8 @@ createArrayType moduleName name schema array = case JSON.arrayItems array of
         enumDescs      = JSON.schemaEnumDescriptions schema
         newFieldSchema = if isJust enumDescs
           then fieldSchema { JSON.schemaDescription      = desc
-                   , JSON.schemaEnumDescriptions = enumDescs
-                   }
+                           , JSON.schemaEnumDescriptions = enumDescs
+                           }
           else fieldSchema { JSON.schemaDescription = desc }
     fieldType <- createType moduleName name newFieldSchema True
     pure $ "[" <> fieldType <> "]"
@@ -315,7 +315,10 @@ createFieldEnumContent name enums =
     <> "\n  =\n"
     <> T.intercalate
          "\n  |\n"
-         (fmap (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> e) enums)
+         (fmap
+           (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> toCamelName e)
+           enums
+         )
     <> "\n  deriving (Show, Generic)"
 
 createFieldEnumAesonContent :: ModuleName -> SchemaName -> Text
