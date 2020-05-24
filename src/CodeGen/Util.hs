@@ -21,7 +21,7 @@ applyHead f text = maybe text (\(c, t) -> T.cons (f c) t) (T.uncons text)
 
 toCamelName :: Text -> Text
 toCamelName =
-  toTitle . T.concat . fmap T.toTitle . T.split (\c -> c == '_' || c == '-')
+  toTitle . T.concat . fmap T.toTitle . T.split (not . C.isAlphaNum)
 
 withDir :: FilePath -> IO a -> IO a
 withDir dir action = do
