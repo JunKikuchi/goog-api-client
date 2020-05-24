@@ -203,16 +203,14 @@ createArrayType
   :: ModuleName -> SchemaName -> JSON.Schema -> JSON.Array -> GenRecord Text
 createArrayType moduleName name schema array = case JSON.arrayItems array of
   (Just (JSON.ArrayItemsItem fieldSchema)) -> do
-    let desc      = JSON.schemaDescription schema
-        enumDescs = JSON.schemaEnumDescriptions schema
-    fieldType <- createType
-      moduleName
-      name
-      (fieldSchema { JSON.schemaDescription      = desc
+    let desc           = JSON.schemaDescription schema
+        enumDescs      = JSON.schemaEnumDescriptions schema
+        newFieldSchema = if isJust enumDescs
+          then fieldSchema { JSON.schemaDescription      = desc
                    , JSON.schemaEnumDescriptions = enumDescs
                    }
-      )
-      True
+          else fieldSchema { JSON.schemaDescription = desc }
+    fieldType <- createType moduleName name newFieldSchema True
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
