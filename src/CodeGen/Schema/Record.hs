@@ -181,7 +181,10 @@ createType moduleName name schema required = do
     (JSON.NumberType  _) -> pure "Float"
     (JSON.ObjectType _) ->
       tell [Gen (name, schema)] >> pure (moduleName <> "." <> name)
-    (JSON.RefType ref) -> tell [GenRef (Ref ref)] >> pure (ref <> "." <> ref)
+    (JSON.RefType ref) ->
+      if Just ref /= L.headMaybe (reverse (T.split (== '.') moduleName)) -- TODO: ここで RecordName が欲しい
+        then tell [GenRef (Ref ref)] >> pure (ref <> "." <> ref)
+        else pure ref
     (JSON.ArrayType array) -> createArrayType moduleName name schema array
     JSON.BooleanType       -> pure "Bool"
     JSON.AnyType           -> pure "Aeson.Value"
