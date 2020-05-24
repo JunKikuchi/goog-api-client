@@ -316,7 +316,9 @@ createFieldEnumContent name enums =
     <> T.intercalate
          "\n  |\n"
          (fmap
-           (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> toCamelName e)
+           (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> toCamelName
+             (T.toLower e)
+           )
            enums
          )
     <> "\n  deriving (Show, Generic)"
