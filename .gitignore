@@ -1,4 +1,5 @@
 .stack-work/
 *~
-dist
+dist/*
 !dist/goog-api-client.hsfiles
+!dist/buildall.sh
