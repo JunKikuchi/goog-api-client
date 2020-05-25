@@ -197,6 +197,7 @@ createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
     let descs = fromMaybe (L.repeat "") $ JSON.schemaEnumDescriptions schema
     tell [GenEnum (name, zip jsonEnum descs), GenRef RefGenerics]
+    tell [GenRef RefEnum]
     pure name
   _ -> pure defaultType
 
@@ -307,7 +308,7 @@ createFieldRecords moduleName = fmap unLines . foldr f (pure mempty)
     acc
   f (GenEnum (name, enums)) acc = do
     let a     = createFieldEnumContent name enums
-        aeson = createFieldEnumAesonContent moduleName name
+        aeson = createFieldEnumAesonContent moduleName name enums
     ((a <> "\n\n" <> aeson) :) <$> acc
   f (Gen schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldRecord moduleName schema
@@ -332,23 +333,50 @@ createFieldEnumContent name enums =
          )
     <> "\n  deriving (Show, Generic)"
 
-createFieldEnumAesonContent :: ModuleName -> SchemaName -> Text
-createFieldEnumAesonContent moduleName name =
+createFieldEnumAesonContent :: ModuleName -> SchemaName -> Enums -> Text
+createFieldEnumAesonContent moduleName name enums =
   createFieldEnumConstructorTagModifier name
+    <> "\n"
+    <> createFieldEnumConstructorTagModifierValues name enums
     <> "\n"
     <> createFieldEnumFromJSONContent moduleName name
     <> "\n"
     <> createFieldEnumToJSONContent moduleName name
 
 createFieldEnumConstructorTagModifier :: SchemaName -> Text
-createFieldEnumConstructorTagModifier name =
-  fn
-    <> " :: String -> String\n"
-    <> fn
-    <> " = drop "
-    <> (T.pack . show . T.length $ name)
-    <> "\n"
+createFieldEnumConstructorTagModifier name = T.intercalate
+  "\n"
+  [ fn <> " :: String -> String"
+  , fn <> " s = fromMaybe s $ Map.lookup s " <> fn <> "s"
+  , ""
+  ]
   where fn = "to" <> name
+
+createFieldEnumConstructorTagModifierValues :: SchemaName -> Enums -> Text
+createFieldEnumConstructorTagModifierValues name enums = T.intercalate
+  "\n"
+  [ fn <> " :: Map String String"
+  , fn
+  <> " =\n  Map.fromList\n    ["
+  <> T.intercalate
+       "\n    ,"
+       (fmap
+         (\(e, _) ->
+           " (\""
+             <> name
+             <> toCamelName (T.toLower e)
+             <> "\""
+             <> ", "
+             <> "\""
+             <> e
+             <> "\")"
+         )
+         enums
+       )
+  <> "\n    ]"
+  , ""
+  ]
+  where fn = "to" <> name <> "s"
 
 createFieldEnumFromJSONContent :: ModuleName -> SchemaName -> Text
 createFieldEnumFromJSONContent moduleName name =

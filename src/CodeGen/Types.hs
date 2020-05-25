@@ -28,4 +28,4 @@ type Enum       = (SchemaName, Enums)
 type Enums      = [(EnumName, EnumDesc)]
 type EnumName   = Text
 type EnumDesc   = Text
-data Ref        = Ref RecordName | RefGenerics deriving (Eq, Ord, Show)
+data Ref        = Ref RecordName | RefEnum | RefGenerics deriving (Eq, Ord, Show)

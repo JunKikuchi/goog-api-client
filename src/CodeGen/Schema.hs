@@ -117,17 +117,18 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
     let t = isCyclicImport name ref Set.empty refRecs
         s = if t then "{-# SOURCE #-} " else ""
     in  "import "
-          <> s
-          <> "qualified "
-          <> svcName
-          <> "."
-          <> svcVersion
-          <> "."
-          <> schemaName
-          <> "."
-          <> ref
-          <> " as "
-          <> ref
+        <> s
+        <> "qualified "
+        <> svcName
+        <> "."
+        <> svcVersion
+        <> "."
+        <> schemaName
+        <> "."
+        <> ref
+        <> " as "
+        <> ref
+  f RefEnum     = "import qualified RIO.Map as Map"
   f RefGenerics = "import GHC.Generics()"
 
 isCyclicImport
