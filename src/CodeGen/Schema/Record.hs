@@ -90,7 +90,8 @@ createRecordAdditionalPropertiesContent
 createRecordAdditionalPropertiesContent moduleName name desc schema = do
   fieldType <- createType moduleName name schema True
   let fieldDesc = descContent 4 (JSON.schemaDescription schema)
-  let field = "    " <> T.concat ["un", name] <> " :: Map Text " <> fieldType
+  let field =
+        "    " <> T.concat ["un", name] <> " :: Map RIO.Text " <> fieldType
   pure
     .  pure
     $  createRecordContent name (fieldDesc <> field) 1 desc
@@ -176,9 +177,9 @@ createType
 createType moduleName name schema required = do
   jsonType <- get JSON.schemaType "schemaType" schema
   _type    <- case jsonType of
-    (JSON.StringType  _) -> createEnumType "Text" name schema
-    (JSON.IntegerType _) -> pure "Int"
-    (JSON.NumberType  _) -> pure "Float"
+    (JSON.StringType  _) -> createEnumType "RIO.Text" name schema
+    (JSON.IntegerType _) -> pure "RIO.Int"
+    (JSON.NumberType  _) -> pure "RIO.Float"
     (JSON.ObjectType _) ->
       tell [Gen (name, schema)] >> pure (moduleName <> "." <> name)
     (JSON.RefType ref) ->
@@ -186,7 +187,7 @@ createType moduleName name schema required = do
         then tell [GenRef (Ref ref)] >> pure (ref <> "." <> ref)
         else pure ref
     (JSON.ArrayType array) -> createArrayType moduleName name schema array
-    JSON.BooleanType       -> pure "Bool"
+    JSON.BooleanType       -> pure "RIO.Bool"
     JSON.AnyType           -> pure "Aeson.Value"
     JSON.NullType          -> undefined
   if required then pure _type else pure $ "Maybe " <> _type
