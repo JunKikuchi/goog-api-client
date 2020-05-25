@@ -88,7 +88,7 @@ createRecordAdditionalPropertiesContent
   -> JSON.Schema
   -> GenRecord (Maybe Text)
 createRecordAdditionalPropertiesContent moduleName name desc schema = do
-  fieldType <- createType moduleName name schema True
+  fieldType <- createType moduleName (name <> "Value") schema True
   let fieldDesc = descContent 4 (JSON.schemaDescription schema)
   let field =
         "    " <> T.concat ["un", name] <> " :: Map RIO.Text " <> fieldType
