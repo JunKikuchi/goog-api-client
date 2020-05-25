@@ -195,7 +195,7 @@ createType moduleName name schema required = do
 createEnumType :: Text -> SchemaName -> JSON.Schema -> GenRecord Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
-    let descs = fromMaybe mempty $ JSON.schemaEnumDescriptions schema
+    let descs = fromMaybe (L.repeat "") $ JSON.schemaEnumDescriptions schema
     tell [GenEnum (name, zip jsonEnum descs), GenRef RefGenerics]
     pure name
   _ -> pure defaultType
