@@ -243,6 +243,8 @@ createFromJSONContent moduleName name props
     <> " where\n  parseJSON = Aeson.withObject \""
     <> name
     <> "\" (\\v -> if null v then pure "
+    <> moduleName
+    <> "."
     <> name
     <> " else mempty)"
   | otherwise
@@ -253,6 +255,8 @@ createFromJSONContent moduleName name props
     <> " where\n  parseJSON = Aeson.withObject \""
     <> name
     <> "\" $ \\v -> "
+    <> moduleName
+    <> "."
     <> name
     <> "\n    <$> "
     <> T.intercalate "\n    <*> " (Map.foldrWithKey cons mempty props)
@@ -267,6 +271,8 @@ createToJSONContent moduleName name props
     <> name
     <> " where\n"
     <> "  toJSON "
+    <> moduleName
+    <> "."
     <> name
     <> " = Aeson.object mempty"
   | otherwise
@@ -275,6 +281,8 @@ createToJSONContent moduleName name props
     <> "."
     <> name
     <> " where\n  toJSON(\n    "
+    <> moduleName
+    <> "."
     <> name
     <> "\n      "
     <> args
