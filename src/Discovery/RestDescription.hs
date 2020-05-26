@@ -1,11 +1,30 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Discovery.RestDescription where
+module Discovery.RestDescription
+  ( RestDescription(..)
+  , RestDescriptionIcons(..)
+  , RestDescriptionParameters
+  , RestDescriptionSchemas
+  , RestDescriptionMethods
+  , RestDescriptionResources
+  , RestDescriptionAuth(..)
+  , RestDescriptionAuthOAuth2(..)
+  , RestDescriptionAuthOAuth2Scope(..)
+  , RestDescriptionMethod(..)
+  , RestDescriptionMethodMediaUpload(..)
+  , RestDescriptionMethodMediaProtocols(..)
+  , RestDescriptionMethodMediaProtocolsSimple(..)
+  , RestDescriptionMethodMediaProtocolsResumable(..)
+  , RestDescriptionMethodRequest(..)
+  , RestDescriptionMethodResponse(..)
+  , RestDescriptionResource(..)
+  , module Discovery.RestDescription.Schema
+  )
+where
 
 import           RIO
 import           Data.Aeson                     ( (.:?) )
 import qualified Data.Aeson                    as Aeson
 import           Discovery.RestDescription.Schema
-                                                ( Schema )
 
 type Key = Text
 

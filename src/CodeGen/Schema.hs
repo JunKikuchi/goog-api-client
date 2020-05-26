@@ -13,7 +13,6 @@ import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
-import           Discovery.RestDescription.Schema
 import           CodeGen.Schema.Record         as Record
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
