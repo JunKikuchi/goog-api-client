@@ -355,7 +355,7 @@ createFieldEnumConstructorTagModifier :: SchemaName -> Text
 createFieldEnumConstructorTagModifier name = T.intercalate
   "\n"
   [ fn <> " :: String -> String"
-  , fn <> " s = fromMaybe s $ Map.lookup s " <> fn <> "s"
+  , fn <> " s = fromMaybe s $ Map.lookup s " <> fn <> "Map"
   , ""
   ]
   where fn = "to" <> name
@@ -384,7 +384,7 @@ createFieldEnumConstructorTagModifierValues name enums = T.intercalate
   <> "\n    ]"
   , ""
   ]
-  where fn = "to" <> name <> "s"
+  where fn = "to" <> name <> "Map"
 
 createFieldEnumFromJSONContent :: ModuleName -> SchemaName -> Text
 createFieldEnumFromJSONContent moduleName name =
