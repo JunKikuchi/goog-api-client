@@ -1,6 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
-module JSON.Schema where
+module JSON.Schema
+  ( Schema(..)
+  , Type(..)
+  , Pattern
+  , String(..)
+  , StringFormat(..)
+  , Integer(..)
+  , IntegerFormat(..)
+  , Number(..)
+  , NumberFormat(..)
+  , Object(..)
+  , AdditionalProperties(..)
+  , PropertyNames(..)
+  , Dependencies(..)
+  , Array(..)
+  , ArrayItems(..)
+  , ArrayAdditionalItems(..)
+  )
+where
 
 import           RIO                     hiding ( Integer
                                                 , String

@@ -1,5 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Schema.Record where
+module CodeGen.Schema.Record
+  ( createRecord
+  , createBootRecord
+  , createFieldRecords
+  )
+where
 
 import           RIO
 import qualified RIO.List                      as L

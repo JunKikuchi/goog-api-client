@@ -1,5 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Project where
+module CodeGen.Project
+  ( projectName
+  , projectDir
+  , srcDir
+  , serviceDir
+  , gen
+  )
+where
 
 import           RIO
 import           RIO.FilePath                   ( (</>) )

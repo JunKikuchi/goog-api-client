@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Schema where
+module CodeGen.Schema
+  ( gen
+  )
+where
 
 import           Prelude                        ( print )
 import qualified RIO.Directory                 as Dir

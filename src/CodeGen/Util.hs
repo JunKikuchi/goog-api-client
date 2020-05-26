@@ -1,5 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Util where
+module CodeGen.Util
+  ( get
+  , toTitle
+  , unTitle
+  , toCamelName
+  , withDir
+  , unLines
+  )
+where
 
 import           RIO
 import qualified RIO.Char                      as C

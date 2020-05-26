@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen where
+module CodeGen
+  ( gen
+  )
+where
 
 import           RIO
 import           Discovery.RestDescription      ( RestDescription )

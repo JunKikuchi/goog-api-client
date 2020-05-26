@@ -1,5 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Discovery.DirectoryList where
+module Discovery.DirectoryList
+  ( DirectoryList(..)
+  , DirectoryItem(..)
+  , DirectoryItemIcons(..)
+  )
+where
 
 import           RIO
 import           Data.Aeson                     ( FromJSON(..)

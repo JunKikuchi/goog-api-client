@@ -1,5 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Discovery.RestDescription.Schema where
+module Discovery.RestDescription.Schema
+  ( Schema(..)
+  , Type(..)
+  , String(..)
+  , Integer(..)
+  , Number(..)
+  , Object(..)
+  , ObjectProperties
+  , Array(..)
+  , SchemaAnnotations(..)
+  )
+where
 
 import           RIO                     hiding ( Integer
                                                 , String
