@@ -1,8 +1,8 @@
 module CodeGen.Types where
 
 import           RIO                     hiding ( Enum )
-import qualified JSON.Schema                   as JSON
 import           RIO.Writer                     ( WriterT )
+import qualified JSON.Schema                   as JSON
 
 type Dist       = FilePath
 type ProjectDir = FilePath
