@@ -19,7 +19,7 @@ type Desc           = Text
 
 type Required = Bool
 
-type GenRecord  = WriterT [Gen] IO
+type GenData    = WriterT [Gen] IO
 type GenRef     = WriterT (Set Ref) IO
 data Gen        = GenSchema Schema | GenEnum Enum | GenRef Ref deriving Show
 type Schema     = (SchemaName, JSON.Schema)
