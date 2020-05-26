@@ -49,11 +49,19 @@ createRecordPropertiesContent
   -> Maybe Desc
   -> Desc.ObjectProperties
   -> GenRecord (Maybe Text)
-createRecordPropertiesContent moduleName name desc props = do
-  field <- createField moduleName name props
-  let record = createRecordContent name field (Map.size props) desc
-      aeson  = createAesonContent moduleName name props
-  pure . pure $ record <> "\n\n" <> aeson
+createRecordPropertiesContent moduleName name desc props = if Map.null props
+  then do
+    let field =
+          "    " <> T.concat ["un", name] <> " :: Map RIO.Text Aeson.Value"
+        record =
+          createRecordContent name field 1 desc
+            <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+    pure . pure $ record
+  else do
+    field <- createField moduleName name props
+    let record = createRecordContent name field (Map.size props) desc
+        aeson  = createAesonContent moduleName name props
+    pure . pure $ record <> "\n\n" <> aeson
 
 createRecordAdditionalProperties
   :: ModuleName
@@ -90,12 +98,12 @@ createRecordAdditionalPropertiesContent
 createRecordAdditionalPropertiesContent moduleName name desc schema = do
   fieldType <- createType moduleName (name <> "Value") schema True
   let fieldDesc = descContent 4 (JSON.schemaDescription schema)
-  let field =
+      field =
         "    " <> T.concat ["un", name] <> " :: Map RIO.Text " <> fieldType
-  pure
-    .  pure
-    $  createRecordContent name (fieldDesc <> field) 1 desc
-    <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+      record =
+        createRecordContent name (fieldDesc <> field) 1 desc
+          <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+  pure . pure $ record
 
 createArrayRecord
   :: ModuleName -> SchemaName -> Desc.Schema -> Desc.Array -> GenRecord Text
