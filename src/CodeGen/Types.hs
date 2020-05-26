@@ -30,4 +30,4 @@ type EnumName   = Text
 type EnumDesc   = Text
 data Import     = ImportPrelude | ImportEnum | ImportGenerics | Import RecordName deriving (Eq, Ord, Show)
 
-type RefRecords = Map RecordName (Set RecordName)
+type ImportMap  = Map RecordName (Set RecordName)
