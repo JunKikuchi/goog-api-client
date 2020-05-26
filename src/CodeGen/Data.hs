@@ -339,7 +339,7 @@ createFieldData moduleName = fmap unLines . foldr f (pure mempty)
     tell $ Set.singleton ref
     acc
 
-createFieldEnumContent :: SchemaName -> Enums -> Text
+createFieldEnumContent :: SchemaName -> EnumList -> Text
 createFieldEnumContent name enums =
   "data "
     <> name
@@ -354,7 +354,7 @@ createFieldEnumContent name enums =
          )
     <> "\n  deriving (Show, Generic)"
 
-createFieldEnumAesonContent :: ModuleName -> SchemaName -> Enums -> Text
+createFieldEnumAesonContent :: ModuleName -> SchemaName -> EnumList -> Text
 createFieldEnumAesonContent moduleName name enums =
   createFieldEnumConstructorTagModifier name
     <> "\n"
@@ -373,7 +373,7 @@ createFieldEnumConstructorTagModifier name = T.intercalate
   ]
   where fn = "to" <> name
 
-createFieldEnumConstructorTagModifierValues :: SchemaName -> Enums -> Text
+createFieldEnumConstructorTagModifierValues :: SchemaName -> EnumList -> Text
 createFieldEnumConstructorTagModifierValues name enums = T.intercalate
   "\n"
   [ fn <> " :: Map String String"
