@@ -54,6 +54,17 @@ createFile svcName svcVer importMap schema = do
   createHsBootFile name moduleName schema
   createHsFile svcName svcVer name moduleName importMap schema
 
+createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
+createHsBootFile name moduleName schema = do
+  record <- Data.createBootData schema
+
+  let path = FP.addExtension (T.unpack name) "hs-boot"
+      content =
+        flip T.snoc '\n'
+          . unLines
+          $ ["module " <> moduleName <> " where", "import Data.Aeson", record]
+  B.writeFile path (T.encodeUtf8 content)
+
 createHsFile
   :: ServiceName
   -> ServiceVersion
@@ -94,17 +105,6 @@ createHsFile svcName svcVer name moduleName importMap schema = do
   filterRecord :: Import -> Bool
   filterRecord (Import _) = True
   filterRecord _          = False
-
-createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
-createHsBootFile name moduleName schema = do
-  record <- Data.createBootData schema
-
-  let path = FP.addExtension (T.unpack name) "hs-boot"
-      content =
-        flip T.snoc '\n'
-          . unLines
-          $ ["module " <> moduleName <> " where", "import Data.Aeson", record]
-  B.writeFile path (T.encodeUtf8 content)
 
 createImports
   :: ServiceName
