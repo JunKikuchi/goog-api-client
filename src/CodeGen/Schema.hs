@@ -65,36 +65,36 @@ createHsFile
   -> IO RefRecords
 createHsFile svcName svcVer name moduleName refRecs schema = do
   (record , jsonObjs) <- runWriterT $ Data.createData moduleName schema
-  (records, refs    ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
+  (records, imports ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
   let path = FP.addExtension (T.unpack name) "hs"
-      imports =
+      importList =
         L.sort
           $  defaultImports
-          <> createImports svcName svcVer name refRecs refs
+          <> createImports svcName svcVer name refRecs imports
       content =
         flip T.snoc '\n'
           . unLines
           $ [ T.intercalate "\n" defaultExtentions
             , "module " <> moduleName <> " where"
-            , T.intercalate "\n" imports
+            , T.intercalate "\n" importList
             , record
             , records
             ]
   B.writeFile path (T.encodeUtf8 content)
 
-  let names = Set.map unRef . Set.filter filterRecord $ refs
+  let names = Set.map unImport . Set.filter filterRecord $ imports
   pure $ if Set.null names
     then refRecs
     else do
       let refRec = Map.singleton name names
       Map.union refRec refRecs
  where
-  unRef :: Ref -> Text
-  unRef (Ref ref) = ref
-  unRef _         = undefined
-  filterRecord :: Ref -> Bool
-  filterRecord (Ref _) = True
-  filterRecord _       = False
+  unImport :: Import -> Text
+  unImport (Import imports) = imports
+  unImport _                = undefined
+  filterRecord :: Import -> Bool
+  filterRecord (Import _) = True
+  filterRecord _          = False
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
@@ -112,13 +112,15 @@ createImports
   -> ServiceVersion
   -> RecordName
   -> RefRecords
-  -> Set Ref
+  -> Set Import
   -> [Text]
 createImports svcName svcVersion name refRecs = fmap f . Set.toList
  where
-  f RefPrelude = "import RIO"
-  f (Ref ref) =
-    let t = isCyclicImport name ref Set.empty refRecs
+  f ImportPrelude  = "import RIO"
+  f ImportEnum     = "import qualified RIO.Map as Map"
+  f ImportGenerics = "import GHC.Generics()"
+  f (Import recName) =
+    let t = isCyclicImport name recName Set.empty refRecs
         s = if t then "{-# SOURCE #-} " else ""
     in  "import "
         <> s
@@ -129,24 +131,22 @@ createImports svcName svcVersion name refRecs = fmap f . Set.toList
         <> "."
         <> schemaName
         <> "."
-        <> ref
+        <> recName
         <> " as "
-        <> ref
-  f RefEnum     = "import qualified RIO.Map as Map"
-  f RefGenerics = "import GHC.Generics()"
+        <> recName
 
 isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> RefRecords -> Bool
-isCyclicImport name ref acc refRecs
-  | Set.member ref acc
+isCyclicImport name recName acc refRecs
+  | Set.member recName acc
   = False
   | otherwise
   = maybe
       False
       (\rs -> Set.member name rs || any
         (== True)
-        (fmap (\r -> isCyclicImport name r (Set.insert ref acc) refRecs)
+        (fmap (\r -> isCyclicImport name r (Set.insert recName acc) refRecs)
               (Set.toList rs)
         )
       )
-    $ Map.lookup ref refRecs
+    $ Map.lookup recName refRecs

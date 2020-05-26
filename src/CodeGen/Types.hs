@@ -20,14 +20,14 @@ type Desc           = Text
 type Required = Bool
 
 type GenData    = WriterT [Gen] IO
-type GenRef     = WriterT (Set Ref) IO
-data Gen        = GenSchema Schema | GenEnum Enum | GenRef Ref deriving Show
+type GenImport  = WriterT (Set Import) IO
+data Gen        = GenSchema Schema | GenEnum Enum | GenImport Import deriving Show
 type Schema     = (SchemaName, JSON.Schema)
 type SchemaName = Text
 type Enum       = (SchemaName, Enums)
 type Enums      = [(EnumName, EnumDesc)]
 type EnumName   = Text
 type EnumDesc   = Text
-data Ref        = RefPrelude | Ref RecordName | RefEnum | RefGenerics deriving (Eq, Ord, Show)
+data Import     = ImportPrelude | ImportEnum | ImportGenerics | Import RecordName deriving (Eq, Ord, Show)
 
 type RefRecords = Map RecordName (Set RecordName)

@@ -33,7 +33,7 @@ createData moduleName schema = do
 createObject
   :: ModuleName -> RecordName -> Maybe Desc -> Desc.Object -> GenData Text
 createObject moduleName name desc obj = do
-  tell [GenRef RefPrelude]
+  tell [GenImport ImportPrelude]
   props    <- createObjectProperties moduleName name desc obj
   addProps <- createObjectAdditionalProperties moduleName name desc obj
   maybe (error "faild to get JSON object properties nor additionalProperties")
@@ -116,7 +116,7 @@ createObjectAdditionalPropertiesContent moduleName name desc schema = do
 createArray
   :: ModuleName -> RecordName -> Desc.Array -> Desc.Schema -> GenData Text
 createArray moduleName name array schema = do
-  tell [GenRef RefPrelude]
+  tell [GenImport ImportPrelude]
   createArrayRecord moduleName name schema array
 
 createArrayRecord
@@ -205,7 +205,7 @@ createType moduleName name schema required = do
       tell [GenSchema (name, schema)] >> pure (moduleName <> "." <> name)
     (JSON.RefType ref) ->
       if Just ref /= L.headMaybe (reverse (T.split (== '.') moduleName)) -- TODO: ここで RecordName が欲しい
-        then tell [GenRef (Ref ref)] >> pure (ref <> "." <> ref)
+        then tell [GenImport (Import ref)] >> pure (ref <> "." <> ref)
         else pure ref
     (JSON.ArrayType array) -> createArrayType moduleName name schema array
     JSON.BooleanType       -> pure "RIO.Bool"
@@ -217,8 +217,8 @@ createEnumType :: Text -> SchemaName -> JSON.Schema -> GenData Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
     let descs = fromMaybe (L.repeat "") $ JSON.schemaEnumDescriptions schema
-    tell [GenEnum (name, zip jsonEnum descs), GenRef RefGenerics]
-    tell [GenRef RefEnum]
+    tell [GenEnum (name, zip jsonEnum descs), GenImport ImportGenerics]
+    tell [GenImport ImportEnum]
     pure name
   _ -> pure defaultType
 
@@ -320,10 +320,10 @@ createToJSONContent moduleName name props
     "\n    , "
     ((\(key, argName) -> "\"" <> key <> "\" Aeson..= " <> argName) <$> names)
 
-createFieldData :: ModuleName -> [Gen] -> GenRef Text
+createFieldData :: ModuleName -> [Gen] -> GenImport Text
 createFieldData moduleName = fmap unLines . foldr f (pure mempty)
  where
-  f :: Gen -> GenRef [Text] -> GenRef [Text]
+  f :: Gen -> GenImport [Text] -> GenImport [Text]
   f (GenSchema schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldDatum moduleName schema
     if null schemas
@@ -335,7 +335,7 @@ createFieldData moduleName = fmap unLines . foldr f (pure mempty)
     let a     = createFieldEnumContent name enums
         aeson = createFieldEnumAesonContent moduleName name enums
     ((a <> "\n\n" <> aeson) :) <$> acc
-  f (GenRef ref) acc = do
+  f (GenImport ref) acc = do
     tell $ Set.singleton ref
     acc
 
