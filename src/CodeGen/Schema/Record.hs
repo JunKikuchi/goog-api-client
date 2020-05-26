@@ -197,7 +197,7 @@ createType moduleName name schema required = do
     (JSON.IntegerType _) -> pure "RIO.Int"
     (JSON.NumberType  _) -> pure "RIO.Float"
     (JSON.ObjectType _) ->
-      tell [Gen (name, schema)] >> pure (moduleName <> "." <> name)
+      tell [GenSchema (name, schema)] >> pure (moduleName <> "." <> name)
     (JSON.RefType ref) ->
       if Just ref /= L.headMaybe (reverse (T.split (== '.') moduleName)) -- TODO: ここで RecordName が欲しい
         then tell [GenRef (Ref ref)] >> pure (ref <> "." <> ref)
@@ -319,20 +319,20 @@ createFieldRecords :: ModuleName -> [Gen] -> GenRef Text
 createFieldRecords moduleName = fmap unLines . foldr f (pure mempty)
  where
   f :: Gen -> GenRef [Text] -> GenRef [Text]
-  f (GenRef ref) acc = do
-    tell $ Set.singleton ref
-    acc
-  f (GenEnum (name, enums)) acc = do
-    let a     = createFieldEnumContent name enums
-        aeson = createFieldEnumAesonContent moduleName name enums
-    ((a <> "\n\n" <> aeson) :) <$> acc
-  f (Gen schema) acc = do
+  f (GenSchema schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldRecord moduleName schema
     if null schemas
       then (a :) <$> acc
       else do
         b <- createFieldRecords moduleName schemas
         (a :) <$> ((b :) <$> acc)
+  f (GenEnum (name, enums)) acc = do
+    let a     = createFieldEnumContent name enums
+        aeson = createFieldEnumAesonContent moduleName name enums
+    ((a <> "\n\n" <> aeson) :) <$> acc
+  f (GenRef ref) acc = do
+    tell $ Set.singleton ref
+    acc
 
 createFieldEnumContent :: SchemaName -> Enums -> Text
 createFieldEnumContent name enums =
