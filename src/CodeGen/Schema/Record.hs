@@ -22,15 +22,18 @@ createRecord moduleName schema = do
   schemaType <- get Desc.schemaType "schema type" schema
   case schemaType of
     (Desc.ObjectType obj) -> do
+      tell [GenRef RefPrelude]
       props    <- createRecordProperties moduleName name desc obj
       addProps <- createRecordAdditionalProperties moduleName name desc obj
       maybe
         (error "faild to get JSON object properties nor additionalProperties")
         pure
         (props <|> addProps)
-    (Desc.ArrayType array) -> createArrayRecord moduleName name schema array
-    Desc.AnyType           -> createAnyRecord name desc
-    _                      -> undefined
+    (Desc.ArrayType array) -> do
+      tell [GenRef RefPrelude]
+      createArrayRecord moduleName name schema array
+    Desc.AnyType -> createAnyRecord name desc
+    _            -> undefined
 
 createRecordProperties
   :: ModuleName

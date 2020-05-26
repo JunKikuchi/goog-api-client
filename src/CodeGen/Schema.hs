@@ -7,6 +7,7 @@ import qualified RIO.Directory                 as Dir
 import           RIO
 import qualified RIO.ByteString                as B
 import qualified RIO.FilePath                  as FP
+import qualified RIO.List                      as L
 import qualified RIO.Map                       as Map
 import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
@@ -31,7 +32,7 @@ defaultExtentions =
   ]
 
 defaultImports :: [Text]
-defaultImports = ["import RIO", "import qualified Data.Aeson as Aeson"]
+defaultImports = ["import qualified Data.Aeson as Aeson"]
 
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
@@ -65,14 +66,16 @@ createHsFile
 createHsFile svcName svcVer name moduleName refRecs schema = do
   (record, jsonObjs) <- runWriterT $ Record.createRecord moduleName schema
   (records, refs) <- runWriterT $ Record.createFieldRecords moduleName jsonObjs
-  let path    = FP.addExtension (T.unpack name) "hs"
-      imports = createImports svcName svcVer name refRecs refs
+  let path = FP.addExtension (T.unpack name) "hs"
+      imports =
+        L.sort
+          $  defaultImports
+          <> createImports svcName svcVer name refRecs refs
       content =
         flip T.snoc '\n'
           . unLines
           $ [ T.intercalate "\n" defaultExtentions
             , "module " <> moduleName <> " where"
-            , T.intercalate "\n" defaultImports
             , T.intercalate "\n" imports
             , record
             , records
@@ -113,6 +116,7 @@ createImports
   -> [Text]
 createImports svcName svcVersion name refRecs = fmap f . Set.toList
  where
+  f RefPrelude = "import RIO"
   f (Ref ref) =
     let t = isCyclicImport name ref Set.empty refRecs
         s = if t then "{-# SOURCE #-} " else ""
