@@ -137,18 +137,15 @@ createImports svcName svcVersion name importMap = fmap f . Set.toList
 isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> ImportMap -> Bool
 isCyclicImport name recName acc importMap
-  | Set.member rn acc
-  = False
-  | otherwise
-  = maybe
-      False
-      (\rs -> Set.member n rs || any
-        (== True)
-        (fmap (\r -> isCyclicImport name r (Set.insert rn acc) importMap)
-              (Set.toList rs)
-        )
-      )
-    $ Map.lookup rn importMap
+  | Set.member rn acc = False
+  | otherwise         = maybe False f $ Map.lookup rn importMap
  where
   n  = T.toUpper name
   rn = T.toUpper recName
+  f rs = imported || cyclicImport
+   where
+    imported = Set.member n rs
+    cyclicImport =
+      any (== True)
+        . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importMap)
+        $ Set.toList rs
