@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Schema.Record
-  ( createRecord
-  , createBootRecord
-  , createFieldRecords
+module CodeGen.Data
+  ( createData
+  , createBootData
+  , createFieldData
   )
 where
 
@@ -20,44 +20,44 @@ import qualified JSON.Schema                   as JSON
 import           CodeGen.Types
 import           CodeGen.Util
 
-createRecord :: ModuleName -> Desc.Schema -> GenRecord Text
-createRecord moduleName schema = do
+createData :: ModuleName -> Desc.Schema -> GenRecord Text
+createData moduleName schema = do
   name <- lift $ get Desc.schemaId "schema id" schema
   let desc = Desc.schemaDescription schema
   schemaType <- get Desc.schemaType "schema type" schema
   case schemaType of
-    (Desc.ObjectType obj) -> do
-      tell [GenRef RefPrelude]
-      props    <- createRecordProperties moduleName name desc obj
-      addProps <- createRecordAdditionalProperties moduleName name desc obj
-      maybe
-        (error "faild to get JSON object properties nor additionalProperties")
+    (Desc.ObjectType obj  ) -> createObject moduleName name desc obj
+    (Desc.ArrayType  array) -> createArray moduleName name array schema
+    Desc.AnyType            -> createAnyRecord name desc
+    _                       -> undefined
+createObject
+  :: ModuleName -> RecordName -> Maybe Desc -> Desc.Object -> GenRecord Text
+createObject moduleName name desc obj = do
+  tell [GenRef RefPrelude]
+  props    <- createObjectProperties moduleName name desc obj
+  addProps <- createObjectAdditionalProperties moduleName name desc obj
+  maybe (error "faild to get JSON object properties nor additionalProperties")
         pure
         (props <|> addProps)
-    (Desc.ArrayType array) -> do
-      tell [GenRef RefPrelude]
-      createArrayRecord moduleName name schema array
-    Desc.AnyType -> createAnyRecord name desc
-    _            -> undefined
 
-createRecordProperties
+createObjectProperties
   :: ModuleName
   -> RecordName
   -> Maybe Desc
   -> Desc.Object
   -> GenRecord (Maybe Text)
-createRecordProperties moduleName name desc obj =
+createObjectProperties moduleName name desc obj =
   case Desc.objectProperties obj of
-    (Just props) -> createRecordPropertiesContent moduleName name desc props
+    (Just props) -> createObjectPropertiesContent moduleName name desc props
     _            -> pure Nothing
 
-createRecordPropertiesContent
+createObjectPropertiesContent
   :: ModuleName
   -> RecordName
   -> Maybe Desc
   -> Desc.ObjectProperties
   -> GenRecord (Maybe Text)
-createRecordPropertiesContent moduleName name desc props = if Map.null props
+createObjectPropertiesContent moduleName name desc props = if Map.null props
   then do
     let field =
           "    " <> T.concat ["un", name] <> " :: Map RIO.Text Aeson.Value"
@@ -71,18 +71,18 @@ createRecordPropertiesContent moduleName name desc props = if Map.null props
         aeson  = createAesonContent moduleName name props
     pure . pure $ record <> "\n\n" <> aeson
 
-createRecordAdditionalProperties
+createObjectAdditionalProperties
   :: ModuleName
   -> RecordName
   -> Maybe Desc
   -> Desc.Object
   -> GenRecord (Maybe Text)
-createRecordAdditionalProperties moduleName name desc obj =
+createObjectAdditionalProperties moduleName name desc obj =
   case Desc.objectAdditionalProperties obj of
     (Just (JSON.AdditionalPropertiesSchema schema)) ->
-      createRecordAdditionalPropertiesContent moduleName name desc schema
+      createObjectAdditionalPropertiesContent moduleName name desc schema
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
-    Nothing -> createRecordAdditionalPropertiesContent
+    Nothing -> createObjectAdditionalPropertiesContent
       moduleName
       name
       desc
@@ -97,13 +97,13 @@ createRecordAdditionalProperties moduleName name desc obj =
         , JSON.schemaConst            = Nothing
         }
 
-createRecordAdditionalPropertiesContent
+createObjectAdditionalPropertiesContent
   :: ModuleName
   -> RecordName
   -> Maybe Desc
   -> JSON.Schema
   -> GenRecord (Maybe Text)
-createRecordAdditionalPropertiesContent moduleName name desc schema = do
+createObjectAdditionalPropertiesContent moduleName name desc schema = do
   fieldType <- createType moduleName (name <> "Value") schema True
   let fieldDesc = descContent 4 (JSON.schemaDescription schema)
       field =
@@ -112,6 +112,12 @@ createRecordAdditionalPropertiesContent moduleName name desc schema = do
         createRecordContent name (fieldDesc <> field) 1 desc
           <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
   pure . pure $ record
+
+createArray
+  :: ModuleName -> RecordName -> Desc.Array -> Desc.Schema -> GenRecord Text
+createArray moduleName name array schema = do
+  tell [GenRef RefPrelude]
+  createArrayRecord moduleName name schema array
 
 createArrayRecord
   :: ModuleName -> SchemaName -> Desc.Schema -> Desc.Array -> GenRecord Text
@@ -142,8 +148,8 @@ createAnyRecord name desc =
     <> name
     <> " = Aeson.Value"
 
-createBootRecord :: Desc.Schema -> IO Text
-createBootRecord schema = do
+createBootData :: Desc.Schema -> IO Text
+createBootData schema = do
   schemaType <- get Desc.schemaType "schema type" schema
   name       <- get Desc.schemaId "schema id" schema
   pure $ case schemaType of
@@ -315,16 +321,16 @@ createToJSONContent moduleName name props
     "\n    , "
     ((\(key, argName) -> "\"" <> key <> "\" Aeson..= " <> argName) <$> names)
 
-createFieldRecords :: ModuleName -> [Gen] -> GenRef Text
-createFieldRecords moduleName = fmap unLines . foldr f (pure mempty)
+createFieldData :: ModuleName -> [Gen] -> GenRef Text
+createFieldData moduleName = fmap unLines . foldr f (pure mempty)
  where
   f :: Gen -> GenRef [Text] -> GenRef [Text]
   f (GenSchema schema) acc = do
-    (a, schemas) <- lift $ runWriterT $ createFieldRecord moduleName schema
+    (a, schemas) <- lift $ runWriterT $ createFieldDatum moduleName schema
     if null schemas
       then (a :) <$> acc
       else do
-        b <- createFieldRecords moduleName schemas
+        b <- createFieldData moduleName schemas
         (a :) <$> ((b :) <$> acc)
   f (GenEnum (name, enums)) acc = do
     let a     = createFieldEnumContent name enums
@@ -416,12 +422,12 @@ createFieldEnumToJSONContent moduleName name =
     <> name
     <> " }\n"
 
-createFieldRecord :: ModuleName -> Schema -> GenRecord Text
-createFieldRecord moduleName (name, schema) = case JSON.schemaType schema of
+createFieldDatum :: ModuleName -> Schema -> GenRecord Text
+createFieldDatum moduleName (name, schema) = case JSON.schemaType schema of
   (Just (JSON.ObjectType obj)) -> do
     let desc = JSON.schemaDescription schema
-    fields <- createFieldRecordFields moduleName name desc obj
-    field  <- createFieldRecordField moduleName name desc obj
+    fields <- createFieldDatumFields moduleName name desc obj
+    field  <- createFieldDatumField moduleName name desc obj
     maybe
       (error "faild to get JSON object properties nor additionalProperties")
       pure
@@ -429,26 +435,26 @@ createFieldRecord moduleName (name, schema) = case JSON.schemaType schema of
   (Just _) -> undefined
   Nothing  -> undefined
 
-createFieldRecordFields
+createFieldDatumFields
   :: ModuleName
   -> SchemaName
   -> Maybe Desc
   -> JSON.Object
   -> GenRecord (Maybe Text)
-createFieldRecordFields moduleName name desc obj =
+createFieldDatumFields moduleName name desc obj =
   case JSON.objectProperties obj of
-    (Just props) -> createRecordPropertiesContent moduleName name desc props
+    (Just props) -> createObjectPropertiesContent moduleName name desc props
     Nothing      -> pure Nothing
 
-createFieldRecordField
+createFieldDatumField
   :: ModuleName
   -> SchemaName
   -> Maybe Desc
   -> JSON.Object
   -> GenRecord (Maybe Text)
-createFieldRecordField moduleName name desc obj =
+createFieldDatumField moduleName name desc obj =
   case JSON.objectAdditionalProperties obj of
     (Just (JSON.AdditionalPropertiesSchema schema)) ->
-      createRecordAdditionalPropertiesContent moduleName name desc schema
+      createObjectAdditionalPropertiesContent moduleName name desc schema
     (Just (JSON.AdditionalPropertiesBool _)) -> undefined
     Nothing -> pure Nothing

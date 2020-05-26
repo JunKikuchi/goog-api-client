@@ -29,3 +29,5 @@ type Enums      = [(EnumName, EnumDesc)]
 type EnumName   = Text
 type EnumDesc   = Text
 data Ref        = RefPrelude | Ref RecordName | RefEnum | RefGenerics deriving (Eq, Ord, Show)
+
+type RefRecords = Map RecordName (Set RecordName)

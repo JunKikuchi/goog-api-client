@@ -16,7 +16,7 @@ import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
-import           CodeGen.Schema.Record         as Record
+import           CodeGen.Data                  as Data
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
 
@@ -43,8 +43,6 @@ gen svcName svcVer schemas = withDir schemaDir $ do
 
   foldM_ (createFile svcName svcVer) Map.empty schemas
 
-type RefRecords = Map RecordName (Set RecordName)
-
 createFile
   :: ServiceName -> ServiceVersion -> RefRecords -> Schema -> IO RefRecords
 createFile svcName svcVer refRecs schema = do
@@ -66,8 +64,8 @@ createHsFile
   -> Schema
   -> IO RefRecords
 createHsFile svcName svcVer name moduleName refRecs schema = do
-  (record, jsonObjs) <- runWriterT $ Record.createRecord moduleName schema
-  (records, refs) <- runWriterT $ Record.createFieldRecords moduleName jsonObjs
+  (record , jsonObjs) <- runWriterT $ Data.createData moduleName schema
+  (records, refs    ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
   let path = FP.addExtension (T.unpack name) "hs"
       imports =
         L.sort
@@ -100,7 +98,7 @@ createHsFile svcName svcVer name moduleName refRecs schema = do
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
-  record <- Record.createBootRecord schema
+  record <- Data.createBootData schema
 
   let path = FP.addExtension (T.unpack name) "hs-boot"
       content =
