@@ -168,8 +168,7 @@ createBootData schema = do
     Desc.AnyType -> "type " <> name <> " = Aeson.Value"
     _            -> undefined
 
-createField
-  :: ModuleName -> RecordName -> Desc.ObjectProperties -> GenData Text
+createField :: ModuleName -> RecordName -> Desc.ObjectProperties -> GenData Text
 createField moduleName name props = do
   fields <- Map.foldrWithKey cons (pure mempty) props
   pure $ T.intercalate ",\n\n" fields
