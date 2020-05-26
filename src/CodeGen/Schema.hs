@@ -91,17 +91,17 @@ createHsFile svcName svcVer name moduleName importMap schema = do
             , records
             ]
   B.writeFile path (T.encodeUtf8 content)
+  pure $ mergeImports name imports importMap
 
-  let names = Set.map unImport . Set.filter filterRecord $ imports
-  pure $ if Set.null names
-    then importMap
-    else do
-      let imptMap = Map.singleton name names
-      Map.union imptMap importMap
+mergeImports :: RecordName -> Set Import -> ImportMap -> ImportMap
+mergeImports name imports importMap
+  | Set.null names = importMap
+  | otherwise      = Map.union (Map.singleton (T.toUpper name) names) importMap
  where
+  names = Set.map (T.toUpper . unImport) . Set.filter filterRecord $ imports
   unImport :: Import -> Text
-  unImport (Import imports) = imports
-  unImport _                = undefined
+  unImport (Import impt) = T.toUpper impt
+  unImport _             = undefined
   filterRecord :: Import -> Bool
   filterRecord (Import _) = True
   filterRecord _          = False
@@ -137,15 +137,18 @@ createImports svcName svcVersion name importMap = fmap f . Set.toList
 isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> ImportMap -> Bool
 isCyclicImport name recName acc importMap
-  | Set.member recName acc
+  | Set.member rn acc
   = False
   | otherwise
   = maybe
       False
-      (\rs -> Set.member name rs || any
+      (\rs -> Set.member n rs || any
         (== True)
-        (fmap (\r -> isCyclicImport name r (Set.insert recName acc) importMap)
+        (fmap (\r -> isCyclicImport name r (Set.insert rn acc) importMap)
               (Set.toList rs)
         )
       )
-    $ Map.lookup recName importMap
+    $ Map.lookup rn importMap
+ where
+  n  = T.toUpper name
+  rn = T.toUpper recName
