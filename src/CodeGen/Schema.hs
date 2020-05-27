@@ -44,15 +44,15 @@ gen svcName svcVer schemas = withDir schemaDir $ do
   foldM_ (createFile svcName svcVer) Map.empty schemas
 
 createFile
-  :: ServiceName -> ServiceVersion -> ImportMap -> Schema -> IO ImportMap
-createFile svcName svcVer importMap schema = do
+  :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
+createFile svcName svcVer importInfo schema = do
   name <- get schemaId "schemaId" schema
 
   let moduleName = T.intercalate "." [svcName, svcVer, schemaName, name]
   print moduleName
 
   createHsBootFile name moduleName schema
-  createHsFile svcName svcVer name moduleName importMap schema
+  createHsFile svcName svcVer name moduleName importInfo schema
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
@@ -70,17 +70,17 @@ createHsFile
   -> ServiceVersion
   -> RecordName
   -> ModuleName
-  -> ImportMap
+  -> ImportInfo
   -> Schema
-  -> IO ImportMap
-createHsFile svcName svcVer name moduleName importMap schema = do
+  -> IO ImportInfo
+createHsFile svcName svcVer name moduleName importInfo schema = do
   (record , jsonObjs) <- runWriterT $ Data.createData moduleName schema
   (records, imports ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
   let path = FP.addExtension (T.unpack name) "hs"
       importList =
         L.sort
           $  defaultImports
-          <> createImports svcName svcVer name importMap imports
+          <> createImports svcName svcVer name importInfo imports
       content =
         flip T.snoc '\n'
           . unLines
@@ -91,12 +91,11 @@ createHsFile svcName svcVer name moduleName importMap schema = do
             , records
             ]
   B.writeFile path (T.encodeUtf8 content)
-  pure $ mergeImports name imports importMap
+  pure $ mergeImports name imports importInfo
 
-mergeImports :: RecordName -> Set Import -> ImportMap -> ImportMap
-mergeImports name imports importMap
-  | Set.null names = importMap
-  | otherwise      = Map.union (Map.singleton (T.toUpper name) names) importMap
+mergeImports :: RecordName -> Set Import -> ImportInfo -> ImportInfo
+mergeImports name imports importInfo | Set.null names = importInfo
+                                     | otherwise = Map.union imptInfo importInfo
  where
   names = Set.map (T.toUpper . unImport) . Set.filter filterRecord $ imports
   unImport :: Import -> Text
@@ -105,21 +104,24 @@ mergeImports name imports importMap
   filterRecord :: Import -> Bool
   filterRecord (Import _) = True
   filterRecord _          = False
+  imptInfo = Map.singleton (T.toUpper name) imptDetail
+  imptDetail =
+    ImportDetail {importDetailImports = names, importDetailRename = Nothing}
 
 createImports
   :: ServiceName
   -> ServiceVersion
   -> RecordName
-  -> ImportMap
+  -> ImportInfo
   -> Set Import
   -> [Text]
-createImports svcName svcVersion name importMap = fmap f . Set.toList
+createImports svcName svcVersion name importInfo = fmap f . Set.toList
  where
   f ImportPrelude  = "import RIO"
   f ImportEnum     = "import qualified RIO.Map as Map"
   f ImportGenerics = "import GHC.Generics()"
   f (Import recName) =
-    let t = isCyclicImport name recName Set.empty importMap
+    let t = isCyclicImport name recName Set.empty importInfo
         s = if t then "{-# SOURCE #-} " else ""
     in  "import "
         <> s
@@ -135,17 +137,18 @@ createImports svcName svcVersion name importMap = fmap f . Set.toList
         <> recName
 
 isCyclicImport
-  :: RecordName -> RecordName -> Set RecordName -> ImportMap -> Bool
-isCyclicImport name recName acc importMap
+  :: RecordName -> RecordName -> Set RecordName -> ImportInfo -> Bool
+isCyclicImport name recName acc importInfo
   | Set.member rn acc = False
-  | otherwise         = maybe False f $ Map.lookup rn importMap
+  | otherwise         = maybe False f $ Map.lookup rn importInfo
  where
   n  = T.toUpper name
   rn = T.toUpper recName
-  f rs = imported || cyclicImport
+  f impDetail = imported || cyclicImport
    where
-    imported = Set.member n rs
+    imported = Set.member n impts
     cyclicImport =
       any (== True)
-        . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importMap)
-        $ Set.toList rs
+        . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importInfo)
+        $ Set.toList impts
+    impts = importDetailImports impDetail

@@ -30,4 +30,9 @@ type EnumName   = Text
 type EnumDesc   = Text
 data Import     = ImportPrelude | ImportEnum | ImportGenerics | Import RecordName deriving (Eq, Ord, Show)
 
-type ImportMap  = Map RecordName (Set RecordName)
+type ImportInfo = Map RecordName ImportDetail
+data ImportDetail
+  = ImportDetail
+  { importDetailImports :: Set RecordName
+  , importDetailRename  :: Maybe RecordName
+  }
