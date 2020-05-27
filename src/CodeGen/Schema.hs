@@ -48,7 +48,9 @@ createFile
 createFile svcName svcVer importInfo schema = do
   name <- get schemaId "schemaId" schema
 
-  let moduleName = T.intercalate "." [svcName, svcVer, schemaName, name]
+  let t          = Map.member (T.toUpper name) $ importDetailImports importInfo
+      cname      = if t then name <> "'" else name
+      moduleName = T.intercalate "." [svcName, svcVer, schemaName, name]
   print moduleName
 
   createHsBootFile name moduleName schema
