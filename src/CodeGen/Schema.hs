@@ -41,20 +41,23 @@ gen svcName svcVer schemas = withDir schemaDir $ do
   dir <- Dir.getCurrentDirectory
   print dir
 
-  foldM_ (createFile svcName svcVer) Map.empty schemas
+  foldM_
+    (createFile svcName svcVer)
+    ImportInfo {importInfoImports = Map.empty, importInfoRename = Map.empty}
+    schemas
 
 createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
 createFile svcName svcVer importInfo schema = do
   name <- get schemaId "schemaId" schema
 
-  let t          = Map.member (T.toUpper name) $ importDetailImports importInfo
+  let t          = Map.member (T.toUpper name) $ importInfoImports importInfo
       cname      = if t then name <> "'" else name
-      moduleName = T.intercalate "." [svcName, svcVer, schemaName, name]
+      moduleName = T.intercalate "." [svcName, svcVer, schemaName, cname]
   print moduleName
 
-  createHsBootFile name moduleName schema
-  createHsFile svcName svcVer name moduleName importInfo schema
+  createHsBootFile cname moduleName schema
+  createHsFile svcName svcVer cname moduleName importInfo schema
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
@@ -96,8 +99,11 @@ createHsFile svcName svcVer name moduleName importInfo schema = do
   pure $ mergeImports name imports importInfo
 
 mergeImports :: RecordName -> Set Import -> ImportInfo -> ImportInfo
-mergeImports name imports importInfo | Set.null names = importInfo
-                                     | otherwise = Map.union imptInfo importInfo
+mergeImports name imports importInfo
+  | Set.null names = importInfo
+  | otherwise = importInfo
+    { importInfoImports = Map.union imprts $ importInfoImports importInfo
+    }
  where
   names = Set.map (T.toUpper . unImport) . Set.filter filterRecord $ imports
   unImport :: Import -> Text
@@ -106,9 +112,7 @@ mergeImports name imports importInfo | Set.null names = importInfo
   filterRecord :: Import -> Bool
   filterRecord (Import _) = True
   filterRecord _          = False
-  imptInfo = Map.singleton (T.toUpper name) imptDetail
-  imptDetail =
-    ImportDetail {importDetailImports = names, importDetailRename = Nothing}
+  imprts = Map.singleton (T.toUpper name) names
 
 createImports
   :: ServiceName
@@ -142,15 +146,14 @@ isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> ImportInfo -> Bool
 isCyclicImport name recName acc importInfo
   | Set.member rn acc = False
-  | otherwise         = maybe False f $ Map.lookup rn importInfo
+  | otherwise = maybe False f $ Map.lookup rn (importInfoImports importInfo)
  where
   n  = T.toUpper name
   rn = T.toUpper recName
-  f impDetail = imported || cyclicImport
+  f imports = imported || cyclicImport
    where
-    imported = Set.member n impts
+    imported = Set.member n imports
     cyclicImport =
       any (== True)
         . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importInfo)
-        $ Set.toList impts
-    impts = importDetailImports impDetail
+        $ Set.toList imports
