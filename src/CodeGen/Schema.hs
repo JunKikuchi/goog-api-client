@@ -50,14 +50,18 @@ createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
 createFile svcName svcVer importInfo schema = do
   name <- get schemaId "schemaId" schema
-
-  let t          = Map.member (T.toUpper name) $ importInfoImports importInfo
-      cname      = if t then name <> "'" else name
-      moduleName = T.intercalate "." [svcName, svcVer, schemaName, cname]
+  let
+    t         = Map.member (T.toUpper name) $ importInfoImports importInfo
+    cname     = if t then name <> "'" else name
+    imprtInfo = if t
+      then importInfo
+        { importInfoRename = Map.insert name cname $ importInfoRename importInfo
+        }
+      else importInfo
+    moduleName = T.intercalate "." [svcName, svcVer, schemaName, cname]
   print moduleName
-
   createHsBootFile cname moduleName schema
-  createHsFile svcName svcVer cname moduleName importInfo schema
+  createHsFile svcName svcVer cname moduleName imprtInfo schema
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
@@ -100,8 +104,8 @@ createHsFile svcName svcVer name moduleName importInfo schema = do
 
 mergeImports :: RecordName -> Set Import -> ImportInfo -> ImportInfo
 mergeImports name imports importInfo = importInfo
-    { importInfoImports = Map.union imprts $ importInfoImports importInfo
-    }
+  { importInfoImports = Map.union imprts $ importInfoImports importInfo
+  }
  where
   names = Set.map (T.toUpper . unImport) . Set.filter filterRecord $ imports
   unImport :: Import -> Text
@@ -125,20 +129,24 @@ createImports svcName svcVersion name importInfo = fmap f . Set.toList
   f ImportEnum     = "import qualified RIO.Map as Map"
   f ImportGenerics = "import GHC.Generics()"
   f (Import recName) =
-    let t = isCyclicImport name recName Set.empty importInfo
-        s = if t then "{-# SOURCE #-} " else ""
-    in  "import "
-        <> s
-        <> "qualified "
-        <> svcName
-        <> "."
-        <> svcVersion
-        <> "."
-        <> schemaName
-        <> "."
-        <> recName
-        <> " as "
-        <> recName
+    let
+      t = isCyclicImport name recName Set.empty importInfo
+      s = if t then "{-# SOURCE #-} " else ""
+      cname =
+        fromMaybe recName . Map.lookup recName . importInfoRename $ importInfo
+    in
+      "import "
+      <> s
+      <> "qualified "
+      <> svcName
+      <> "."
+      <> svcVersion
+      <> "."
+      <> schemaName
+      <> "."
+      <> cname
+      <> " as "
+      <> recName -- cname にしたいところ
 
 isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> ImportInfo -> Bool
