@@ -99,9 +99,7 @@ createHsFile svcName svcVer name moduleName importInfo schema = do
   pure $ mergeImports name imports importInfo
 
 mergeImports :: RecordName -> Set Import -> ImportInfo -> ImportInfo
-mergeImports name imports importInfo
-  | Set.null names = importInfo
-  | otherwise = importInfo
+mergeImports name imports importInfo = importInfo
     { importInfoImports = Map.union imprts $ importInfoImports importInfo
     }
  where
