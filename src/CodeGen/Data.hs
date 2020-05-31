@@ -30,6 +30,7 @@ createData moduleName schema = do
     (Desc.ArrayType  array) -> createArray moduleName name array schema
     Desc.AnyType            -> createAnyRecord name desc
     _                       -> undefined
+
 createObject
   :: ModuleName -> RecordName -> Maybe Desc -> Desc.Object -> GenData Text
 createObject moduleName name desc obj = do

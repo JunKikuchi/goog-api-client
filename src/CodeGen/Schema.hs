@@ -40,11 +40,10 @@ gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
   dir <- Dir.getCurrentDirectory
   print dir
-
-  foldM_
-    (createFile svcName svcVer)
+  foldM_ (createFile svcName svcVer) empty schemas
+ where
+  empty =
     ImportInfo {importInfoImports = Map.empty, importInfoRename = Map.empty}
-    schemas
 
 createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
@@ -66,7 +65,6 @@ createFile svcName svcVer importInfo schema = do
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
   record <- Data.createBootData schema
-
   let path = FP.addExtension (T.unpack name) "hs-boot"
       content =
         flip T.snoc '\n'
@@ -101,20 +99,6 @@ createHsFile svcName svcVer name moduleName importInfo schema = do
             ]
   B.writeFile path (T.encodeUtf8 content)
   pure $ mergeImports name imports importInfo
-
-mergeImports :: RecordName -> Set Import -> ImportInfo -> ImportInfo
-mergeImports name imports importInfo = importInfo
-  { importInfoImports = Map.union imprts $ importInfoImports importInfo
-  }
- where
-  names = Set.map (T.toUpper . unImport) . Set.filter filterRecord $ imports
-  unImport :: Import -> Text
-  unImport (Import impt) = T.toUpper impt
-  unImport _             = undefined
-  filterRecord :: Import -> Bool
-  filterRecord (Import _) = True
-  filterRecord _          = False
-  imprts = Map.singleton (T.toUpper name) names
 
 createImports
   :: ServiceName
@@ -163,3 +147,17 @@ isCyclicImport name recName acc importInfo
       any (== True)
         . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importInfo)
         $ Set.toList imports
+
+mergeImports :: RecordName -> Set Import -> ImportInfo -> ImportInfo
+mergeImports name imports importInfo = importInfo
+  { importInfoImports = Map.union imprts $ importInfoImports importInfo
+  }
+ where
+  names = Set.map (T.toUpper . unImport) . Set.filter filterRecord $ imports
+  unImport :: Import -> Text
+  unImport (Import impt) = T.toUpper impt
+  unImport _             = undefined
+  filterRecord :: Import -> Bool
+  filterRecord (Import _) = True
+  filterRecord _          = False
+  imprts = Map.singleton (T.toUpper name) names
