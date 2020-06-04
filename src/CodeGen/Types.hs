@@ -1,6 +1,8 @@
 module CodeGen.Types where
 
-import           RIO                     hiding ( Enum )
+import           RIO                     hiding ( Data
+                                                , Enum
+                                                )
 import           RIO.Writer                     ( WriterT )
 import qualified JSON.Schema                   as JSON
 
@@ -19,9 +21,11 @@ type Desc           = Text
 
 type Required = Bool
 
-type GenData    = WriterT [Gen] IO
-type GenImport  = WriterT (Set Import) IO
-data Gen        = GenSchema Schema | GenEnum Enum | GenImport Import deriving Show
+type Gen w     = WriterT w IO
+type GenData   = Gen [Data]
+type GenImport = Gen (Set Import)
+
+data Data       = DataSchema Schema | DataEnum Enum | DataImport Import deriving Show
 type Schema     = (SchemaName, JSON.Schema)
 type SchemaName = Text
 type Enum       = (SchemaName, EnumList)

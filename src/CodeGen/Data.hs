@@ -6,7 +6,7 @@ module CodeGen.Data
   )
 where
 
-import           RIO
+import           RIO                     hiding ( Data )
 import qualified RIO.List                      as L
 import qualified RIO.Map                       as Map
 import qualified RIO.Set                       as Set
@@ -34,7 +34,7 @@ createData moduleName schema = do
 createObject
   :: ModuleName -> RecordName -> Maybe Desc -> Desc.Object -> GenData Text
 createObject moduleName name desc obj = do
-  tell [GenImport ImportPrelude]
+  tell [DataImport ImportPrelude]
   props    <- createObjectProperties moduleName name desc obj
   addProps <- createObjectAdditionalProperties moduleName name desc obj
   maybe (error "faild to get JSON object properties nor additionalProperties")
@@ -117,7 +117,7 @@ createObjectAdditionalPropertiesContent moduleName name desc schema = do
 createArray
   :: ModuleName -> RecordName -> Desc.Array -> Desc.Schema -> GenData Text
 createArray moduleName name array schema = do
-  tell [GenImport ImportPrelude]
+  tell [DataImport ImportPrelude]
   createArrayRecord moduleName name schema array
 
 createArrayRecord
@@ -203,10 +203,10 @@ createType moduleName name schema required = do
     (JSON.IntegerType _) -> pure "RIO.Int"
     (JSON.NumberType  _) -> pure "RIO.Float"
     (JSON.ObjectType _) ->
-      tell [GenSchema (name, schema)] >> pure (moduleName <> "." <> name)
+      tell [DataSchema (name, schema)] >> pure (moduleName <> "." <> name)
     (JSON.RefType ref) ->
       if Just ref /= L.headMaybe (reverse (T.split (== '.') moduleName)) -- TODO: ここで RecordName が欲しい
-        then tell [GenImport (Import ref)] >> pure (ref <> "." <> ref)
+        then tell [DataImport (Import ref)] >> pure (ref <> "." <> ref)
         else pure ref
     (JSON.ArrayType array) -> createArrayType moduleName name schema array
     JSON.BooleanType       -> pure "RIO.Bool"
@@ -218,8 +218,8 @@ createEnumType :: Text -> SchemaName -> JSON.Schema -> GenData Text
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
     let descs = fromMaybe (L.repeat "") $ JSON.schemaEnumDescriptions schema
-    tell [GenEnum (name, zip jsonEnum descs), GenImport ImportGenerics]
-    tell [GenImport ImportEnum]
+    tell [DataEnum (name, zip jsonEnum descs), DataImport ImportGenerics]
+    tell [DataImport ImportEnum]
     pure name
   _ -> pure defaultType
 
@@ -321,22 +321,22 @@ createToJSONContent moduleName name props
     "\n    , "
     ((\(key, argName) -> "\"" <> key <> "\" Aeson..= " <> argName) <$> names)
 
-createFieldData :: ModuleName -> [Gen] -> GenImport Text
+createFieldData :: ModuleName -> [Data] -> GenImport Text
 createFieldData moduleName = fmap unLines . foldr f (pure mempty)
  where
-  f :: Gen -> GenImport [Text] -> GenImport [Text]
-  f (GenSchema schema) acc = do
+  f :: Data -> GenImport [Text] -> GenImport [Text]
+  f (DataSchema schema) acc = do
     (a, schemas) <- lift $ runWriterT $ createFieldDatum moduleName schema
     if null schemas
       then (a :) <$> acc
       else do
         b <- createFieldData moduleName schemas
         (a :) <$> ((b :) <$> acc)
-  f (GenEnum (name, enums)) acc = do
+  f (DataEnum (name, enums)) acc = do
     let a     = createFieldEnumContent name enums
         aeson = createFieldEnumAesonContent moduleName name enums
     ((a <> "\n\n" <> aeson) :) <$> acc
-  f (GenImport ref) acc = do
+  f (DataImport ref) acc = do
     tell $ Set.singleton ref
     acc
 
