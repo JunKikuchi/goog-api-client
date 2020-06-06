@@ -16,7 +16,7 @@ import           Discovery.RestDescription
 import           CodeGen.Types
 import           CodeGen.Util                   ( get )
 
-projectName :: RestDescription -> IO ProjectName
+projectName :: MonadThrow m => RestDescription -> m ProjectName
 projectName desc = do
   name <- get restDescriptionName "name" desc
   pure $ "goog-api-client-" <> T.intercalate "-" (T.split (== '_') name)

@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Util
-  ( get
+  ( CodeGenException(..)
+  , get
   , toTitle
   , unTitle
   , toCamelName
@@ -13,10 +14,10 @@ import           RIO
 import qualified RIO.Char                      as C
 import qualified RIO.Directory                 as Dir
 import qualified RIO.Text                      as T
+import           CodeGen.Types                  ( CodeGenException(..) )
 
-get :: Applicative f => (t -> Maybe a) -> Text -> t -> f a
-get f s desc = maybe (error err) pure (f desc)
-  where err = T.unpack $ T.intercalate " " ["failed to get", s]
+get :: MonadThrow m => (t -> Maybe b) -> Text -> t -> m b
+get f s desc = maybe (throwM $ GetException s) pure (f desc)
 
 toTitle :: Text -> Text
 toTitle = applyHead C.toUpper

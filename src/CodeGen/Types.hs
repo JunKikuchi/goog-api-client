@@ -6,6 +6,9 @@ import           RIO                     hiding ( Data
 import           RIO.Writer                     ( WriterT )
 import qualified JSON.Schema                   as JSON
 
+newtype CodeGenException = GetException Text deriving Show
+instance Exception CodeGenException
+
 type Dist       = FilePath
 type ProjectDir = FilePath
 type SrcDir     = FilePath
@@ -21,7 +24,7 @@ type Desc           = Text
 
 type Required = Bool
 
-type Gen w     = WriterT w IO
+type Gen w     = WriterT w
 type GenData   = Gen [Data]
 type GenImport = Gen (Set Import)
 
