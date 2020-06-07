@@ -15,6 +15,7 @@ import           CodeGen.Util                   ( get
 import qualified CodeGen.Project               as Proj
 import qualified CodeGen.Schema                as Schema
 import qualified CodeGen.Parameter             as Parameter
+import qualified CodeGen.Resource              as Resource
 
 gen :: Dist -> RestDescription -> IO ()
 gen dist desc = withDir dist $ do
@@ -32,3 +33,6 @@ gen dist desc = withDir dist $ do
       case Desc.restDescriptionParameters desc of
         (Just params) -> Parameter.gen svcName svcVer params
         _             -> pure ()
+      case Desc.restDescriptionResources desc of
+        (Just resources) -> Resource.gen svcName svcVer resources
+        _                -> pure ()
