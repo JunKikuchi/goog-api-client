@@ -400,21 +400,19 @@ createFieldEnumContent name enums =
     <> "\n  deriving (Show, Generic)"
 
 createFieldEnumAesonContent :: ModuleName -> SchemaName -> EnumList -> Text
-createFieldEnumAesonContent moduleName name enums =
-  createFieldEnumConstructorTagModifier name
-    <> "\n"
-    <> createFieldEnumConstructorTagModifierValues name enums
-    <> "\n"
-    <> createFieldEnumFromJSONContent moduleName name
-    <> "\n"
-    <> createFieldEnumToJSONContent moduleName name
+createFieldEnumAesonContent moduleName name enums = T.intercalate
+  "\n\n"
+  [ createFieldEnumConstructorTagModifier name
+  , createFieldEnumConstructorTagModifierValues name enums
+  , createFieldEnumFromJSONContent moduleName name
+  , createFieldEnumToJSONContent moduleName name
+  ]
 
 createFieldEnumConstructorTagModifier :: SchemaName -> Text
 createFieldEnumConstructorTagModifier name = T.intercalate
   "\n"
   [ fn <> " :: String -> String"
   , fn <> " s = fromMaybe s $ Map.lookup s " <> fn <> "Map"
-  , ""
   ]
   where fn = "to" <> name
 
@@ -440,7 +438,6 @@ createFieldEnumConstructorTagModifierValues name enums = T.intercalate
          enums
        )
   <> "\n    ]"
-  , ""
   ]
   where fn = "to" <> name <> "Map"
 
@@ -453,7 +450,7 @@ createFieldEnumFromJSONContent moduleName name =
     <> " where\n"
     <> "  parseJSON = Aeson.genericParseJSON Aeson.defaultOptions { Aeson.constructorTagModifier = to"
     <> name
-    <> " }\n"
+    <> " }"
 
 createFieldEnumToJSONContent :: ModuleName -> SchemaName -> Text
 createFieldEnumToJSONContent moduleName name =
@@ -464,7 +461,7 @@ createFieldEnumToJSONContent moduleName name =
     <> " where\n"
     <> "  toJSON = Aeson.genericToJSON Aeson.defaultOptions { Aeson.constructorTagModifier = to"
     <> name
-    <> " }\n"
+    <> " }"
 
 createFieldDatum :: MonadThrow m => ModuleName -> Schema -> GenData m Text
 createFieldDatum moduleName (name, schema) = case JSON.schemaType schema of
