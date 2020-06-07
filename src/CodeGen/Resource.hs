@@ -99,8 +99,11 @@ createQueryParam moduleName =
   where filterQuery (_, schema) = schemaLocation schema == Just "query"
 
 createQueryParamElement :: ModuleName -> (Text, Schema) -> Text
-createQueryParamElement moduleName (name, _schema) =
-  "QueryParam \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name -- TODO: required 対応
+createQueryParamElement moduleName (name, schema) =
+  queryParam <> " \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name -- TODO: required 対応
+ where
+  queryParam | schemaRepeated schema == Just True = "QueryParams"
+             | otherwise                          = "QueryParam"
 
 {-
 createRequestBody :: ModuleName -> RestDescriptionMethodRequest -> [Text]
