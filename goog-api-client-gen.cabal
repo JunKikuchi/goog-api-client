@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 127d535181e668a57392a245b0c539742fe409ee0cb4de5935c767d465531e80
+-- hash: fd6100ca0016a3388cf4fdc5b8ef690d8713c6cf411f6392e3a8df11c73e3c6d
 
 name:           goog-api-client-gen
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       CodeGen
       CodeGen.Data
+      CodeGen.ImportInfo
       CodeGen.Project
       CodeGen.Schema
       CodeGen.Types

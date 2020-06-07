@@ -17,6 +17,7 @@ import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
 import           CodeGen.Data                  as Data
+import qualified CodeGen.ImportInfo            as ImportInfo
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
 
@@ -40,23 +41,17 @@ gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
 gen svcName svcVer schemas = withDir schemaDir $ do
   dir <- Dir.getCurrentDirectory
   print dir
-  foldM_ (createFile svcName svcVer) empty schemas
- where
-  empty =
-    ImportInfo {importInfoImports = Map.empty, importInfoRename = Map.empty}
+  foldM_ (createFile svcName svcVer) ImportInfo.empty schemas
 
 createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
 createFile svcName svcVer importInfo schema = do
   name <- get schemaId "schemaId" schema
   let
-    t         = Map.member (T.toUpper name) $ importInfoImports importInfo
-    cname     = if t then name <> "'" else name
-    imprtInfo = if t
-      then importInfo
-        { importInfoRename = Map.insert name cname $ importInfoRename importInfo
-        }
-      else importInfo
+    t     = ImportInfo.member name importInfo
+    cname = if t then name <> "'" else name
+    imprtInfo =
+      if t then ImportInfo.rename name cname importInfo else importInfo
     moduleName = T.intercalate "." [svcName, svcVer, schemaName, cname]
   print moduleName
   createHsBootFile cname moduleName schema
@@ -80,14 +75,14 @@ createHsFile
   -> ImportInfo
   -> Schema
   -> IO ImportInfo
-createHsFile svcName svcVer name moduleName importInfo schema = do
+createHsFile svcName svcVer recName moduleName importInfo schema = do
   (record , jsonObjs) <- runWriterT $ Data.createData moduleName schema
   (records, imports ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
-  let path = FP.addExtension (T.unpack name) "hs"
+  let path = FP.addExtension (T.unpack recName) "hs"
       importList =
         L.sort
           $  defaultImports
-          <> createImports svcName svcVer name importInfo imports
+          <> createImports svcName svcVer recName importInfo imports
       content =
         flip T.snoc '\n'
           . unLines
@@ -98,7 +93,7 @@ createHsFile svcName svcVer name moduleName importInfo schema = do
             , records
             ]
   B.writeFile path (T.encodeUtf8 content)
-  pure $ mergeImports name imports importInfo
+  pure $ ImportInfo.insert recName imports importInfo
 
 createImports
   :: ServiceName
@@ -136,7 +131,7 @@ isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> ImportInfo -> Bool
 isCyclicImport name recName acc importInfo
   | Set.member rn acc = False
-  | otherwise = maybe False f $ Map.lookup rn (importInfoImports importInfo)
+  | otherwise         = maybe False f $ ImportInfo.lookup recName importInfo
  where
   n  = T.toUpper name
   rn = T.toUpper recName
@@ -147,17 +142,3 @@ isCyclicImport name recName acc importInfo
       any (== True)
         . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importInfo)
         $ Set.toList imports
-
-mergeImports :: RecordName -> Set Import -> ImportInfo -> ImportInfo
-mergeImports name imports importInfo = importInfo
-  { importInfoImports = Map.union imprts $ importInfoImports importInfo
-  }
- where
-  names = Set.map (T.toUpper . unImport) . Set.filter filterRecord $ imports
-  unImport :: Import -> Text
-  unImport (Import impt) = T.toUpper impt
-  unImport _             = undefined
-  filterRecord :: Import -> Bool
-  filterRecord (Import _) = True
-  filterRecord _          = False
-  imprts = Map.singleton (T.toUpper name) names
