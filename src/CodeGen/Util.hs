@@ -7,12 +7,14 @@ module CodeGen.Util
   , toCamelName
   , withDir
   , unLines
+  , descContent
   )
 where
 
 import           RIO
 import qualified RIO.Char                      as C
 import qualified RIO.Directory                 as Dir
+import qualified RIO.List                      as L
 import qualified RIO.Text                      as T
 import           CodeGen.Types                  ( CodeGenException(..) )
 
@@ -38,3 +40,15 @@ withDir dir action = do
 
 unLines :: [Text] -> Text
 unLines = T.intercalate "\n\n" . filter (not . T.null)
+
+descContent :: Int -> Maybe Text -> Text
+descContent n = maybe
+  ""
+  (\s ->
+    indent
+      <> "{-|\n"
+      <> (T.unlines . fmap ((indent <> "  ") <>) . T.lines $ s)
+      <> indent
+      <> "-}\n"
+  )
+  where indent = T.concat $ take n $ L.repeat " "

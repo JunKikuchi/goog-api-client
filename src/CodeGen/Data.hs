@@ -262,18 +262,6 @@ createField moduleName name props = do
     let field = desc <> "    " <> fieldName <> " :: " <> fieldType
     (field :) <$> acc
 
-descContent :: Int -> Maybe Text -> Text
-descContent n = maybe
-  ""
-  (\s ->
-    indent
-      <> "{-|\n"
-      <> (T.unlines . fmap ((indent <> "  ") <>) . T.lines $ s)
-      <> indent
-      <> "-}\n"
-  )
-  where indent = T.concat $ take n $ L.repeat " "
-
 createType
   :: MonadThrow m
   => ModuleName
