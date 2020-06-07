@@ -13,7 +13,6 @@ import qualified RIO.FilePath                  as FP
 import qualified RIO.Map                       as Map
 import qualified RIO.Text                      as T
 import           Discovery.RestDescription
-import           CodeGen.Parameter              ( createParams )
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
 
@@ -66,11 +65,8 @@ createMethod moduleName _name method = do
   methodId    <- get restDescriptionMethodId "method id" method
   path        <- get restDescriptionMethodPath "method path" method
   _httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  let params = restDescriptionMethodParameters method
-  (_contents, _imports) <- maybe (pure ("", ""))
-                                 (createParams moduleName)
-                                 params
   let
+    params    = restDescriptionMethodParameters method
     _request  = restDescriptionMethodRequest method
     _response = restDescriptionMethodResponse method
     desc
