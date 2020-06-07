@@ -38,13 +38,10 @@ defaultImports :: [Text]
 defaultImports = ["import qualified Data.Aeson as Aeson"]
 
 gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
-gen svcName svcVer schemas = do
-  imports <- withDir schemaDir $ do
-    dir <- Dir.getCurrentDirectory
-    print dir
-    importInfo <- foldM (createFile svcName svcVer) ImportInfo.empty schemas
-    pure $ importInfoNames importInfo
-  createSchemaFile svcName svcVer imports
+gen svcName svcVer schemas = withDir schemaDir $ do
+  dir <- Dir.getCurrentDirectory
+  print dir
+  foldM_ (createFile svcName svcVer) ImportInfo.empty schemas
 
 createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
@@ -145,27 +142,3 @@ isCyclicImport name recName acc importInfo
       any (== True)
         . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importInfo)
         $ Set.toList imports
-
-createSchemaFile :: ServiceName -> ServiceVersion -> Imports -> IO ()
-createSchemaFile svcName svcVer imports = do
-  print moduleName
-  B.writeFile path (T.encodeUtf8 content)
- where
-  path    = FP.addExtension (T.unpack schemaName) "hs"
-  content = T.intercalate
-    "\n"
-    [ "module "
-    <> moduleName
-    <> "\n  ( "
-    <> importsContent "\n  , " "module "
-    <> "\n  ) where"
-    , ""
-    , importsContent "\n" "import "
-    , ""
-    ]
-  moduleName = T.intercalate "." [svcName, svcVer, schemaName]
-  importsContent sep h =
-    T.intercalate sep
-      $ fmap
-          (\name -> h <> T.intercalate "." [svcName, svcVer, schemaName, name])
-      $ Set.toList imports
