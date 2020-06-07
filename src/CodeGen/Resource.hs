@@ -52,11 +52,16 @@ createFile svcName svcVer resName resource = do
   name       = toCamelName resName
   path       = FP.addExtension (T.unpack name) "hs"
 
-createMethods :: ModuleName -> Map MethodName RestDescriptionMethod -> IO [Text]
+createMethods
+  :: MonadThrow m
+  => ModuleName
+  -> Map MethodName RestDescriptionMethod
+  -> m [Text]
 createMethods moduleName methods =
   forM (Map.toList methods) (uncurry $ createMethod moduleName)
 
-createMethod :: ModuleName -> MethodName -> RestDescriptionMethod -> IO Text
+createMethod
+  :: MonadThrow m => ModuleName -> MethodName -> RestDescriptionMethod -> m Text
 createMethod moduleName _name method = do
   methodId    <- get restDescriptionMethodId "method id" method
   path        <- get restDescriptionMethodPath "method path" method
