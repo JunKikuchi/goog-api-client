@@ -77,19 +77,19 @@ createMethod moduleName _name method = do
     apiName = toCamelName methodId
     apiPath =
       T.intercalate "\n  :> "
-        $  createPaths moduleName path
+        $  createCapture moduleName path
         <> maybe [] (createQueryParam moduleName) params
         -- <> maybe [] (createRequestBody moduleName)  request
         -- <> maybe [] (createResponseBody moduleName) response
     apiType = "type " <> apiName <> "\n  =  " <> apiPath
   pure $ desc <> apiType
 
-createPaths :: ModuleName -> Text -> [Text]
-createPaths moduleName path =
-  createPathElement moduleName <$> T.split (== '/') path
+createCapture :: ModuleName -> Text -> [Text]
+createCapture moduleName path =
+  createCaptureElement moduleName <$> T.split (== '/') path
 
-createPathElement :: ModuleName -> Text -> Text
-createPathElement moduleName s
+createCaptureElement :: ModuleName -> Text -> Text
+createCaptureElement moduleName s
   | T.take 1 s == "{"
   = "Capture \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name
   | otherwise
