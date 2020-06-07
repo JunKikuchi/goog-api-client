@@ -79,7 +79,7 @@ createHsFile
   -> Schema
   -> IO ImportInfo
 createHsFile svcName svcVer recName moduleName importInfo schema = do
-  (record , jsonObjs) <- runWriterT $ Data.createData moduleName schema
+  (record , jsonObjs) <- runWriterT $ Data.createData moduleName recName schema
   (records, imports ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
   let path = FP.addExtension (T.unpack recName) "hs"
       importList =

@@ -9,11 +9,12 @@ import qualified JSON.Schema                   as JSON
 newtype CodeGenException = GetException Text deriving Show
 instance Exception CodeGenException
 
-type Dist       = FilePath
-type ProjectDir = FilePath
-type SrcDir     = FilePath
-type ServiceDir = FilePath
-type SchemaDir  = FilePath
+type Dist        = FilePath
+type ProjectDir  = FilePath
+type SrcDir      = FilePath
+type ServiceDir  = FilePath
+type SchemaDir   = FilePath
+type PrameterDir = FilePath
 
 type ProjectName    = Text
 type ServiceName    = Text

@@ -20,16 +20,27 @@ import qualified JSON.Schema                   as JSON
 import           CodeGen.Types
 import           CodeGen.Util
 
-createData :: MonadThrow m => ModuleName -> Desc.Schema -> GenData m Text
-createData moduleName schema = do
-  name <- get Desc.schemaId "schema id" schema
-  let desc = Desc.schemaDescription schema
+createData
+  :: MonadThrow m => ModuleName -> RecordName -> Desc.Schema -> GenData m Text
+createData moduleName recName schema = do
+  let name = fromMaybe recName $ Desc.schemaId schema
+      desc = Desc.schemaDescription schema
   schemaType <- get Desc.schemaType "schema type" schema
   case schemaType of
     (Desc.ObjectType obj  ) -> createObject moduleName name desc obj
     (Desc.ArrayType  array) -> createArray moduleName name array schema
     Desc.AnyType            -> createAnyRecord name desc
-    _                       -> undefined
+    (Desc.StringType  _)    -> createString moduleName name desc schema
+    (Desc.IntegerType _)    -> do
+      tell [DataImport ImportPrelude]
+      pure $ createPrimitive name desc "RIO.Int"
+    (Desc.NumberType _) -> do
+      tell [DataImport ImportPrelude]
+      pure $ createPrimitive name desc "RIO.Float"
+    Desc.BooleanType -> do
+      tell [DataImport ImportPrelude]
+      pure $ createPrimitive name desc "RIO.Bool"
+    _ -> undefined
 
 createObject
   :: MonadThrow m
@@ -170,6 +181,48 @@ createAnyRecord name desc =
     <> "type "
     <> name
     <> " = Aeson.Value"
+
+createString
+  :: MonadThrow m
+  => ModuleName
+  -> RecordName
+  -> Maybe Desc
+  -> Desc.Schema
+  -> GenData m Text
+createString moduleName name desc schema = case Desc.schemaEnum schema of
+  (Just descEnum) -> do
+    let descs = fromMaybe (L.repeat "") $ Desc.schemaEnumDescriptions schema
+        enums = zip descEnum descs
+    tell
+      [ DataImport ImportPrelude
+      , DataImport ImportGenerics
+      , DataImport ImportEnum
+      ]
+    let content = createFieldEnumContent name enums
+        aeson   = createFieldEnumAesonContent moduleName name enums
+    pure
+      $  maybe
+           ""
+           (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n"
+           )
+           desc
+      <> content
+      <> "\n\n"
+      <> aeson
+  _ -> do
+    tell [DataImport ImportPrelude]
+    pure $ createPrimitive name desc "RIO.Text"
+
+createPrimitive :: RecordName -> Maybe Desc -> Text -> Text
+createPrimitive name desc type_ =
+  maybe
+      ""
+      (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
+      desc
+    <> "type "
+    <> name
+    <> " = "
+    <> type_
 
 createBootData :: MonadThrow m => Desc.Schema -> m Text
 createBootData schema = do
