@@ -4,12 +4,12 @@ module CodeGen.Resource
   )
 where
 
-import           Prelude                        ( print
-                                                , putStrLn
-                                                )
+import           Prelude                        ( print )
 import qualified RIO.Directory                 as Dir
 
 import           RIO
+import qualified RIO.ByteString                as B
+import qualified RIO.FilePath                  as FP
 import qualified RIO.Map                       as Map
 import qualified RIO.Text                      as T
 import           Discovery.RestDescription
@@ -37,27 +37,34 @@ createFile
   -> IO ()
 createFile svcName svcVer resName resource = do
   print moduleName
-  case restDescriptionResourceMethods resource of
+  contents <- case restDescriptionResourceMethods resource of
     Just methods -> createMethods moduleName methods
-    _            -> pure ()
+    _            -> pure []
   case restDescriptionResourceResources resource of
     Just _resources -> pure () -- print resources
     _               -> pure ()
+  let content =
+        T.intercalate "\n" ["module " <> moduleName <> " where", ""]
+          <> T.intercalate "\n\n" contents
+  B.writeFile path (T.encodeUtf8 content)
  where
   moduleName = T.intercalate "." [svcName, svcVer, resourceName, name]
   name       = toCamelName resName
+  path       = FP.addExtension (T.unpack name) "hs"
 
-createMethods :: ModuleName -> Map MethodName RestDescriptionMethod -> IO ()
+createMethods :: ModuleName -> Map MethodName RestDescriptionMethod -> IO [Text]
 createMethods moduleName methods =
-  forM_ (Map.toList methods) (uncurry $ createMethod moduleName)
+  forM (Map.toList methods) (uncurry $ createMethod moduleName)
 
-createMethod :: ModuleName -> MethodName -> RestDescriptionMethod -> IO ()
-createMethod moduleName name method = do
-  methodId   <- get restDescriptionMethodId "method id" method
-  path       <- get restDescriptionMethodPath "method path" method
-  httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
+createMethod :: ModuleName -> MethodName -> RestDescriptionMethod -> IO Text
+createMethod moduleName _name method = do
+  methodId    <- get restDescriptionMethodId "method id" method
+  path        <- get restDescriptionMethodPath "method path" method
+  _httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
   let params = restDescriptionMethodParameters method
-  (contents, imports) <- maybe (pure ("", "")) (createParams moduleName) params
+  (_contents, _imports) <- maybe (pure ("", ""))
+                                 (createParams moduleName)
+                                 params
   let
     _request  = restDescriptionMethodRequest method
     _response = restDescriptionMethodResponse method
@@ -75,11 +82,7 @@ createMethod moduleName name method = do
         -- <> maybe [] (createRequestBody moduleName)  request
         -- <> maybe [] (createResponseBody moduleName) response
     apiType = "type " <> apiName <> "\n  =  " <> apiPath
-  print name
-  print httpMethod
-  putStrLn $ T.unpack $ desc <> apiType
-  putStrLn $ T.unpack imports
-  putStrLn $ T.unpack contents
+  pure $ desc <> apiType
 
 createPaths :: ModuleName -> Text -> [Text]
 createPaths moduleName path =
