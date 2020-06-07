@@ -65,24 +65,18 @@ createMethod moduleName _name method = do
   methodId    <- get restDescriptionMethodId "method id" method
   path        <- get restDescriptionMethodPath "method path" method
   _httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  let
-    params    = restDescriptionMethodParameters method
-    _request  = restDescriptionMethodRequest method
-    _response = restDescriptionMethodResponse method
-    desc
-      = maybe
-          ""
-          (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n"
-          )
-        $ restDescriptionMethodDescription method
-    apiName = toCamelName methodId
-    apiPath =
-      T.intercalate "\n  :> "
-        $  createCapture moduleName path
-        <> maybe [] (createQueryParam moduleName) params
-        -- <> maybe [] (createRequestBody moduleName)  request
-        -- <> maybe [] (createResponseBody moduleName) response
-    apiType = "type " <> apiName <> "\n  =  " <> apiPath
+  let params    = restDescriptionMethodParameters method
+      _request  = restDescriptionMethodRequest method
+      _response = restDescriptionMethodResponse method
+      desc      = descContent 0 $ restDescriptionMethodDescription method
+      apiName   = toCamelName methodId
+      apiPath =
+        T.intercalate "\n  :>\n"
+          $  createCapture moduleName path
+          <> maybe [] (createQueryParam moduleName) params
+          -- <> maybe [] (createRequestBody moduleName)  request
+          -- <> maybe [] (createResponseBody moduleName) response
+      apiType = "type " <> apiName <> "\n  =\n" <> apiPath
   pure $ desc <> apiType
 
 createCapture :: ModuleName -> Text -> [Text]
@@ -92,9 +86,9 @@ createCapture moduleName path =
 createCaptureElement :: ModuleName -> Text -> Text
 createCaptureElement moduleName s
   | T.take 1 s == "{"
-  = "Capture \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name
+  = "  Capture \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name
   | otherwise
-  = "\"" <> s <> "\""
+  = "  \"" <> s <> "\""
   where name = T.dropEnd 1 . T.drop 1 $ s
 
 createQueryParam :: ModuleName -> RestDescriptionParameters -> [Text]
@@ -104,7 +98,15 @@ createQueryParam moduleName =
 
 createQueryParamElement :: ModuleName -> (Text, Schema) -> Text
 createQueryParamElement moduleName (name, schema) =
-  query <> " \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name -- TODO: required 対応
+  descContent 2 (schemaDescription schema)
+    <> "  "
+    <> query
+    <> " \""
+    <> name
+    <> "\" "
+    <> moduleName
+    <> "."
+    <> toCamelName name -- TODO: required 対応
  where
   query | schemaRepeated schema == Just True = "QueryParams"
         | otherwise                          = "QueryParam"
