@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Parameter where
+module CodeGen.Parameter
+  ( gen
+  , createParams
+  )
+where
 
 import           Prelude                        ( print )
 import qualified RIO.Directory                 as Dir
@@ -25,19 +29,29 @@ gen svcName svcVer params = do
   dir <- Dir.getCurrentDirectory
   print dir
   print moduleName
-  (contents, imports) <- runWriterT $ Map.foldrWithKey cons (pure []) params
+  (contents, imports) <- createParams moduleName params
   let path    = FP.addExtension (T.unpack parameterName) "hs"
       content = T.intercalate
         "\n"
         [ "{-# LANGUAGE DeriveGeneric #-}"
         , "module " <> moduleName <> " where"
         , ""
-        , createImports $ foldr selectImport Set.empty imports
+        , imports
         , ""
-        , createContent contents
+        , contents
         , ""
         ]
   B.writeFile path (T.encodeUtf8 content)
+  where moduleName = T.intercalate "." [svcName, svcVer, parameterName]
+
+createParams
+  :: MonadThrow m => ModuleName -> RestDescriptionParameters -> m (Text, Text)
+createParams moduleName params = do
+  (contents, imports) <- runWriterT $ Map.foldrWithKey cons (pure []) params
+  pure
+    ( createContent contents
+    , createImports $ foldr selectImport Set.empty imports
+    )
  where
   cons
     :: MonadThrow m
@@ -48,7 +62,6 @@ gen svcName svcVer params = do
   cons name schema contents = do
     record <- createData moduleName (toCamelName name) schema
     (record :) <$> contents
-  moduleName = T.intercalate "." [svcName, svcVer, parameterName]
   selectImport (DataImport imprt) = Set.insert imprt
   selectImport _                  = id
 

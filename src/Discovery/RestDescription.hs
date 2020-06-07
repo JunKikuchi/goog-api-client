@@ -126,7 +126,7 @@ data RestDescriptionMethod
   = RestDescriptionMethod
   { restDescriptionMethodId :: Maybe Text
   , restDescriptionMethodDescription :: Maybe Text
-  , restDescriptionMethodParameters :: Maybe (Map Key Schema)
+  , restDescriptionMethodParameters :: Maybe RestDescriptionParameters
   , restDescriptionMethodParameterOrder :: Maybe [Text]
   , restDescriptionMethodScopes :: Maybe [Text]
   , restDescriptionMethodSupportsMediaDownload :: Maybe Bool
