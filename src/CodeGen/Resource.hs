@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Resource where
+module CodeGen.Resource
+  ( gen
+  )
+where
 
 import           Prelude                        ( print
                                                 , putStrLn
@@ -10,6 +13,7 @@ import           RIO
 import qualified RIO.Map                       as Map
 import qualified RIO.Text                      as T
 import           Discovery.RestDescription
+import           CodeGen.Parameter              ( createParams )
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
 
@@ -52,8 +56,9 @@ createMethod moduleName name method = do
   methodId   <- get restDescriptionMethodId "method id" method
   path       <- get restDescriptionMethodPath "method path" method
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
+  let params = restDescriptionMethodParameters method
+  (contents, imports) <- maybe (pure ("", "")) (createParams moduleName) params
   let
-    _params   = restDescriptionMethodParameters method
     _request  = restDescriptionMethodRequest method
     _response = restDescriptionMethodResponse method
     desc
@@ -63,14 +68,18 @@ createMethod moduleName name method = do
           )
         $ restDescriptionMethodDescription method
     apiName = toCamelName methodId
-    apiPath = T.intercalate "\n  :> " $ createPaths moduleName path
-        -- <> maybe [] (createParams moduleName)       params
+    apiPath =
+      T.intercalate "\n  :> "
+        $  createPaths moduleName path
+        <> maybe [] (createQueryParam moduleName) params
         -- <> maybe [] (createRequestBody moduleName)  request
         -- <> maybe [] (createResponseBody moduleName) response
     apiType = "type " <> apiName <> "\n  =  " <> apiPath
   print name
   print httpMethod
   putStrLn $ T.unpack $ desc <> apiType
+  putStrLn $ T.unpack imports
+  putStrLn $ T.unpack contents
 
 createPaths :: ModuleName -> Text -> [Text]
 createPaths moduleName path =
@@ -84,10 +93,16 @@ createPathElement moduleName s
   = "\"" <> s <> "\""
   where name = T.dropEnd 1 . T.drop 1 $ s
 
-{-
-createParams :: ModuleName -> Map Text Schema -> [Text]
-createParams = undefined
+createQueryParam :: ModuleName -> RestDescriptionParameters -> [Text]
+createQueryParam moduleName =
+  fmap (createQueryParamElement moduleName) . filter filterQuery . Map.toList
+  where filterQuery (_, schema) = schemaLocation schema == Just "query"
 
+createQueryParamElement :: ModuleName -> (Text, Schema) -> Text
+createQueryParamElement moduleName (name, _schema) =
+  "QueryParam \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name -- TODO: required 対応
+
+{-
 createRequestBody :: ModuleName -> RestDescriptionMethodRequest -> [Text]
 createRequestBody = undefined
 
