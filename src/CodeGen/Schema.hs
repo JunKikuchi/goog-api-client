@@ -147,8 +147,9 @@ isCyclicImport name recName acc importInfo
         $ Set.toList imports
 
 createSchemaFile :: ServiceName -> ServiceVersion -> Imports -> IO ()
-createSchemaFile svcName svcVer imports = B.writeFile path
-                                                      (T.encodeUtf8 content)
+createSchemaFile svcName svcVer imports = do
+  print moduleName
+  B.writeFile path (T.encodeUtf8 content)
  where
   path    = FP.addExtension (T.unpack schemaName) "hs"
   content = T.intercalate
