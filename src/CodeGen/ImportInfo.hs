@@ -7,8 +7,11 @@ import qualified RIO.Text                      as T
 import           CodeGen.Types
 
 empty :: ImportInfo
-empty =
-  ImportInfo {importInfoImports = Map.empty, importInfoRename = Map.empty}
+empty = ImportInfo
+  { importInfoNames   = Set.empty
+  , importInfoImports = Map.empty
+  , importInfoRename  = Map.empty
+  }
 
 member :: RecordName -> ImportInfo -> Bool
 member name importInfo =
@@ -25,7 +28,8 @@ rename name cname importInfo = importInfo
 
 insert :: RecordName -> Set Import -> ImportInfo -> ImportInfo
 insert name imports importInfo = importInfo
-  { importInfoImports = Map.union newImportInfo $ importInfoImports importInfo
+  { importInfoNames   = Set.insert name $ importInfoNames importInfo
+  , importInfoImports = Map.union newImportInfo $ importInfoImports importInfo
   }
  where
   newImportInfo = Map.singleton (T.toUpper name) names

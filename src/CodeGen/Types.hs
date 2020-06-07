@@ -39,7 +39,8 @@ data Import     = ImportPrelude | ImportEnum | ImportGenerics | Import RecordNam
 
 data ImportInfo
   = ImportInfo
-  { importInfoImports :: Map RecordName Imports
+  { importInfoNames   :: Imports
+  , importInfoImports :: Map RecordName Imports
   , importInfoRename  :: Map RecordName RecordName
   } deriving (Show)
 type Imports = Set RecordName
