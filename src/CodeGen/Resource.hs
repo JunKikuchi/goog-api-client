@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Resource where
 
-import           Prelude                        ( print )
+import           Prelude                        ( print
+                                                , putStrLn
+                                                )
 import qualified RIO.Directory                 as Dir
 
 import           RIO
@@ -29,8 +31,66 @@ createFile
   -> ResourceName
   -> RestDescriptionResource
   -> IO ()
-createFile svcName svcVer resName _resource = do
+createFile svcName svcVer resName resource = do
   print moduleName
+  case restDescriptionResourceMethods resource of
+    Just methods -> createMethods moduleName methods
+    _            -> pure ()
+  case restDescriptionResourceResources resource of
+    Just _resources -> pure () -- print resources
+    _               -> pure ()
  where
-  moduleName =
-    T.intercalate "." [svcName, svcVer, resourceName, toCamelName resName]
+  moduleName = T.intercalate "." [svcName, svcVer, resourceName, name]
+  name       = toCamelName resName
+
+createMethods :: ModuleName -> Map MethodName RestDescriptionMethod -> IO ()
+createMethods moduleName methods =
+  forM_ (Map.toList methods) (uncurry $ createMethod moduleName)
+
+createMethod :: ModuleName -> MethodName -> RestDescriptionMethod -> IO ()
+createMethod moduleName name method = do
+  methodId   <- get restDescriptionMethodId "method id" method
+  path       <- get restDescriptionMethodPath "method path" method
+  httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
+  let
+    _params   = restDescriptionMethodParameters method
+    _request  = restDescriptionMethodRequest method
+    _response = restDescriptionMethodResponse method
+    desc
+      = maybe
+          ""
+          (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n"
+          )
+        $ restDescriptionMethodDescription method
+    apiName = toCamelName methodId
+    apiPath = T.intercalate "\n  :> " $ createPaths moduleName path
+        -- <> maybe [] (createParams moduleName)       params
+        -- <> maybe [] (createRequestBody moduleName)  request
+        -- <> maybe [] (createResponseBody moduleName) response
+    apiType = "type " <> apiName <> "\n  =  " <> apiPath
+  print name
+  print httpMethod
+  putStrLn $ T.unpack $ desc <> apiType
+
+createPaths :: ModuleName -> Text -> [Text]
+createPaths moduleName path =
+  createPathElement moduleName <$> T.split (== '/') path
+
+createPathElement :: ModuleName -> Text -> Text
+createPathElement moduleName s
+  | T.take 1 s == "{"
+  = "Capture \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name
+  | otherwise
+  = "\"" <> s <> "\""
+  where name = T.dropEnd 1 . T.drop 1 $ s
+
+{-
+createParams :: ModuleName -> Map Text Schema -> [Text]
+createParams = undefined
+
+createRequestBody :: ModuleName -> RestDescriptionMethodRequest -> [Text]
+createRequestBody = undefined
+
+createResponseBody :: ModuleName -> RestDescriptionMethodResponse -> [Text]
+createResponseBody = undefined
+-}

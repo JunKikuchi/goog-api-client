@@ -22,6 +22,7 @@ type ServiceVersion = Text
 type ModuleName     = Text
 type RecordName     = Text
 type ResourceName   = Text
+type MethodName     = Text
 type Desc           = Text
 
 type Required = Bool
