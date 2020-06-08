@@ -65,31 +65,42 @@ createMethod moduleName _name method = do
   methodId    <- get restDescriptionMethodId "method id" method
   path        <- get restDescriptionMethodPath "method path" method
   _httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  let params    = restDescriptionMethodParameters method
+  let params    = fromMaybe Map.empty $ restDescriptionMethodParameters method
       _request  = restDescriptionMethodRequest method
       _response = restDescriptionMethodResponse method
       desc      = descContent 0 $ restDescriptionMethodDescription method
       apiName   = toCamelName methodId
       apiPath =
         T.intercalate "\n  :>\n"
-          $  createCapture moduleName path
-          <> maybe [] (createQueryParam moduleName) params
+          $  createCapture moduleName params path
+          <> createQueryParam moduleName params
           -- <> maybe [] (createRequestBody moduleName)  request
           -- <> maybe [] (createResponseBody moduleName) response
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
   pure $ desc <> apiType
 
-createCapture :: ModuleName -> Text -> [Text]
-createCapture moduleName path =
-  createCaptureElement moduleName <$> T.split (== '/') path
+createCapture :: ModuleName -> RestDescriptionParameters -> Text -> [Text]
+createCapture moduleName params path =
+  createCaptureElement moduleName pathParams <$> T.split (== '/') path
+ where
+  pathParams = Map.filter filterPath params
+  filterPath schema = schemaLocation schema == Just "path"
 
-createCaptureElement :: ModuleName -> Text -> Text
-createCaptureElement moduleName s
+createCaptureElement :: ModuleName -> RestDescriptionParameters -> Text -> Text
+createCaptureElement moduleName params s
   | T.take 1 s == "{"
-  = "  Capture \"" <> name <> "\" " <> moduleName <> "." <> toCamelName name
+  = desc
+    <> "  Capture \""
+    <> name
+    <> "\" "
+    <> moduleName
+    <> "."
+    <> toCamelName name
   | otherwise
-  = "  \"" <> s <> "\""
-  where name = T.dropEnd 1 . T.drop 1 $ s
+  = desc <> "  \"" <> s <> "\""
+ where
+  desc = descContent 2 (Map.lookup name params >>= schemaDescription)
+  name = T.dropEnd 1 . T.drop 1 $ s
 
 createQueryParam :: ModuleName -> RestDescriptionParameters -> [Text]
 createQueryParam moduleName =
