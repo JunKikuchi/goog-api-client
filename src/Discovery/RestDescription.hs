@@ -221,8 +221,8 @@ instance Aeson.FromJSON RestDescriptionMethodResponse where
 
 data RestDescriptionResource
   = RestDescriptionResource
-  { restDescriptionResourceMethods :: Maybe (Map Key RestDescriptionMethod)
-  , restDescriptionResourceResources :: Maybe (Map Key RestDescriptionResource)
+  { restDescriptionResourceMethods :: Maybe RestDescriptionMethods
+  , restDescriptionResourceResources :: Maybe RestDescriptionResources
   } deriving Show
 
 instance Aeson.FromJSON RestDescriptionResource where
