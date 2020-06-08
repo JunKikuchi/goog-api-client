@@ -117,9 +117,11 @@ createQueryParamElement moduleName (name, schema) =
     <> "\" "
     <> moduleName
     <> "."
-    <> toCamelName name -- TODO: required 対応
+    <> toCamelName name
  where
-  query | schemaRepeated schema == Just True = "QueryParams"
+  query | schemaRepeated schema == Just True -- TODO: required 対応
+                                             = "QueryParams"
+        | schemaRequired schema == Just True = "QueryParam' '[Required, Strict]"
         | otherwise                          = "QueryParam"
 
 {-
