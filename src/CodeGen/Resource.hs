@@ -37,38 +37,42 @@ defaultImports = ["import Servant.API"]
 
 gen :: ServiceName -> ServiceVersion -> RestDescriptionResources -> IO ()
 gen svcName svcVer resources = withDir resourceDir $ do
-  dir <- Dir.getCurrentDirectory
-  print dir
-  forM_ (Map.toList resources) (uncurry $ createFile svcName svcVer)
+  Dir.getCurrentDirectory >>= print
+  forM_ (Map.toList resources) (uncurry $ createFile svcName svcVer [])
 
 createFile
   :: ServiceName
   -> ServiceVersion
+  -> [ResourceName]
   -> ResourceName
   -> RestDescriptionResource
   -> IO ()
-createFile svcName svcVer resName resource = do
-  print moduleName
-  (contents, imports) <- case restDescriptionResourceMethods resource of
-    Just methods -> runWriterT $ createMethods methods
-    _            -> pure ([], Set.empty)
+createFile svcName svcVer resNames resName resource = do
+  case restDescriptionResourceMethods resource of
+    Just methods -> do
+      print moduleName
+      (contents, imports) <- runWriterT $ createMethods methods
+      let content =
+            T.intercalate "\n"
+              $  defaultExtentions
+              <> [ "module " <> moduleName <> " where"
+                 , ""
+                 , createImports svcName svcVer imports
+                 , ""
+                 ]
+              <> contents
+      B.writeFile path (T.encodeUtf8 content)
+    _ -> pure ()
   case restDescriptionResourceResources resource of
-    Just _resources -> pure () -- print resources
-    _               -> pure ()
-  let content =
-        T.intercalate "\n"
-          $  defaultExtentions
-          <> [ "module " <> moduleName <> " where"
-             , ""
-             , createImports svcName svcVer imports
-             , ""
-             ]
-          <> contents
-  B.writeFile path (T.encodeUtf8 content)
+    Just resources -> withDir (T.unpack name) $ do
+      Dir.getCurrentDirectory >>= print
+      forM_ (Map.toList resources) (uncurry $ createFile svcName svcVer [name])
+    _ -> pure ()
  where
-  moduleName = T.intercalate "." [svcName, svcVer, resourceName, name]
-  name       = toCamelName resName
-  path       = FP.addExtension (T.unpack name) "hs"
+  moduleName =
+    T.intercalate "." $ [svcName, svcVer, resourceName] <> resNames <> [name]
+  name = toCamelName resName
+  path = FP.addExtension (T.unpack name) "hs"
 
 createMethods
   :: MonadThrow m => Map MethodName RestDescriptionMethod -> GenImport m [Text]
