@@ -173,14 +173,7 @@ createArrayRecord moduleName name schema array = case Desc.arrayItems array of
 
 createAnyRecord :: MonadThrow m => RecordName -> Maybe Desc -> GenData m Text
 createAnyRecord name desc =
-  pure
-    $  maybe
-         ""
-         (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
-         desc
-    <> "type "
-    <> name
-    <> " = Aeson.Value"
+  pure $ descContent 0 desc <> "type " <> name <> " = Aeson.Value"
 
 createString
   :: MonadThrow m
@@ -200,29 +193,14 @@ createString moduleName name desc schema = case Desc.schemaEnum schema of
       ]
     let content = createFieldEnumContent name enums
         aeson   = createFieldEnumAesonContent moduleName name enums
-    pure
-      $  maybe
-           ""
-           (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n"
-           )
-           desc
-      <> content
-      <> "\n\n"
-      <> aeson
+    pure $ descContent 0 desc <> content <> "\n\n" <> aeson
   _ -> do
     tell [DataImport ImportPrelude]
     pure $ createPrimitive name desc "RIO.Text"
 
 createPrimitive :: RecordName -> Maybe Desc -> Text -> Text
 createPrimitive name desc type_ =
-  maybe
-      ""
-      (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
-      desc
-    <> "type "
-    <> name
-    <> " = "
-    <> type_
+  descContent 0 desc <> "type " <> name <> " = " <> type_
 
 createBootData :: MonadThrow m => Desc.Schema -> m Text
 createBootData schema = do
@@ -324,11 +302,8 @@ createArrayType moduleName name schema array = case JSON.arrayItems array of
   _ -> undefined
 
 createRecordContent :: RecordName -> Text -> Int -> Maybe Text -> Text
-createRecordContent name field size desc
-  = maybe
-      ""
-      (\s -> "{-|\n" <> (T.unlines . fmap ("  " <>) . T.lines $ s) <> "-}\n")
-      desc
+createRecordContent name field size desc =
+  descContent 0 desc
     <> (if size == 1 then "newtype " else "data ")
     <> name
     <> " = "
