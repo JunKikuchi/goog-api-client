@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Schema
   ( gen
+  , createImport
   )
 where
 
@@ -104,28 +105,31 @@ createImports
   -> [Text]
 createImports svcName svcVersion name importInfo = fmap f . Set.toList
  where
-  f ImportPrelude  = "import RIO"
-  f ImportEnum     = "import qualified RIO.Map as Map"
-  f ImportGenerics = "import GHC.Generics()"
-  f (Import recName) =
-    let
-      t = isCyclicImport name recName Set.empty importInfo
-      s = if t then "{-# SOURCE #-} " else ""
-      cname =
-        fromMaybe recName . Map.lookup recName . importInfoRename $ importInfo
-    in
-      "import "
-      <> s
-      <> "qualified "
-      <> svcName
-      <> "."
-      <> svcVersion
-      <> "."
-      <> schemaName
-      <> "."
-      <> cname
-      <> " as "
-      <> recName -- cname にしたいところ
+  f ImportPrelude    = "import RIO"
+  f ImportEnum       = "import qualified RIO.Map as Map"
+  f ImportGenerics   = "import GHC.Generics()"
+  f (Import recName) = createImport svcName svcVersion cname recName t
+   where
+    t = isCyclicImport name recName Set.empty importInfo
+    cname =
+      fromMaybe recName . Map.lookup recName . importInfoRename $ importInfo
+
+createImport
+  :: ServiceName -> ServiceVersion -> RecordName -> RecordName -> Bool -> Text
+createImport svcName svcVersion cname recName t =
+  "import "
+    <> s
+    <> "qualified "
+    <> svcName
+    <> "."
+    <> svcVersion
+    <> "."
+    <> schemaName
+    <> "."
+    <> cname
+    <> " as "
+    <> recName -- cname にしたいところ
+  where s = if t then "{-# SOURCE #-} " else ""
 
 isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> ImportInfo -> Bool
