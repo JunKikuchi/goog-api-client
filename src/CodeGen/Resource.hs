@@ -22,6 +22,8 @@ import           CodeGen.Schema                 ( createImport )
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
 
+type ApiName = Text
+
 resourceName :: Text
 resourceName = "Resource"
 
@@ -51,13 +53,17 @@ createFile svcName svcVer resNames resName resource = do
   case restDescriptionResourceMethods resource of
     Just methods -> do
       print moduleName
-      (contents, imports) <- runWriterT $ createMethods methods
-      let content =
+      (cs, imports) <- runWriterT $ createMethods methods
+      let (apiNames, contents) = L.unzip cs
+          api                  = createApi apiNames
+          content =
             T.intercalate "\n"
               $  defaultExtentions
               <> [ "module " <> moduleName <> " where"
                  , ""
                  , createImports svcName svcVer imports
+                 , ""
+                 , api
                  , ""
                  ]
               <> contents
@@ -66,7 +72,8 @@ createFile svcName svcVer resNames resName resource = do
   case restDescriptionResourceResources resource of
     Just resources -> withDir (T.unpack name) $ do
       Dir.getCurrentDirectory >>= print
-      forM_ (Map.toList resources) (uncurry $ createFile svcName svcVer [name])
+      forM_ (Map.toList resources)
+            (uncurry $ createFile svcName svcVer (resNames <> [name]))
     _ -> pure ()
  where
   moduleName =
@@ -74,12 +81,21 @@ createFile svcName svcVer resNames resName resource = do
   name = toCamelName resName
   path = FP.addExtension (T.unpack name) "hs"
 
+createApi :: [ApiName] -> Text
+createApi apiNames = "type API\n  =    " <> api
+  where api = T.intercalate "\n  :<|> " apiNames
+
 createMethods
-  :: MonadThrow m => Map MethodName RestDescriptionMethod -> GenImport m [Text]
+  :: MonadThrow m
+  => Map MethodName RestDescriptionMethod
+  -> GenImport m [(ApiName, Text)]
 createMethods methods = forM (Map.toList methods) (uncurry createMethod)
 
 createMethod
-  :: MonadThrow m => MethodName -> RestDescriptionMethod -> GenImport m Text
+  :: MonadThrow m
+  => MethodName
+  -> RestDescriptionMethod
+  -> GenImport m (ApiName, Text)
 createMethod _name method = do
   methodId   <- get restDescriptionMethodId "method id" method
   path       <- get restDescriptionMethodPath "method path" method
@@ -95,7 +111,7 @@ createMethod _name method = do
     apiName = toCamelName methodId
     apiPath = T.intercalate "\n  :>\n" $ captures <> queries <> reqBody <> verb
     apiType = "type " <> apiName <> "\n  =\n" <> apiPath
-  pure $ desc <> apiType <> "\n"
+  pure (apiName, desc <> apiType <> "\n")
   where params = fromMaybe Map.empty $ restDescriptionMethodParameters method
 
 createCapture
