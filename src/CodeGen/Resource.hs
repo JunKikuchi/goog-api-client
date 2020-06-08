@@ -37,7 +37,7 @@ createFile
 createFile svcName svcVer resName resource = do
   print moduleName
   contents <- case restDescriptionResourceMethods resource of
-    Just methods -> createMethods moduleName methods
+    Just methods -> createMethods methods
     _            -> pure []
   case restDescriptionResourceResources resource of
     Just _resources -> pure () -- print resources
@@ -52,16 +52,11 @@ createFile svcName svcVer resName resource = do
   path       = FP.addExtension (T.unpack name) "hs"
 
 createMethods
-  :: MonadThrow m
-  => ModuleName
-  -> Map MethodName RestDescriptionMethod
-  -> m [Text]
-createMethods moduleName methods =
-  forM (Map.toList methods) (uncurry $ createMethod moduleName)
+  :: MonadThrow m => Map MethodName RestDescriptionMethod -> m [Text]
+createMethods methods = forM (Map.toList methods) (uncurry createMethod)
 
-createMethod
-  :: MonadThrow m => ModuleName -> MethodName -> RestDescriptionMethod -> m Text
-createMethod moduleName _name method = do
+createMethod :: MonadThrow m => MethodName -> RestDescriptionMethod -> m Text
+createMethod _name method = do
   methodId    <- get restDescriptionMethodId "method id" method
   path        <- get restDescriptionMethodPath "method path" method
   _httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
@@ -72,57 +67,58 @@ createMethod moduleName _name method = do
       apiName   = toCamelName methodId
       apiPath =
         T.intercalate "\n  :>\n"
-          $  createCapture moduleName params path
-          <> createQueryParam moduleName params
+          $  createCapture params path
+          <> createQueryParam params
           -- <> maybe [] (createRequestBody moduleName)  request
           -- <> maybe [] (createResponseBody moduleName) response
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
   pure $ desc <> apiType
 
-createCapture :: ModuleName -> RestDescriptionParameters -> Text -> [Text]
-createCapture moduleName params path =
-  createCaptureElement moduleName pathParams <$> T.split (== '/') path
+createCapture :: RestDescriptionParameters -> Text -> [Text]
+createCapture params path =
+  createCaptureElement pathParams <$> T.split (== '/') path
  where
   pathParams = Map.filter filterPath params
   filterPath schema = schemaLocation schema == Just "path"
 
-createCaptureElement :: ModuleName -> RestDescriptionParameters -> Text -> Text
-createCaptureElement moduleName params s
-  | T.take 1 s == "{"
-  = desc
-    <> "  Capture \""
-    <> name
-    <> "\" "
-    <> moduleName
-    <> "."
-    <> toCamelName name
-  | otherwise
-  = desc <> "  \"" <> s <> "\""
+createCaptureElement :: RestDescriptionParameters -> Text -> Text
+createCaptureElement params s
+  | T.take 1 s == "{" = desc <> "  Capture \"" <> name <> "\" " <> captureType
+  | otherwise         = desc <> "  \"" <> s <> "\""
  where
-  desc = descContent 2 (Map.lookup name params >>= schemaDescription)
-  name = T.dropEnd 1 . T.drop 1 $ s
+  desc        = descContent 2 $ schema >>= schemaDescription
+  schema      = Map.lookup name params
+  name        = T.dropEnd 1 . T.drop 1 $ s
+  captureType = required <> maybe "" paramType schema
+  required    = maybe "Maybe " (const "") $ schema >>= schemaRequired
 
-createQueryParam :: ModuleName -> RestDescriptionParameters -> [Text]
-createQueryParam moduleName =
-  fmap (createQueryParamElement moduleName) . filter filterQuery . Map.toList
+createQueryParam :: RestDescriptionParameters -> [Text]
+createQueryParam =
+  fmap createQueryParamElement . filter filterQuery . Map.toList
   where filterQuery (_, schema) = schemaLocation schema == Just "query"
 
-createQueryParamElement :: ModuleName -> (Text, Schema) -> Text
-createQueryParamElement moduleName (name, schema) =
+createQueryParamElement :: (Text, Schema) -> Text
+createQueryParamElement (name, schema) =
   descContent 2 (schemaDescription schema)
     <> "  "
     <> query
     <> " \""
     <> name
     <> "\" "
-    <> moduleName
-    <> "."
-    <> toCamelName name
+    <> paramType schema
  where
   query | schemaRepeated schema == Just True -- TODO: required 対応
                                              = "QueryParams"
         | schemaRequired schema == Just True = "QueryParam' '[Required, Strict]"
         | otherwise                          = "QueryParam"
+
+paramType :: Schema -> Text
+paramType schema = case schemaType schema of
+  Just (StringType  _) -> "RIO.Text"
+  Just (IntegerType _) -> "RIO.Int"
+  Just (NumberType  _) -> "RIO.Float"
+  Just BooleanType     -> "RIO.Bool"
+  _                    -> undefined
 
 {-
 createRequestBody :: ModuleName -> RestDescriptionMethodRequest -> [Text]
