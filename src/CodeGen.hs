@@ -5,6 +5,7 @@ module CodeGen
 where
 
 import           RIO
+import qualified RIO.Map                       as Map
 import           Discovery.RestDescription      ( RestDescription )
 import qualified Discovery.RestDescription     as Desc
 import           CodeGen.Types
@@ -33,6 +34,8 @@ gen dist desc = withDir dist $ do
       case Desc.restDescriptionParameters desc of
         (Just params) -> Parameter.gen svcName svcVer params
         _             -> pure ()
+      let commonParams =
+            fromMaybe Map.empty $ Desc.restDescriptionParameters desc
       case Desc.restDescriptionResources desc of
-        (Just resources) -> Resource.gen svcName svcVer resources
+        (Just resources) -> Resource.gen svcName svcVer commonParams resources
         _                -> pure ()

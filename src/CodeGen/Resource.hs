@@ -37,23 +37,30 @@ defaultExtentions =
 defaultImports :: [Text]
 defaultImports = ["import Servant.API"]
 
-gen :: ServiceName -> ServiceVersion -> RestDescriptionResources -> IO ()
-gen svcName svcVer resources = withDir resourceDir $ do
+gen
+  :: ServiceName
+  -> ServiceVersion
+  -> RestDescriptionParameters
+  -> RestDescriptionResources
+  -> IO ()
+gen svcName svcVer commonParams resources = withDir resourceDir $ do
   Dir.getCurrentDirectory >>= print
-  forM_ (Map.toList resources) (uncurry $ createFile svcName svcVer [])
+  forM_ (Map.toList resources)
+        (uncurry $ createFile svcName svcVer commonParams [])
 
 createFile
   :: ServiceName
   -> ServiceVersion
+  -> RestDescriptionParameters
   -> [ResourceName]
   -> ResourceName
   -> RestDescriptionResource
   -> IO ()
-createFile svcName svcVer resNames resName resource = do
+createFile svcName svcVer commonParams resNames resName resource = do
   case restDescriptionResourceMethods resource of
     Just methods -> do
       print moduleName
-      (cs, imports) <- runWriterT $ createMethods methods
+      (cs, imports) <- runWriterT $ createMethods commonParams methods
       let (apiNames, contents) = L.unzip cs
           api                  = createApi apiNames
           content =
@@ -72,8 +79,9 @@ createFile svcName svcVer resNames resName resource = do
   case restDescriptionResourceResources resource of
     Just resources -> withDir (T.unpack name) $ do
       Dir.getCurrentDirectory >>= print
-      forM_ (Map.toList resources)
-            (uncurry $ createFile svcName svcVer (resNames <> [name]))
+      forM_
+        (Map.toList resources)
+        (uncurry $ createFile svcName svcVer commonParams (resNames <> [name]))
     _ -> pure ()
  where
   moduleName =
@@ -87,30 +95,39 @@ createApi apiNames = "type API\n  =    " <> api
 
 createMethods
   :: MonadThrow m
-  => Map MethodName RestDescriptionMethod
+  => RestDescriptionParameters
+  -> Map MethodName RestDescriptionMethod
   -> GenImport m [(ApiName, Text)]
-createMethods methods = forM (Map.toList methods) (uncurry createMethod)
+createMethods commonParams methods =
+  forM (Map.toList methods) (uncurry $ createMethod commonParams)
 
 createMethod
   :: MonadThrow m
-  => MethodName
+  => RestDescriptionParameters
+  -> MethodName
   -> RestDescriptionMethod
   -> GenImport m (ApiName, Text)
-createMethod _name method = do
-  methodId   <- get restDescriptionMethodId "method id" method
-  path       <- get restDescriptionMethodPath "method path" method
+createMethod commonParams _name method = do
+  methodId      <- get restDescriptionMethodId "method id" method
+  path          <- get restDescriptionMethodPath "method path" method
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  captures   <- createCapture params path
-  queries    <- createQueryParam params
-  request    <- createRequestBody $ restDescriptionMethodRequest method
-  response   <- createResponseBody $ restDescriptionMethodResponse method
-  let
-    reqBody = createReqBody request
-    verb    = createVerb httpMethod response
-    desc    = descContent 0 $ restDescriptionMethodDescription method
-    apiName = toCamelName methodId
-    apiPath = T.intercalate "\n  :>\n" $ captures <> queries <> reqBody <> verb
-    apiType = "type " <> apiName <> "\n  =\n" <> apiPath
+  captures      <- createCapture params path
+  queries       <- createQueryParam params
+  commonQueries <- createQueryParam commonParams
+  request       <- createRequestBody $ restDescriptionMethodRequest method
+  response      <- createResponseBody $ restDescriptionMethodResponse method
+  let reqBody = createReqBody request
+      verb    = createVerb httpMethod response
+      desc    = descContent 0 $ restDescriptionMethodDescription method
+      apiName = toCamelName methodId
+      apiPath =
+        T.intercalate "\n  :>\n"
+          $  captures
+          <> queries
+          <> commonQueries
+          <> reqBody
+          <> verb
+      apiType = "type " <> apiName <> "\n  =\n" <> apiPath
   pure (apiName, desc <> apiType <> "\n")
   where params = fromMaybe Map.empty $ restDescriptionMethodParameters method
 
