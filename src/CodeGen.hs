@@ -15,7 +15,6 @@ import           CodeGen.Util                   ( get
                                                 )
 import qualified CodeGen.Project               as Proj
 import qualified CodeGen.Schema                as Schema
-import qualified CodeGen.Parameter             as Parameter
 import qualified CodeGen.Resource              as Resource
 
 gen :: Dist -> RestDescription -> IO ()
@@ -31,9 +30,6 @@ gen dist desc = withDir dist $ do
       case Desc.restDescriptionSchemas desc of
         (Just schemas) -> Schema.gen svcName svcVer schemas
         _              -> pure ()
-      case Desc.restDescriptionParameters desc of
-        (Just params) -> Parameter.gen svcName svcVer params
-        _             -> pure ()
       let commonParams =
             fromMaybe Map.empty $ Desc.restDescriptionParameters desc
       case Desc.restDescriptionResources desc of
