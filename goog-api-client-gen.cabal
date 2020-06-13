@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ae4da4e6c2e4d8071ec701036374f8a83936fd6d66619a6abe19310abcbeff28
+-- hash: 7beb976cf85d46c97bd67f5a0c3d154f238e1aa1eae61e320b6e1316cb3ef72b
 
 name:           goog-api-client-gen
 version:        0.1.0.0
@@ -51,7 +51,6 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
-    , hspec-megaparsec
     , http-client
     , http-client-tls
     , megaparsec
@@ -74,7 +73,6 @@ executable goog-api-client-gen
       aeson
     , base >=4.7 && <5
     , goog-api-client-gen
-    , hspec-megaparsec
     , http-client
     , http-client-tls
     , megaparsec
@@ -104,7 +102,6 @@ test-suite goog-api-client-gen-tasty
       aeson
     , base >=4.7 && <5
     , goog-api-client-gen
-    , hspec-megaparsec
     , http-client
     , http-client-tls
     , megaparsec
@@ -132,7 +129,6 @@ test-suite goog-api-client-gen-test
     , base >=4.7 && <5
     , doctest
     , goog-api-client-gen
-    , hspec-megaparsec
     , http-client
     , http-client-tls
     , megaparsec

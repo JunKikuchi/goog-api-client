@@ -29,7 +29,6 @@ dependencies:
   - aeson
   - optparse-applicative
   - megaparsec
-  - hspec-megaparsec
 
 default-extensions:
   - NoImplicitPrelude
