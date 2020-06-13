@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: af38d8c1550f67939d9cdcb9f6de263d44d759682e18d8eb74a246cb3aa17388
+-- hash: ae4da4e6c2e4d8071ec701036374f8a83936fd6d66619a6abe19310abcbeff28
 
 name:           goog-api-client-gen
 version:        0.1.0.0
@@ -40,6 +40,8 @@ library
       Discovery.RestDescription
       Discovery.RestDescription.Schema
       JSON.Schema
+      Path.Parser
+      Path.Types
   other-modules:
       Paths_goog_api_client_gen
   hs-source-dirs:
@@ -49,8 +51,10 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , hspec-megaparsec
     , http-client
     , http-client-tls
+    , megaparsec
     , optparse-applicative
     , rio
     , servant
@@ -70,8 +74,10 @@ executable goog-api-client-gen
       aeson
     , base >=4.7 && <5
     , goog-api-client-gen
+    , hspec-megaparsec
     , http-client
     , http-client-tls
+    , megaparsec
     , optparse-applicative
     , rio
     , servant
@@ -82,6 +88,7 @@ test-suite goog-api-client-gen-tasty
   type: exitcode-stdio-1.0
   main-is: Tasty.hs
   other-modules:
+      Test.JSON.Path.Parser
       Test.JSON.Schema
       Test.JSON.Schema.Array
       Test.JSON.Schema.Integer
@@ -97,8 +104,10 @@ test-suite goog-api-client-gen-tasty
       aeson
     , base >=4.7 && <5
     , goog-api-client-gen
+    , hspec-megaparsec
     , http-client
     , http-client-tls
+    , megaparsec
     , optparse-applicative
     , raw-strings-qq
     , rio
@@ -123,8 +132,10 @@ test-suite goog-api-client-gen-test
     , base >=4.7 && <5
     , doctest
     , goog-api-client-gen
+    , hspec-megaparsec
     , http-client
     , http-client-tls
+    , megaparsec
     , optparse-applicative
     , rio
     , servant
