@@ -36,14 +36,11 @@ expression = do
   pure (Expression op str)
 
 operator :: Parser (Maybe Operator)
-operator = choice
-  [ const (Just Reserved) <$> void (char '+')
-  , const (Just Fragment) <$> void (char '#')
-  , pure Nothing
-  ]
+operator =
+  choice [Just Reserved <$ char '+', Just Fragment <$ char '#', pure Nothing]
 
 literal :: Parser Template
-literal = (Literal . T.pack) <$> some (satisfy (\c -> c /= '/' && c /= '{'))
+literal = (Literal . T.pack) <$> some (noneOf ['/', '{'])
 
 slash :: Parser ()
 slash = void $ char '/'
