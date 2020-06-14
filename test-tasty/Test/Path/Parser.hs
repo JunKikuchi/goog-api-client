@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Test.JSON.Path.Parser where
+module Test.Path.Parser where
 
 import           RIO
 import           Test.Tasty
