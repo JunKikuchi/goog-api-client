@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Resource
   ( gen
+  , createCapture
   )
 where
 
