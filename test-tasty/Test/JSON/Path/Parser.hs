@@ -13,6 +13,7 @@ import           Path.Types
 spec_Test_Path_Parser :: Spec
 spec_Test_Path_Parser = describe "Parser" $ describe "path" $ do
   it "空文字" $ parse path "" "" `shouldBe` Right (Path [[]])
+  it "///" $ parse path "" "///" `shouldBe` Right (Path [[], [], [], []])
   it "foo" $ parse path "" "foo" `shouldBe` Right (Path [[Literal "foo"]])
   it "foo/bar" $ parse path "" "foo/bar" `shouldBe` Right
     (Path [[Literal "foo"], [Literal "bar"]])
