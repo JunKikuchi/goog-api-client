@@ -6,6 +6,7 @@ import           Test.Tasty
 import           Test.Tasty.Hspec
 import           Text.Megaparsec
 import           Path.Parser
+import           Path.Types
 
 {-# ANN module ("HLint: ignore Use camelCase" :: RIO.String) #-}
 
