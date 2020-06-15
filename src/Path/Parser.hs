@@ -1,4 +1,8 @@
-module Path.Parser where
+module Path.Parser
+  ( path
+  , module Path.Types
+  )
+where
 
 import           RIO                     hiding ( many
                                                 , some
