@@ -22,6 +22,7 @@ import           Discovery.RestDescription
 import           CodeGen.Schema                 ( createImport )
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
+import           Path
 
 type ApiName = Text
 
@@ -134,29 +135,29 @@ createMethod commonParams _name method = do
 
 createCapture
   :: MonadThrow m => RestDescriptionParameters -> Text -> GenImport m [Text]
-createCapture params path = forM (T.split (== '/') path)
-  $ createCaptureElement pathParams
+createCapture params path = do
+  segs <- either throwM (pure . pathSegments) $ Path.parse path
+  forM segs $ createCaptureElement pathParams
  where
   pathParams = Map.filter filterPath params
   filterPath schema = schemaLocation schema == Just "path"
 
 createCaptureElement
-  :: MonadThrow m => RestDescriptionParameters -> Text -> GenImport m Text
-createCaptureElement params s
-  | T.take 1 s == "{" = do
-    ct <- captureType
-    pure $ desc <> "  Capture \"" <> name <> "\" " <> ct
-  | otherwise = pure $ desc <> "  \"" <> s <> "\""
+  :: MonadThrow m => RestDescriptionParameters -> Segment -> GenImport m Text
+createCaptureElement _ [Literal literal] = pure $ "  \"" <> literal <> "\""
+createCaptureElement params [Expression Nothing expr] = do
+  ct <- captureType
+  pure $ desc <> "  Capture \"" <> expr <> "\" " <> ct
  where
   desc        = descContent 2 $ schema >>= schemaDescription
-  schema      = Map.lookup name params
-  name        = T.dropEnd 1 . T.drop 1 $ s
+  schema      = Map.lookup expr params
   captureType = do
-    pt <- maybe (throwM . GetException $ "faild to lookup '" <> name <> "'")
+    pt <- maybe (throwM . GetException $ "faild to lookup '" <> expr <> "'")
                 paramType
                 schema
     pure $ required <> pt
   required = maybe "Maybe " (const "") $ schema >>= schemaRequired
+createCaptureElement _ _ = undefined
 
 createQueryParam
   :: MonadThrow m => RestDescriptionParameters -> GenImport m [Text]
