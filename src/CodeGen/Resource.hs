@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Resource
   ( gen
-  , createCapture
   )
 where
 
@@ -22,7 +21,6 @@ import           Discovery.RestDescription
 import           CodeGen.Schema                 ( createImport )
 import           CodeGen.Types           hiding ( Schema )
 import           CodeGen.Util
-import           Path
 
 type ApiName = Text
 
@@ -109,11 +107,11 @@ createMethod
   -> MethodName
   -> RestDescriptionMethod
   -> GenImport m (ApiName, Text)
-createMethod commonParams _name method = do
+createMethod commonParams name method = do
   methodId      <- get restDescriptionMethodId "method id" method
-  path          <- get restDescriptionMethodPath "method path" method
+  _path         <- get restDescriptionMethodPath "method path" method
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  captures      <- createCapture params path
+  captures      <- createCapture name
   queries       <- createQueryParam params
   commonQueries <- createQueryParam commonParams
   request       <- createRequestBody $ restDescriptionMethodRequest method
@@ -133,31 +131,10 @@ createMethod commonParams _name method = do
   pure (apiName, desc <> apiType <> "\n")
   where params = fromMaybe Map.empty $ restDescriptionMethodParameters method
 
-createCapture
-  :: MonadThrow m => RestDescriptionParameters -> Text -> GenImport m [Text]
-createCapture params path = do
-  segs <- either throwM (pure . pathSegments) $ Path.parse path
-  forM segs $ createCaptureElement pathParams
- where
-  pathParams = Map.filter filterPath params
-  filterPath schema = schemaLocation schema == Just "path"
-
-createCaptureElement
-  :: MonadThrow m => RestDescriptionParameters -> Segment -> GenImport m Text
-createCaptureElement _ [Literal literal] = pure $ "  \"" <> literal <> "\""
-createCaptureElement params [Expression Nothing expr] = do
-  ct <- captureType
-  pure $ desc <> "  Capture \"" <> expr <> "\" " <> ct
- where
-  desc        = descContent 2 $ schema >>= schemaDescription
-  schema      = Map.lookup expr params
-  captureType = do
-    pt <- maybe (throwM . GetException $ "faild to lookup '" <> expr <> "'")
-                paramType
-                schema
-    pure $ required <> pt
-  required = maybe "Maybe " (const "") $ schema >>= schemaRequired
-createCaptureElement _ _ = undefined
+createCapture :: MonadThrow m => MethodName -> GenImport m [Text]
+createCapture name = tell (Set.singleton ImportPrelude)
+  >> pure ["  CaptureAll \"" <> path <> "\" " <> toCamelName path]
+  where path = name <> "Path"
 
 createQueryParam
   :: MonadThrow m => RestDescriptionParameters -> GenImport m [Text]
