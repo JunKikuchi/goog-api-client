@@ -133,7 +133,7 @@ createMethod commonParams name method = do
 
 createCapture :: MonadThrow m => MethodName -> GenImport m [Text]
 createCapture name = tell (Set.singleton ImportPrelude)
-  >> pure ["  CaptureAll \"" <> path <> "\" " <> toCamelName path]
+  >> pure ["  CaptureAll \"" <> path <> "\" RIO.Text"]
   where path = name <> "Path"
 
 createQueryParam
