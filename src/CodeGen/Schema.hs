@@ -106,6 +106,7 @@ createImports
 createImports svcName svcVersion name importInfo = fmap f . Set.toList
  where
   f ImportPrelude    = "import RIO"
+  f ImportText       = "import qualified RIO.Text as T"
   f ImportEnum       = "import qualified RIO.Map as Map"
   f ImportGenerics   = "import GHC.Generics()"
   f (Import recName) = createImport svcName svcVersion cname recName t

@@ -38,7 +38,7 @@ type Enum       = (SchemaName, EnumList)
 type EnumList   = [(EnumName, EnumDesc)]
 type EnumName   = Text
 type EnumDesc   = Text
-data Import     = ImportPrelude | ImportEnum | ImportGenerics | Import RecordName deriving (Eq, Ord, Show)
+data Import     = ImportPrelude | ImportText | ImportEnum | ImportGenerics | Import RecordName deriving (Eq, Ord, Show)
 
 data ImportInfo
   = ImportInfo

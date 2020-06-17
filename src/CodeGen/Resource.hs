@@ -33,7 +33,10 @@ resourceDir = T.unpack resourceName
 
 defaultExtentions :: [Text]
 defaultExtentions =
-  ["{-# LANGUAGE DataKinds #-}", "{-# LANGUAGE TypeOperators #-}"]
+  [ "{-# LANGUAGE OverloadedStrings #-}"
+  , "{-# LANGUAGE DataKinds #-}"
+  , "{-# LANGUAGE TypeOperators #-}"
+  ]
 
 defaultImports :: [Text]
 defaultImports = ["import Servant.API"]
@@ -142,13 +145,13 @@ createPathFunction
   -> GenImport m Text
 createPathFunction params pathName path = do
   tell (Set.singleton ImportPrelude)
-  paths <- either throwM pure $ Path.parse path
+  paths    <- either throwM pure $ Path.parse path
+  pathArgs <- createPathParams paths
   let argNames = foldr f [] . join . pathSegments $ paths
   types <- createPathTypes pathParams argNames
   let functionType = pathName <> " :: " <> T.intercalate
         " "
         (L.intersperse "->" (types <> ["[RIO.Text]"]))
-      pathArgs = createPathParams paths
       functionBody =
         pathName
           <> " "
@@ -172,14 +175,17 @@ createPathTypes params argNames = sequence $ argTypes <$> argNames
       $   paramType
       <$> Map.lookup name params
 
-createPathParams :: Path -> [Text]
-createPathParams path = segment <$> pathSegments path
+createPathParams :: MonadThrow m => Path -> GenImport m [Text]
+createPathParams path = sequence $ segment <$> pathSegments path
  where
-  segment = T.intercalate " <> " . fmap template
-  template (Literal a                   ) = "\"" <> a <> "\""
-  template (Expression Nothing         a) = a
-  template (Expression (Just Reserved) a) = "T.split (== '/') " <> a
-  template _                              = undefined
+  segment = fmap (T.intercalate " <> ") . sequence . fmap template
+  template :: MonadThrow m => Template -> GenImport m Text
+  template (Literal a                   ) = pure $ "[\"" <> a <> "\"]"
+  template (Expression Nothing         a) = pure $ "[" <> a <> "]"
+  template (Expression (Just Reserved) a) = do
+    tell (Set.singleton ImportText)
+    pure $ "T.split (== '/') " <> a
+  template _ = undefined
 
 createCapture :: MonadThrow m => Text -> GenImport m [Text]
 createCapture name = tell (Set.singleton ImportPrelude)
@@ -267,5 +273,6 @@ createImports svcName svcVer =
   T.intercalate "\n" . L.sort . (<>) defaultImports . join . fmap f . Set.toList
  where
   f ImportPrelude = ["import RIO"]
+  f ImportText    = ["import qualified RIO.Text as T"]
   f (Import ref)  = [createImport svcName svcVer ref ref False]
   f _             = undefined
