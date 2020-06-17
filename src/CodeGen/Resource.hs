@@ -131,7 +131,7 @@ createMethod commonParams name method = do
           <> reqBody
           <> verb
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
-  pure (apiName, createPath <> "\n" <> desc <> apiType <> "\n")
+  pure (apiName, desc <> createPath <> "\n" <> apiType <> "\n")
   where params = fromMaybe Map.empty $ restDescriptionMethodParameters method
 
 createPathFunction
@@ -142,60 +142,44 @@ createPathFunction
   -> GenImport m Text
 createPathFunction params pathName path = do
   tell (Set.singleton ImportPrelude)
-  paths        <- either throwM pure $ Path.parse path
-  functionType <- createPathFunctionType pathParams pathName paths
-  functionBody <- createPathFunctionBody pathParams pathName paths
+  paths <- either throwM pure $ Path.parse path
+  let argNames = foldr f [] . join . pathSegments $ paths
+  types <- createPathTypes pathParams argNames
+  let functionType = pathName <> " :: " <> T.intercalate
+        " "
+        (L.intersperse "->" (types <> ["[RIO.Text]"]))
+      pathArgs = createPathParams paths
+      functionBody =
+        pathName
+          <> " "
+          <> T.intercalate " " argNames
+          <> " = join ["
+          <> T.intercalate ", " pathArgs
+          <> "]"
   pure $ functionType <> "\n" <> functionBody <> "\n"
  where
   pathParams = Map.filter filterPath params
   filterPath schema = schemaLocation schema == Just "path"
-
-createPathFunctionType
-  :: MonadThrow m
-  => RestDescriptionParameters
-  -> Text
-  -> Path
-  -> GenImport m Text
-createPathFunctionType params pathName paths = do
-  types <- createPathTypes params paths
-  pure $ pathName <> " :: " <> T.intercalate " -> " types
+  f (Expression _ name) acc = name : acc
+  f _                   acc = acc
 
 createPathTypes
-  :: MonadThrow m => RestDescriptionParameters -> Path -> GenImport m [Text]
-createPathTypes params paths = sequence $ argTypes <$> argNames
+  :: MonadThrow m => RestDescriptionParameters -> [Text] -> GenImport m [Text]
+createPathTypes params argNames = sequence $ argTypes <$> argNames
  where
   argTypes name =
     fromMaybe (throwM . GetException $ "could not find param '" <> name <> "'")
       $   paramType
       <$> Map.lookup name params
-  argNames = foldr f [] . join . pathSegments $ paths
-  f (Expression _ name) acc = name : acc
-  f _                   acc = acc
 
-createPathFunctionBody
-  :: MonadThrow m
-  => RestDescriptionParameters
-  -> Text
-  -> Path
-  -> GenImport m Text
-createPathFunctionBody _params pathName paths =
-  pure
-    $  pathName
-    <> " "
-    <> T.intercalate " " argNames
-    <> " = ["
-    <> T.intercalate ", " captures
-    <> "]"
+createPathParams :: Path -> [Text]
+createPathParams path = segment <$> pathSegments path
  where
-  captures = segment <$> pathSegments paths
-  segment  = T.intercalate " <> " . fmap template
+  segment = T.intercalate " <> " . fmap template
   template (Literal a                   ) = "\"" <> a <> "\""
   template (Expression Nothing         a) = a
   template (Expression (Just Reserved) a) = "T.split (== '/') " <> a
   template _                              = undefined
-  argNames = foldr f [] . join . pathSegments $ paths
-  f (Expression _ name) acc = name : acc
-  f _                   acc = acc
 
 createCapture :: MonadThrow m => Text -> GenImport m [Text]
 createCapture name = tell (Set.singleton ImportPrelude)
