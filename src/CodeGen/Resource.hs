@@ -111,11 +111,12 @@ createMethod
   -> MethodName
   -> RestDescriptionMethod
   -> GenImport m (ApiName, Text)
-createMethod commonParams name method = do
+createMethod commonParams _name method = do
   methodId   <- get restDescriptionMethodId "method id" method
   path       <- get restDescriptionMethodPath "method path" method
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  let pathName = name <> "Path"
+  let apiName  = toCamelName methodId
+      pathName = unTitle $ apiName <> "Path"
   createPath    <- createPathFunction params pathName path
   captures      <- createCapture pathName
   queries       <- createQueryParam params
@@ -125,7 +126,6 @@ createMethod commonParams name method = do
   let reqBody = createReqBody request
       verb    = createVerb httpMethod response
       desc    = descContent 0 $ restDescriptionMethodDescription method
-      apiName = toCamelName methodId
       apiPath =
         T.intercalate "\n  :>\n"
           $  captures
