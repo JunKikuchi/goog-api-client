@@ -203,14 +203,7 @@ createQueryParam =
 createQueryParamElement :: MonadThrow m => Text -> Schema -> GenImport m Text
 createQueryParamElement name schema = do
   pt <- paramType schema
-  pure
-    $  descContent 2 (schemaDescription schema)
-    <> "  "
-    <> query
-    <> " \""
-    <> name
-    <> "\" "
-    <> pt
+  pure $ "  " <> query <> " \"" <> name <> "\" " <> pt
  where
   query | schemaRepeated schema == Just True -- TODO: required 対応
                                              = "QueryParams"
