@@ -134,7 +134,7 @@ createMethod commonParams _name method = do
           <> reqBody
           <> verb
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
-  pure (apiName, desc <> createPath <> "\n" <> apiType <> "\n")
+  pure (apiName, desc <> apiType <> "\n\n" <> createPath)
   where params = fromMaybe Map.empty $ restDescriptionMethodParameters method
 
 createPathFunction
