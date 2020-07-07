@@ -18,7 +18,7 @@ import           RIO                     hiding ( Integer
 import           Data.Aeson                     ( (.:?) )
 import qualified Data.Aeson                    as Aeson
 import qualified Data.Aeson.Types              as Aeson
-import qualified JSON.Schema                   as JSON
+import qualified JSON
 
 data Schema
   = Schema

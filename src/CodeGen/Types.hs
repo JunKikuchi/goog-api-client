@@ -4,7 +4,7 @@ import           RIO                     hiding ( Data
                                                 , Enum
                                                 )
 import           RIO.Writer                     ( WriterT )
-import qualified JSON.Schema                   as JSON
+import qualified JSON
 
 newtype CodeGenException = GetException Text deriving Show
 instance Exception CodeGenException
