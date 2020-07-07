@@ -1,7 +1,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 module Discovery
-  ( list
+  ( Name
+  , Preferred
+  , Api
+  , Version
+  , list
   , getRest
   , run
   )
@@ -22,10 +26,10 @@ import           Servant.Client                 ( BaseUrl(..)
 import           Discovery.DirectoryList        ( DirectoryList )
 import           Discovery.RestDescription      ( RestDescription )
 
-type Name = Text
+type Name      = Text
 type Preferred = Bool
-type Api = Text
-type Version = Text
+type Api       = Text
+type Version   = Text
 
 baseUrl :: BaseUrl
 baseUrl = BaseUrl Https "www.googleapis.com" 443 ""
