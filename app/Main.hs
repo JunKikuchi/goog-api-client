@@ -6,13 +6,9 @@ import           RIO.Text                      as T
 import           Prelude                        ( print
                                                 , putStrLn
                                                 )
-import           Discovery                      ( list
-                                                , getRest
-                                                , run
-                                                )
+import qualified Discovery                     as D
 import qualified Discovery.DirectoryList       as DL
-import           CodeGen                        ( gen )
-import           CodeGen.Util                   ( get )
+import qualified CodeGen                       as CD
 import qualified Options                       as Opts
 
 main :: IO ()
@@ -23,22 +19,33 @@ main = do
 
 runCommand :: Opts.Commands -> IO ()
 runCommand (Opts.GenAllCommand a) = do
-  let dist = T.unpack $ Opts.genAllDist a
-  ret   <- run $ list name preferred
-  dl    <- either (error . show) pure ret
-  items <- get DL.directoryListItems "directoryListItems" dl
+  resp    <- D.run $ D.list optName optPreferred
+  dirList <- either (error . show) pure resp
+  items   <- CD.get DL.directoryListItems "directoryListItems" dirList
   forM_ items $ \item -> do
-    n <- get DL.directoryItemName "directoryItemName" item
-    v <- get DL.directoryItemVersion "directoryItemVersion" item
-    putStrLn . T.unpack $ "\n\nGenerate(name=" <> n <> ", version=" <> v <> ")"
-    r <- run $ getRest n v
-    either (print . show) (gen dist) r
+    name <- CD.get DL.directoryItemName "directoryItemName" item
+    ver  <- CD.get DL.directoryItemVersion "directoryItemVersion" item
+    putStrLn
+      .  T.unpack
+      $  "\n\nGenerate(name="
+      <> name
+      <> ", version="
+      <> ver
+      <> ")"
+    gen name ver optDist
  where
-  name = case Opts.name a of
+  optName = case Opts.name a of
     ""  -> Nothing
     n@_ -> Just n
-  preferred = if Opts.preferred a then Just True else Nothing
-runCommand (Opts.GenApiCommand a) = do
-  let dist = T.unpack $ Opts.genApiDist a
-  ret <- run $ getRest (Opts.api a) (Opts.version a)
-  either (print . show) (gen dist) ret
+  optPreferred = if Opts.preferred a then Just True else Nothing
+  optDist      = T.unpack $ Opts.genAllDist a
+runCommand (Opts.GenApiCommand a) = gen optName optVer optDist
+ where
+  optName = Opts.api a
+  optVer  = Opts.version a
+  optDist = T.unpack $ Opts.genApiDist a
+
+gen :: D.Api -> D.Version -> CD.Dist -> IO ()
+gen name ver dist = do
+  resp <- D.run $ D.getRest name ver
+  either (error . show) (CD.gen dist) resp
