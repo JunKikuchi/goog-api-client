@@ -18,15 +18,15 @@ data Commands
 data GenAll
   = GenAll
   { genAllDist :: Text
-  , name :: Text
-  , preferred :: Bool
+  , name       :: Text
+  , preferred  :: Bool
   } deriving Show
 
 data GenApi
   = GenApi
   { genApiDist :: Text
-  , api :: Text
-  , version :: Text
+  , api        :: Text
+  , version    :: Text
   } deriving Show
 
 parseOpts :: IO Commands
