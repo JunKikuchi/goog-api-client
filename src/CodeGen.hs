@@ -8,7 +8,6 @@ where
 
 import           RIO
 import qualified RIO.Map                       as Map
-import           Discovery.RestDescription      ( RestDescription )
 import qualified Discovery.RestDescription     as Desc
 import           CodeGen.Types
 import           CodeGen.Util
@@ -16,7 +15,7 @@ import qualified CodeGen.Project               as Proj
 import qualified CodeGen.Schema                as Schema
 import qualified CodeGen.Resource              as Resource
 
-gen :: Dist -> RestDescription -> IO ()
+gen :: Dist -> Desc.RestDescription -> IO ()
 gen dist desc = withDir dist $ do
   projName <- Proj.projectName desc
   Proj.gen projName
