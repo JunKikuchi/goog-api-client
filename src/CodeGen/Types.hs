@@ -9,7 +9,7 @@ import qualified JSON
 newtype CodeGenException = GetException Text deriving Show
 instance Exception CodeGenException
 
-type Dist        = FilePath
+type DistDir     = FilePath
 type ProjectDir  = FilePath
 type SrcDir      = FilePath
 type ServiceDir  = FilePath

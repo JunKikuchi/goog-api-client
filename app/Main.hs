@@ -45,7 +45,7 @@ runCommand (Opts.GenApiCommand a) = gen optName optVer optDist
   optVer  = Opts.version a
   optDist = T.unpack $ Opts.genApiDist a
 
-gen :: D.Api -> D.Version -> CD.Dist -> IO ()
+gen :: D.Api -> D.Version -> CD.DistDir -> IO ()
 gen name ver dist = do
   resp <- D.run $ D.getRest name ver
   either (error . show) (CD.gen dist) resp

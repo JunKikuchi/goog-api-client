@@ -15,7 +15,7 @@ import qualified CodeGen.Project               as Proj
 import qualified CodeGen.Schema                as Schema
 import qualified CodeGen.Resource              as Resource
 
-gen :: Dist -> Desc.RestDescription -> IO ()
+gen :: DistDir -> Desc.RestDescription -> IO ()
 gen dist desc = withDir dist $ do
   projName <- Proj.projectName desc
   Proj.gen projName
