@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 module CodeGen
   ( gen
   , module CodeGen.Types
@@ -16,21 +15,13 @@ import qualified CodeGen.Schema                as Schema
 import qualified CodeGen.Resource              as Resource
 
 gen :: DistDir -> Desc.RestDescription -> IO ()
-gen dist desc = withDir dist $ do
-  projName <- Proj.projectName desc
-  Proj.gen projName
-  let projDir = Proj.projectDir projName
-  withDir projDir $ withDir Proj.srcDir $ do
-    svcName <- toTitle <$> get Desc.restDescriptionName "name" desc
-    svcVer  <- toTitle <$> get Desc.restDescriptionVersion "version" desc
-    let svcDir = Proj.serviceDir svcName svcVer
-    withDir svcDir $ do
-      case Desc.restDescriptionSchemas desc of
-        (Just schemas) -> Schema.gen svcName svcVer schemas
-        _              -> pure ()
-      case Desc.restDescriptionResources desc of
-        (Just resources) -> do
-          let commonParams =
-                fromMaybe Map.empty $ Desc.restDescriptionParameters desc
-          Resource.gen svcName svcVer commonParams resources
-        _ -> pure ()
+gen dist desc = withDir dist $ Proj.gen desc $ \svcName svcVer -> do
+  case Desc.restDescriptionSchemas desc of
+    (Just schemas) -> Schema.gen svcName svcVer schemas
+    _              -> pure ()
+  case Desc.restDescriptionResources desc of
+    (Just resources) -> do
+      let commonParams =
+            fromMaybe Map.empty $ Desc.restDescriptionParameters desc
+      Resource.gen svcName svcVer commonParams resources
+    _ -> pure ()
