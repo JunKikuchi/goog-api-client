@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen
   ( gen
+  , module CodeGen.Types
+  , module CodeGen.Util
   )
 where
 
@@ -9,10 +11,7 @@ import qualified RIO.Map                       as Map
 import           Discovery.RestDescription      ( RestDescription )
 import qualified Discovery.RestDescription     as Desc
 import           CodeGen.Types
-import           CodeGen.Util                   ( get
-                                                , toTitle
-                                                , withDir
-                                                )
+import           CodeGen.Util
 import qualified CodeGen.Project               as Proj
 import qualified CodeGen.Schema                as Schema
 import qualified CodeGen.Resource              as Resource
