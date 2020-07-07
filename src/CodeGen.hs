@@ -30,8 +30,9 @@ gen dist desc = withDir dist $ do
       case Desc.restDescriptionSchemas desc of
         (Just schemas) -> Schema.gen svcName svcVer schemas
         _              -> pure ()
-      let commonParams =
-            fromMaybe Map.empty $ Desc.restDescriptionParameters desc
       case Desc.restDescriptionResources desc of
-        (Just resources) -> Resource.gen svcName svcVer commonParams resources
-        _                -> pure ()
+        (Just resources) -> do
+          let commonParams =
+                fromMaybe Map.empty $ Desc.restDescriptionParameters desc
+          Resource.gen svcName svcVer commonParams resources
+        _ -> pure ()
