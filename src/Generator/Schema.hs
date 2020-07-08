@@ -6,7 +6,7 @@ where
 import           RIO
 import           Discovery.RestDescription
 import           Generator.Types
-import qualified Generator.ImportInfo          as ImportInfo
+import qualified Generator.Schema.ImportInfo   as ImportInfo
 import qualified Generator.Schema.File         as File
 import qualified Generator.Util                as Util
 

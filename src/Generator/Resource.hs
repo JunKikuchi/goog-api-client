@@ -18,7 +18,7 @@ import           RIO.Writer                     ( runWriterT
                                                 , tell
                                                 )
 import           Discovery.RestDescription
-import           Generator.ImportInfo           ( createImport )
+import           Generator.Schema.ImportInfo    ( createImport )
 import           Generator.Schema.File          ( schemaName )
 import           Generator.Types         hiding ( Schema )
 import           Generator.Util

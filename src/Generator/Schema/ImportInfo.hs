@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generator.ImportInfo
+module Generator.Schema.ImportInfo
   ( empty
   , member
   , lookup

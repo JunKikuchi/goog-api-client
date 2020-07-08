@@ -16,7 +16,7 @@ import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
 import           Generator.Data                as Data
-import qualified Generator.ImportInfo          as ImportInfo
+import qualified Generator.Schema.ImportInfo   as ImportInfo
 import           Generator.Types         hiding ( Schema )
 import           Generator.Util
 
