@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generator.Schema.File
-  ( schemaName
-  , schemaDir
-  , createFile
+  ( gen
+  , schemaName
   )
 where
 
@@ -35,6 +34,10 @@ defaultExtentions =
 
 defaultImports :: [Text]
 defaultImports = ["import qualified Data.Aeson as Aeson"]
+
+gen :: ServiceName -> ServiceVersion -> RestDescriptionSchemas -> IO ()
+gen svcName svcVer schemas = withDir schemaDir
+  $ foldM_ (createFile svcName svcVer) ImportInfo.empty schemas
 
 createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
