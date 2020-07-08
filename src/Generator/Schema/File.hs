@@ -1,5 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generator.Schema.File where
+module Generator.Schema.File
+  ( schemaName
+  , schemaDir
+  , createFile
+  )
+where
 
 import           Prelude                        ( print )
 

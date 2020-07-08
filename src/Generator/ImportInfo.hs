@@ -1,5 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generator.ImportInfo where
+module Generator.ImportInfo
+  ( empty
+  , member
+  , lookup
+  , rename
+  , insert
+  , createImports
+  , createImport
+  )
+where
 
 import           RIO                     hiding ( lookup )
 import qualified RIO.Map                       as Map
