@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Schema
+module Generator.Schema
   ( gen
   , createImport
   )
@@ -17,10 +17,10 @@ import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
-import           CodeGen.Data                  as Data
-import qualified CodeGen.ImportInfo            as ImportInfo
-import           CodeGen.Types           hiding ( Schema )
-import           CodeGen.Util
+import           Generator.Data                as Data
+import qualified Generator.ImportInfo          as ImportInfo
+import           Generator.Types         hiding ( Schema )
+import           Generator.Util
 
 schemaName :: Text
 schemaName = "Schema"

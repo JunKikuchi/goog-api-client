@@ -1,18 +1,18 @@
-module CodeGen
+module Generator
   ( gen
-  , module CodeGen.Types
-  , module CodeGen.Util
+  , module Generator.Types
+  , module Generator.Util
   )
 where
 
 import           RIO
 import qualified RIO.Map                       as Map
 import qualified Discovery.RestDescription     as Desc
-import           CodeGen.Types
-import           CodeGen.Util
-import qualified CodeGen.Project               as Proj
-import qualified CodeGen.Schema                as Schema
-import qualified CodeGen.Resource              as Resource
+import           Generator.Types
+import           Generator.Util
+import qualified Generator.Project             as Proj
+import qualified Generator.Schema              as Schema
+import qualified Generator.Resource            as Resource
 
 gen :: DistDir -> Desc.RestDescription -> IO ()
 gen dist desc = withDir dist $ Proj.gen desc $ \svcName svcVer -> do

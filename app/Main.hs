@@ -8,7 +8,7 @@ import           Prelude                        ( print
                                                 )
 import qualified Discovery                     as D
 import qualified Discovery.DirectoryList       as DL
-import qualified CodeGen                       as CD
+import qualified Generator                     as G
 import qualified Options                       as Opts
 
 main :: IO ()
@@ -21,10 +21,10 @@ runCommand :: Opts.Commands -> IO ()
 runCommand (Opts.GenAllCommand a) = do
   resp    <- D.run $ D.list optName optPreferred
   dirList <- either (error . show) pure resp
-  items   <- CD.get DL.directoryListItems "directoryListItems" dirList
+  items   <- G.get DL.directoryListItems "directoryListItems" dirList
   forM_ items $ \item -> do
-    name <- CD.get DL.directoryItemName "directoryItemName" item
-    ver  <- CD.get DL.directoryItemVersion "directoryItemVersion" item
+    name <- G.get DL.directoryItemName "directoryItemName" item
+    ver  <- G.get DL.directoryItemVersion "directoryItemVersion" item
     putStrLn
       .  T.unpack
       $  "\n\nGenerate(name="
@@ -45,7 +45,7 @@ runCommand (Opts.GenApiCommand a) = gen optName optVer optDist
   optVer  = Opts.version a
   optDist = T.unpack $ Opts.genApiDist a
 
-gen :: D.Api -> D.Version -> CD.DistDir -> IO ()
+gen :: D.Api -> D.Version -> G.DistDir -> IO ()
 gen name ver dist = do
   resp <- D.run $ D.getRest name ver
-  either (error . show) (CD.gen dist) resp
+  either (error . show) (G.gen dist) resp

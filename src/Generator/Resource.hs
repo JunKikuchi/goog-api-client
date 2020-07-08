@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Resource
+module Generator.Resource
   ( gen
   )
 where
@@ -18,9 +18,9 @@ import           RIO.Writer                     ( runWriterT
                                                 , tell
                                                 )
 import           Discovery.RestDescription
-import           CodeGen.Schema                 ( createImport )
-import           CodeGen.Types           hiding ( Schema )
-import           CodeGen.Util
+import           Generator.Schema               ( createImport )
+import           Generator.Types         hiding ( Schema )
+import           Generator.Util
 import           Path
 
 type ApiName = Text

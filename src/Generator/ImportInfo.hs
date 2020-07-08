@@ -1,10 +1,10 @@
-module CodeGen.ImportInfo where
+module Generator.ImportInfo where
 
 import           RIO
 import qualified RIO.Map                       as Map
 import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
-import           CodeGen.Types
+import           Generator.Types
 
 empty :: ImportInfo
 empty =

@@ -1,4 +1,4 @@
-module CodeGen.Types where
+module Generator.Types where
 
 import           RIO                     hiding ( Data
                                                 , Enum

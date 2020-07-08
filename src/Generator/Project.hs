@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Project
+module Generator.Project
   ( gen
   )
 where
@@ -9,8 +9,8 @@ import           RIO.FilePath                   ( (</>) )
 import qualified RIO.Process                   as Proc
 import qualified RIO.Text                      as T
 import           Discovery.RestDescription
-import           CodeGen.Types
-import           CodeGen.Util
+import           Generator.Types
+import           Generator.Util
 
 projectName :: MonadThrow m => RestDescription -> m ProjectName
 projectName desc = do

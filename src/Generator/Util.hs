@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Util
+module Generator.Util
   ( CodeGenException(..)
   , get
   , toTitle
@@ -16,7 +16,7 @@ import qualified RIO.Char                      as C
 import qualified RIO.Directory                 as Dir
 import qualified RIO.List                      as L
 import qualified RIO.Text                      as T
-import           CodeGen.Types                  ( CodeGenException(..) )
+import           Generator.Types                  ( CodeGenException(..) )
 
 get :: MonadThrow m => (t -> Maybe b) -> Text -> t -> m b
 get f s desc = maybe (throwM $ GetException s) pure (f desc)

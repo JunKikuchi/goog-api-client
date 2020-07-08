@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Data
+module Generator.Data
   ( createData
   , createBootData
   , createFieldData
@@ -17,8 +17,8 @@ import           RIO.Writer                     ( runWriterT
 import qualified Discovery.RestDescription.Schema
                                                as Desc
 import qualified JSON.Schema                   as JSON
-import           CodeGen.Types
-import           CodeGen.Util
+import           Generator.Types
+import           Generator.Util
 
 createData
   :: MonadThrow m => ModuleName -> RecordName -> Desc.Schema -> GenData m Text
