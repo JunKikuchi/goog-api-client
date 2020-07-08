@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generator.Data
+module Generator.Schema.Data
   ( createData
   , createBootData
   , createFieldData
