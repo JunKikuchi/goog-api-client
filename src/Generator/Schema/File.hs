@@ -7,8 +7,6 @@ import           RIO
 import qualified RIO.ByteString                as B
 import qualified RIO.FilePath                  as FP
 import qualified RIO.List                      as L
-import qualified RIO.Map                       as Map
-import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
@@ -72,7 +70,12 @@ createHsFile svcName svcVer recName moduleName importInfo schema = do
       importList =
         L.sort
           $  defaultImports
-          <> createImports svcName svcVer recName importInfo imports
+          <> ImportInfo.createImports svcName
+                                      svcVer
+                                      schemaName
+                                      recName
+                                      importInfo
+                                      imports
       content =
         flip T.snoc '\n'
           . unLines
@@ -85,54 +88,3 @@ createHsFile svcName svcVer recName moduleName importInfo schema = do
   B.writeFile path (T.encodeUtf8 content)
   pure $ ImportInfo.insert recName imports importInfo
 
-createImports
-  :: ServiceName
-  -> ServiceVersion
-  -> RecordName
-  -> ImportInfo
-  -> Set Import
-  -> [Text]
-createImports svcName svcVersion name importInfo = fmap f . Set.toList
- where
-  f ImportPrelude    = "import RIO"
-  f ImportText       = "import qualified RIO.Text as T"
-  f ImportEnum       = "import qualified RIO.Map as Map"
-  f ImportGenerics   = "import GHC.Generics()"
-  f (Import recName) = createImport svcName svcVersion cname recName t
-   where
-    t = isCyclicImport name recName Set.empty importInfo
-    cname =
-      fromMaybe recName . Map.lookup recName . importInfoRename $ importInfo
-
-createImport
-  :: ServiceName -> ServiceVersion -> RecordName -> RecordName -> Bool -> Text
-createImport svcName svcVersion cname recName t =
-  "import "
-    <> s
-    <> "qualified "
-    <> svcName
-    <> "."
-    <> svcVersion
-    <> "."
-    <> schemaName
-    <> "."
-    <> cname
-    <> " as "
-    <> recName -- cname にしたいところ
-  where s = if t then "{-# SOURCE #-} " else ""
-
-isCyclicImport
-  :: RecordName -> RecordName -> Set RecordName -> ImportInfo -> Bool
-isCyclicImport name recName acc importInfo
-  | Set.member rn acc = False
-  | otherwise         = maybe False f $ ImportInfo.lookup recName importInfo
- where
-  n  = T.toUpper name
-  rn = T.toUpper recName
-  f imports = imported || cyclicImport
-   where
-    imported = Set.member n imports
-    cyclicImport =
-      any (== True)
-        . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importInfo)
-        $ Set.toList imports

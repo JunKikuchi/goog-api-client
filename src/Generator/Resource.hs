@@ -18,7 +18,8 @@ import           RIO.Writer                     ( runWriterT
                                                 , tell
                                                 )
 import           Discovery.RestDescription
-import           Generator.Schema.File          ( createImport )
+import           Generator.ImportInfo           ( createImport )
+import           Generator.Schema.File          ( schemaName )
 import           Generator.Types         hiding ( Schema )
 import           Generator.Util
 import           Path
@@ -267,5 +268,5 @@ createImports svcName svcVer =
  where
   f ImportPrelude = ["import RIO"]
   f ImportText    = ["import qualified RIO.Text as T"]
-  f (Import ref)  = [createImport svcName svcVer ref ref False]
+  f (Import ref)  = [createImport svcName svcVer schemaName ref ref False]
   f _             = undefined
