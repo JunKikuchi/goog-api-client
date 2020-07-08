@@ -16,7 +16,7 @@ import           RIO.Writer                     ( runWriterT
                                                 )
 import qualified Discovery.RestDescription.Schema
                                                as Desc
-import qualified JSON.Schema                   as JSON
+import qualified JSON
 import           Generator.Types
 import           Generator.Util
 import           Generator.Schema.Types
