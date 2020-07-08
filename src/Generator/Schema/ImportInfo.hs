@@ -108,6 +108,6 @@ isCyclicImport name recName acc importInfo
    where
     imported = Set.member n imports
     cyclicImport =
-      any (== True)
+      (True `elem`)
         . fmap (\r -> isCyclicImport name r (Set.insert rn acc) importInfo)
         $ Set.toList imports
