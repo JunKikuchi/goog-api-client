@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6db35d534cef1fbe23cedf2486a11adbbdb08e718bbf6d01cfe77ec98a31a732
+-- hash: 3fb58627e5dc980cd083cfbc2f85b320e18a4a93f812122bfd50463b872e6d50
 
 name:           goog-api-client-generator
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
       Generator.Project
       Generator.Resource
       Generator.Schema
+      Generator.Schema.File
       Generator.Types
       Generator.Util
       JSON
