@@ -37,9 +37,9 @@ commands = subparser (genAllCmd <> genApiCmd)
  where
   genAllCmd = command "all" $ info (genAllCommand <**> helper) allDesc
   genApiCmd = command "api" $ info (genApiCommand <**> helper) apiDesc
-  allDesc   = fullDesc <> progDesc "e.g. goog-api-client-gen all"
+  allDesc   = fullDesc <> progDesc "e.g. goog-api-client-generator all"
   apiDesc   = fullDesc
-    <> progDesc "e.g. goog-api-client-gen api --api storage --version v1"
+    <> progDesc "e.g. goog-api-client-generator api --api storage --version v1"
 
 genAllCommand :: Parser Commands
 genAllCommand = GenAllCommand <$> genAll

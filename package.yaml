@@ -1,6 +1,6 @@
-name: goog-api-client-gen
+name: goog-api-client-generator
 version: 0.1.0.0
-github: "JunKikuchi/goog-api-client-gen"
+github: "JunKikuchi/goog-api-client-generator"
 license: BSD3
 author: "Jun Kikuchi"
 maintainer: "kikuchi@bonnou.com"
@@ -17,7 +17,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description: Please see the README on GitHub at <https://github.com/JunKikuchi/goog-api-client-gen#readme>
+description: Please see the README on GitHub at <https://github.com/JunKikuchi/goog-api-client-generator#readme>
 
 dependencies:
   - base >= 4.7 && < 5
@@ -47,7 +47,7 @@ library:
     - -Werror
 
 executables:
-  goog-api-client-gen:
+  goog-api-client-generator:
     main: Main.hs
     source-dirs: app
     ghc-options:
@@ -63,10 +63,10 @@ executables:
       - -Wredundant-constraints
       - -Werror
     dependencies:
-      - goog-api-client-gen
+      - goog-api-client-generator
 
 tests:
-  goog-api-client-gen-test:
+  goog-api-client-generator-test:
     main: Spec.hs
     source-dirs: test
     ghc-options:
@@ -74,9 +74,9 @@ tests:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - goog-api-client-gen
+      - goog-api-client-generator
       - doctest
-  goog-api-client-gen-tasty:
+  goog-api-client-generator-tasty:
     main: Tasty.hs
     source-dirs: test-tasty
     ghc-options:
@@ -84,7 +84,7 @@ tests:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - goog-api-client-gen
+      - goog-api-client-generator
       - raw-strings-qq
       - tasty
       - tasty-discover

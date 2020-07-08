@@ -1,3 +1,3 @@
-![build](https://github.com/JunKikuchi/goog-api-client-gen/workflows/build/badge.svg)
+![build](https://github.com/JunKikuchi/goog-api-client-generator/workflows/build/badge.svg)
 
-# goog-api-client-gen
+# goog-api-client-generator
