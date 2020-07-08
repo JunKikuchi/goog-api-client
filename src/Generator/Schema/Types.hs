@@ -21,11 +21,3 @@ type Enum       = (SchemaName, EnumList)
 type EnumList   = [(EnumName, EnumDesc)]
 type EnumName   = Text
 type EnumDesc   = Text
-
-data ImportInfo
-  = ImportInfo
-  { importInfoImports :: Map RecordName Imports
-  , importInfoRename  :: Map RecordName RecordName
-  } deriving (Show)
-
-type Imports = Set RecordName

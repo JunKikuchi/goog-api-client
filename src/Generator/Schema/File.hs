@@ -17,6 +17,7 @@ import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
 import qualified Generator.Schema.Data         as Data
+import           Generator.Schema.ImportInfo    ( ImportInfo )
 import qualified Generator.Schema.ImportInfo   as ImportInfo
 import           Generator.Schema.Types  hiding ( Schema )
 

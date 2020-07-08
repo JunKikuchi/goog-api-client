@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Generator.Schema.ImportInfo
-  ( empty
+  ( ImportInfo
+  , empty
   , member
   , lookup
   , rename
@@ -16,6 +17,14 @@ import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           Generator.Types
 import           Generator.Schema.Types
+
+data ImportInfo
+  = ImportInfo
+  { importInfoImports :: Map RecordName Imports
+  , importInfoRename  :: Map RecordName RecordName
+  } deriving (Show)
+
+type Imports = Set RecordName
 
 empty :: ImportInfo
 empty =
