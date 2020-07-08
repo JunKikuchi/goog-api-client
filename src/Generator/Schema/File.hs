@@ -14,10 +14,11 @@ import qualified RIO.List                      as L
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
+import           Generator.Types
+import           Generator.Util
 import qualified Generator.Schema.Data         as Data
 import qualified Generator.Schema.ImportInfo   as ImportInfo
-import           Generator.Types         hiding ( Schema )
-import           Generator.Util
+import           Generator.Schema.Types  hiding ( Schema )
 
 schemaName :: Text
 schemaName = "Schema"

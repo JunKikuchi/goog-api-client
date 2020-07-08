@@ -15,6 +15,7 @@ import qualified RIO.Map                       as Map
 import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           Generator.Types
+import           Generator.Schema.Types
 
 empty :: ImportInfo
 empty =

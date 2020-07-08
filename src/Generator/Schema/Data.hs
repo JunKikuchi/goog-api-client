@@ -19,6 +19,7 @@ import qualified Discovery.RestDescription.Schema
 import qualified JSON.Schema                   as JSON
 import           Generator.Types
 import           Generator.Util
+import           Generator.Schema.Types
 
 createData
   :: MonadThrow m => ModuleName -> RecordName -> Desc.Schema -> GenData m Text

@@ -18,10 +18,11 @@ import           RIO.Writer                     ( runWriterT
                                                 , tell
                                                 )
 import           Discovery.RestDescription
+import           Generator.Types
+import           Generator.Util
 import           Generator.Schema.ImportInfo    ( createImport )
 import           Generator.Schema.File          ( schemaName )
-import           Generator.Types         hiding ( Schema )
-import           Generator.Util
+import           Generator.Schema.Types  hiding ( Schema )
 import           Path
 
 type ApiName = Text
