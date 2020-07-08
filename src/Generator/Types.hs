@@ -45,4 +45,5 @@ data ImportInfo
   { importInfoImports :: Map RecordName Imports
   , importInfoRename  :: Map RecordName RecordName
   } deriving (Show)
+
 type Imports = Set RecordName
