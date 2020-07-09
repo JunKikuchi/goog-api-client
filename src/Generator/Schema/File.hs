@@ -45,15 +45,14 @@ createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
 createFile svcName svcVer importInfo schema = do
   name <- get schemaId "schemaId" schema
-  let
-    t     = ImportInfo.member name importInfo
-    cname = if t then name <> "'" else name
-    imprtInfo =
-      if t then ImportInfo.rename name cname importInfo else importInfo
-    moduleName = T.intercalate "." [svcName, svcVer, schemaName, cname]
+  let t     = ImportInfo.member name importInfo
+      cname = if t then name <> "'" else name
+      newImportInfo =
+        if t then ImportInfo.rename name cname importInfo else importInfo
+      moduleName = T.intercalate "." [svcName, svcVer, schemaName, cname]
   print moduleName
   createHsBootFile cname moduleName schema
-  createHsFile svcName svcVer cname moduleName imprtInfo schema
+  createHsFile svcName svcVer cname moduleName schema newImportInfo
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile name moduleName schema = do
@@ -70,10 +69,10 @@ createHsFile
   -> ServiceVersion
   -> RecordName
   -> ModuleName
-  -> ImportInfo
   -> Schema
+  -> ImportInfo
   -> IO ImportInfo
-createHsFile svcName svcVer recName moduleName importInfo schema = do
+createHsFile svcName svcVer recName moduleName schema importInfo = do
   (record , jsonObjs) <- runWriterT $ Data.createData moduleName recName schema
   (records, imports ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
   let path = FP.addExtension (T.unpack recName) "hs"
