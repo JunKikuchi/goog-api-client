@@ -45,10 +45,7 @@ createFile
   :: ServiceName -> ServiceVersion -> ImportInfo -> Schema -> IO ImportInfo
 createFile svcName svcVer importInfo schema = do
   name <- get schemaId "schemaId" schema
-  let t     = ImportInfo.member name importInfo
-      cname = if t then name <> "'" else name
-      newImportInfo =
-        if t then ImportInfo.rename name cname importInfo else importInfo
+  let (cname, newImportInfo) = ImportInfo.canonicalName name importInfo
       moduleName = T.intercalate "." [svcName, svcVer, schemaName, cname]
   print moduleName
   createHsBootFile cname moduleName schema

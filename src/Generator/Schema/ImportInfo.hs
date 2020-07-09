@@ -2,9 +2,7 @@
 module Generator.Schema.ImportInfo
   ( ImportInfo
   , empty
-  , member
-  , lookup
-  , rename
+  , canonicalName
   , insert
   , createImports
   , createImport
@@ -29,6 +27,12 @@ type Imports = Set RecordName
 empty :: ImportInfo
 empty =
   ImportInfo {importInfoImports = Map.empty, importInfoRename = Map.empty}
+
+canonicalName :: RecordName -> ImportInfo -> (RecordName, ImportInfo)
+canonicalName name importInfo
+  | member name importInfo = (cname, rename name cname importInfo)
+  | otherwise              = (name, importInfo)
+  where cname = name <> "'"
 
 member :: RecordName -> ImportInfo -> Bool
 member name importInfo =
