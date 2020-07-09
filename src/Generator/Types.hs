@@ -3,8 +3,9 @@ module Generator.Types where
 import           RIO
 import           RIO.Writer                     ( WriterT )
 
-newtype CodeGenException = GetException Text deriving Show
-instance Exception CodeGenException
+newtype GeneratorException = GeneratorException Text deriving Show
+
+instance Exception GeneratorException
 
 type DistDir     = FilePath
 type ProjectDir  = FilePath

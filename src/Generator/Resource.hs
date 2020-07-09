@@ -173,7 +173,7 @@ createPathTypes
 createPathTypes params argNames = sequence $ argTypes <$> argNames
  where
   argTypes name =
-    fromMaybe (throwM . GetException $ "could not find param '" <> name <> "'")
+    fromMaybe (throwM . GeneratorException $ "could not find param '" <> name <> "'")
       $   paramType
       <$> Map.lookup name params
 
@@ -220,13 +220,13 @@ paramType schema = case schemaType schema of
   Just BooleanType     -> tell (Set.singleton ImportPrelude) >> pure "RIO.Bool"
   Just st ->
     throwM
-      .  GetException
+      .  GeneratorException
       $  "not implemented schemaType '"
       <> T.pack (show st)
       <> "'"
   _ ->
     throwM
-      .  GetException
+      .  GeneratorException
       $  "failed to get schemaType '"
       <> T.pack (show schema)
       <> "'"

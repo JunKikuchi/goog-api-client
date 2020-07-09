@@ -55,7 +55,7 @@ createObject moduleName name desc obj = do
   props    <- createObjectProperties moduleName name desc obj
   addProps <- createObjectAdditionalProperties moduleName name desc obj
   maybe
-    (throwM $ GetException
+    (throwM $ GeneratorException
       "faild to get JSON object properties nor additionalProperties"
     )
     pure
@@ -483,7 +483,7 @@ createFieldDatum moduleName (name, schema) = case JSON.schemaType schema of
     field  <- createFieldDatumField moduleName name desc obj
     maybe
       (throwM
-        (GetException
+        (GeneratorException
           "faild to get JSON object properties nor additionalProperties"
         )
       )
