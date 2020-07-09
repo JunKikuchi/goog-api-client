@@ -55,9 +55,9 @@ createFile svcName svcVer importInfo schema = do
   createHsFile svcName svcVer cname moduleName schema newImportInfo
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
-createHsBootFile name moduleName schema = do
+createHsBootFile recName moduleName schema = do
   record <- Data.createBootData schema
-  let path = FP.addExtension (T.unpack name) "hs-boot"
+  let path = FP.addExtension (T.unpack recName) "hs-boot"
       content =
         flip T.snoc '\n'
           . unLines
