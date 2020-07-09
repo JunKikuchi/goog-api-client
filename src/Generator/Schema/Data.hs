@@ -82,6 +82,7 @@ createObjectPropertiesContent
   -> GenData m (Maybe Text)
 createObjectPropertiesContent moduleName name desc props = if Map.null props
   then do
+    let field  = "    un" <> name <> " :: Map RIO.Text Aeson.Value"
     let field =
           "    " <> T.concat ["un", name] <> " :: Map RIO.Text Aeson.Value"
         record =
@@ -131,6 +132,7 @@ createObjectAdditionalPropertiesContent
 createObjectAdditionalPropertiesContent moduleName name desc schema = do
   fieldType <- createType moduleName (name <> "Value") schema True
   let fieldDesc = descContent 4 (JSON.schemaDescription schema)
+      field     = "    un" <> name <> " :: Map RIO.Text " <> fieldType
       field =
         "    " <> T.concat ["un", name] <> " :: Map RIO.Text " <> fieldType
       record =
