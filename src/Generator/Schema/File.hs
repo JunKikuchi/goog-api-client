@@ -93,4 +93,3 @@ createHsFile svcName svcVer recName moduleName schema importInfo = do
             ]
   B.writeFile path (T.encodeUtf8 content)
   pure $ ImportInfo.insert recName imports importInfo
-
