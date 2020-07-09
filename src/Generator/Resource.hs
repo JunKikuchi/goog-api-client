@@ -269,5 +269,5 @@ createImports svcName svcVer =
  where
   f ImportPrelude = ["import RIO"]
   f ImportText    = ["import qualified RIO.Text as T"]
-  f (Import ref)  = [createImport svcName svcVer schemaName ref ref False]
+  f (Import ref)  = [createImport "" svcName svcVer schemaName ref ref]
   f _             = undefined

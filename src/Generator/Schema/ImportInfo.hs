@@ -72,28 +72,29 @@ createImports svcName svcVersion schemaName name importInfo =
   f ImportText       = "import qualified RIO.Text as T"
   f ImportEnum       = "import qualified RIO.Map as Map"
   f ImportGenerics   = "import GHC.Generics()"
-  f (Import recName) = createImport svcName
+  f (Import recName) = createImport sourcePragma
+                                    svcName
                                     svcVersion
                                     schemaName
                                     cname
                                     recName
-                                    t
    where
-    t = isCyclicImport name recName Set.empty importInfo
+    sourcePragma = if isCyclic then "{-# SOURCE #-} " else ""
+    isCyclic     = isCyclicImport name recName Set.empty importInfo
     cname =
       fromMaybe recName . Map.lookup recName . importInfoRename $ importInfo
 
 createImport
-  :: ServiceName
+  :: Text
+  -> ServiceName
   -> ServiceVersion
   -> Text
   -> RecordName
   -> RecordName
-  -> Bool
   -> Text
-createImport svcName svcVersion schemaName cname recName t =
+createImport sourcePragma svcName svcVersion schemaName cname recName =
   "import "
-    <> s
+    <> sourcePragma
     <> "qualified "
     <> svcName
     <> "."
@@ -104,7 +105,6 @@ createImport svcName svcVersion schemaName cname recName t =
     <> cname
     <> " as "
     <> recName -- cname にしたいところ
-  where s = if t then "{-# SOURCE #-} " else ""
 
 isCyclicImport
   :: RecordName -> RecordName -> Set RecordName -> ImportInfo -> Bool
