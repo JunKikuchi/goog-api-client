@@ -83,15 +83,11 @@ createObjectPropertiesContent
 createObjectPropertiesContent moduleName name desc props = if Map.null props
   then do
     let field  = "    un" <> name <> " :: Map RIO.Text Aeson.Value"
-    let field =
-          "    " <> T.concat ["un", name] <> " :: Map RIO.Text Aeson.Value"
-        record =
-          createRecordContent name field 1 desc
-            <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+        record = createRecordContent name field 1 desc True
     pure . pure $ record
   else do
     field <- createField moduleName name props
-    let record = createRecordContent name field (Map.size props) desc
+    let record = createRecordContent name field (Map.size props) desc False
         aeson  = createAesonContent moduleName name props
     pure . pure $ record <> "\n\n" <> aeson
 
@@ -133,11 +129,7 @@ createObjectAdditionalPropertiesContent moduleName name desc schema = do
   fieldType <- createType moduleName (name <> "Value") schema True
   let fieldDesc = descContent 4 (JSON.schemaDescription schema)
       field     = "    un" <> name <> " :: Map RIO.Text " <> fieldType
-      field =
-        "    " <> T.concat ["un", name] <> " :: Map RIO.Text " <> fieldType
-      record =
-        createRecordContent name (fieldDesc <> field) 1 desc
-          <> " deriving (Aeson.ToJSON, Aeson.FromJSON)"
+      record    = createRecordContent name (fieldDesc <> field) 1 desc True
   pure . pure $ record
 
 createArray
@@ -304,14 +296,15 @@ createArrayType moduleName name schema array = case JSON.arrayItems array of
     pure $ "[" <> fieldType <> "]"
   _ -> undefined
 
-createRecordContent :: RecordName -> Text -> Int -> Maybe Text -> Text
-createRecordContent name field size desc =
+createRecordContent :: RecordName -> Text -> Int -> Maybe Text -> Bool -> Text
+createRecordContent name field numFields desc addDeriving =
   descContent 0 desc
-    <> (if size == 1 then "newtype " else "data ")
+    <> (if numFields == 1 then "newtype " else "data ")
     <> name
     <> " = "
     <> name
-    <> (if size == 0 then "" else "\n  {\n" <> field <> "\n  }")
+    <> (if numFields == 0 then "" else "\n  {\n" <> field <> "\n  }")
+    <> (if addDeriving then " deriving (Aeson.ToJSON, Aeson.FromJSON)" else "")
 
 createAesonContent :: ModuleName -> RecordName -> Desc.ObjectProperties -> Text
 createAesonContent moduleName name props =
