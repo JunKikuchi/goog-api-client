@@ -74,7 +74,7 @@ createImports svcName svcVersion schemaName name importInfo =
  where
   f ImportPrelude    = "import RIO"
   f ImportText       = "import qualified RIO.Text as T"
-  f ImportEnum       = "import qualified RIO.Map as Map"
+  f ImportMap        = "import qualified RIO.Map as Map"
   f ImportGenerics   = "import GHC.Generics()"
   f (Import recName) = createImport sourcePragma
                                     svcName

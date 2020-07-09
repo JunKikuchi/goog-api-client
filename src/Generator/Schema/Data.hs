@@ -184,7 +184,7 @@ createString moduleName name desc schema = case Desc.schemaEnum schema of
     tell
       [ DataImport ImportPrelude
       , DataImport ImportGenerics
-      , DataImport ImportEnum
+      , DataImport ImportMap
       ]
     let content = createFieldEnumContent name enums
         aeson   = createFieldEnumAesonContent moduleName name enums
@@ -271,7 +271,7 @@ createEnumType defaultType name schema = case JSON.schemaEnum schema of
     tell
       [ DataEnum (name, zip jsonEnum descs)
       , DataImport ImportGenerics
-      , DataImport ImportEnum
+      , DataImport ImportMap
       ]
     pure name
   _ -> pure defaultType

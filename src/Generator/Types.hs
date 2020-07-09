@@ -24,4 +24,4 @@ type Required = Bool
 type Gen w     = WriterT w
 type GenImport = Gen (Set Import)
 
-data Import = ImportPrelude | ImportText | ImportEnum | ImportGenerics | Import Text deriving (Eq, Ord, Show)
+data Import = ImportPrelude | ImportText | ImportMap | ImportGenerics | Import Text deriving (Eq, Ord, Show)
