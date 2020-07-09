@@ -15,8 +15,10 @@ type ResourceName = Text
 type GenData = Gen [Data]
 
 data Data       = DataSchema Schema | DataEnum Enum | DataImport Import deriving Show
+
 type Schema     = (SchemaName, JSON.Schema)
 type SchemaName = Text
+
 type Enum       = (SchemaName, EnumList)
 type EnumList   = [(EnumName, EnumDesc)]
 type EnumName   = Text
