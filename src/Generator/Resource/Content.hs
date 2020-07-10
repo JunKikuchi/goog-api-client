@@ -82,12 +82,12 @@ createPath apiName params pathName path paramOrder = do
              )
       functionType = desc <> pathName <> " :: " <> T.intercalate
         " "
-        (L.intersperse "->" (types <> ["[RIO.Text]"]))
+        (L.intersperse "->" (types <> ["RIO.Text"]))
       functionBody =
         pathName
           <> " "
           <> T.intercalate " " argNames
-          <> " = join ["
+          <> " = T.intercalate \"/\" $ join ["
           <> T.intercalate ", " pathArgs
           <> "]"
       content = T.intercalate "\n" [functionType, functionBody]

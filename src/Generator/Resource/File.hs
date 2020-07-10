@@ -35,7 +35,7 @@ defaultExtentions =
   ]
 
 defaultImports :: [Text]
-defaultImports = ["import Servant.API"]
+defaultImports = ["import Servant.API", "import qualified RIO.Text as T"]
 
 gen
   :: ServiceName
