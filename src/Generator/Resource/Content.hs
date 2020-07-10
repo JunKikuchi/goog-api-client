@@ -34,7 +34,7 @@ createContent commonParams method = do
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
   let apiName  = toCamelName methodId
       pathName = unTitle $ apiName <> "Path"
-  cpath         <- createPath params pathName path
+  cpath         <- createPath apiName params pathName path paramOrder
   captures      <- createCapture pathName
   queries       <- createQueryParam params
   commonQueries <- createQueryParam commonParams
@@ -53,21 +53,34 @@ createContent commonParams method = do
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
       content = desc <> apiType <> "\n\n" <> cpath
   pure (apiName, content)
-  where params = fromMaybe Map.empty $ restDescriptionMethodParameters method
+ where
+  params     = fromMaybe Map.empty $ restDescriptionMethodParameters method
+  paramOrder = fromMaybe [] $ restDescriptionMethodParameterOrder method
 
 createPath
   :: MonadThrow m
-  => RestDescriptionParameters
+  => ApiName
+  -> RestDescriptionParameters
   -> Text
   -> Text
+  -> [Text]
   -> GenImport m Text
-createPath params pathName path = do
+createPath apiName params pathName path paramOrder = do
   tell (Set.singleton ImportPrelude)
   paths    <- either throwM pure $ Path.parse path
   pathArgs <- createPathParams paths
   let argNames = foldr f [] . join . pathSegments $ paths
   types <- createPathTypes pathParams argNames
-  let functionType = pathName <> " :: " <> T.intercalate
+  let desc =
+        descContent 0
+          .  Just
+          $  "Create CaptureAll path parameter for "
+          <> apiName
+          <> (if null paramOrder
+               then ""
+               else "\n\nArgs: " <> T.intercalate ", " paramOrder
+             )
+      functionType = desc <> pathName <> " :: " <> T.intercalate
         " "
         (L.intersperse "->" (types <> ["[RIO.Text]"]))
       functionBody =
@@ -77,7 +90,8 @@ createPath params pathName path = do
           <> " = join ["
           <> T.intercalate ", " pathArgs
           <> "]"
-  pure $ functionType <> "\n" <> functionBody
+      content = T.intercalate "\n" [functionType, functionBody]
+  pure content
  where
   pathParams = Map.filter filterPath params
   filterPath schema = schemaLocation schema == Just "path"
