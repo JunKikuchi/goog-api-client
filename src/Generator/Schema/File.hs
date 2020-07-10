@@ -16,7 +16,7 @@ import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
-import qualified Generator.Schema.Data         as Data
+import qualified Generator.Schema.Content      as C
 import           Generator.Schema.ImportInfo    ( ImportInfo )
 import qualified Generator.Schema.ImportInfo   as ImportInfo
 import           Generator.Schema.Types  hiding ( Schema )
@@ -53,7 +53,7 @@ createFile svcName svcVer importInfo schema = do
 
 createHsBootFile :: RecordName -> ModuleName -> Schema -> IO ()
 createHsBootFile recName moduleName schema = do
-  record <- Data.createBootData schema
+  record <- C.createBootContent schema
   let path = FP.addExtension (T.unpack recName) "hs-boot"
       content =
         flip T.snoc '\n'
@@ -70,8 +70,8 @@ createHsFile
   -> ImportInfo
   -> IO ImportInfo
 createHsFile svcName svcVer recName moduleName schema importInfo = do
-  (record , jsonObjs) <- runWriterT $ Data.createData moduleName recName schema
-  (records, imports ) <- runWriterT $ Data.createFieldData moduleName jsonObjs
+  (record , jsonObjs) <- runWriterT $ C.createContent moduleName recName schema
+  (records, imports ) <- runWriterT $ C.createFieldContent moduleName jsonObjs
   let path = FP.addExtension (T.unpack recName) "hs"
       importList =
         L.sort

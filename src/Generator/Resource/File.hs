@@ -16,7 +16,7 @@ import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
-import qualified Generator.Resource.Data       as Data
+import qualified Generator.Resource.Content    as C
 import           Generator.Schema.File          ( schemaName )
 import qualified Generator.Schema.ImportInfo   as ImportInfo
 import           Generator.Schema.Types  hiding ( Schema )
@@ -59,7 +59,7 @@ createFile svcName svcVer commonParams resNames resName resource = do
   case restDescriptionResourceMethods resource of
     Just methods -> withDir dir $ forM_ (Map.elems methods) $ \method -> do
       ((apiName, body), imports) <- runWriterT
-        $ Data.createData commonParams method
+        $ C.createContent commonParams method
       let moduleName =
             T.intercalate "."
               $  [svcName, svcVer, resourceName]

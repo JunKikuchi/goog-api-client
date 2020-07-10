@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generator.Resource.Data
-  ( createData
+module Generator.Resource.Content
+  ( createContent
   )
 where
 
@@ -23,12 +23,12 @@ createApi apiNames = "type API\n  =    " <> api
   where api = T.intercalate "\n  :<|> " apiNames
 -}
 
-createData
+createContent
   :: MonadThrow m
   => RestDescriptionParameters
   -> RestDescriptionMethod
   -> GenImport m (ApiName, Text)
-createData commonParams method = do
+createContent commonParams method = do
   methodId   <- get restDescriptionMethodId "method id" method
   path       <- get restDescriptionMethodPath "method path" method
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method

@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generator.Schema.Data
-  ( createData
-  , createBootData
-  , createFieldData
+module Generator.Schema.Content
+  ( createContent
+  , createBootContent
+  , createFieldContent
   )
 where
 
@@ -21,9 +21,9 @@ import           Generator.Types
 import           Generator.Util
 import           Generator.Schema.Types
 
-createData
+createContent
   :: MonadThrow m => ModuleName -> RecordName -> Desc.Schema -> GenData m Text
-createData moduleName recName schema = do
+createContent moduleName recName schema = do
   let name = fromMaybe recName $ Desc.schemaId schema
       desc = Desc.schemaDescription schema
   schemaType <- get Desc.schemaType "schema type" schema
@@ -197,8 +197,8 @@ createPrimitive :: RecordName -> Maybe Desc -> Text -> Text
 createPrimitive name desc type_ =
   descContent 0 desc <> "type " <> name <> " = " <> type_
 
-createBootData :: MonadThrow m => Desc.Schema -> m Text
-createBootData schema = do
+createBootContent :: MonadThrow m => Desc.Schema -> m Text
+createBootContent schema = do
   schemaType <- get Desc.schemaType "schema type" schema
   name       <- get Desc.schemaId "schema id" schema
   pure $ case schemaType of
@@ -377,8 +377,8 @@ createToJSONContent moduleName name props
     "\n    , "
     ((\(key, argName) -> "\"" <> key <> "\" Aeson..= " <> argName) <$> names)
 
-createFieldData :: MonadThrow m => ModuleName -> [Data] -> GenImport m Text
-createFieldData moduleName = fmap unLines . foldr f (pure mempty)
+createFieldContent :: MonadThrow m => ModuleName -> [Data] -> GenImport m Text
+createFieldContent moduleName = fmap unLines . foldr f (pure mempty)
  where
   f :: MonadThrow m => Data -> GenImport m [Text] -> GenImport m [Text]
   f (DataSchema schema) acc = do
@@ -386,7 +386,7 @@ createFieldData moduleName = fmap unLines . foldr f (pure mempty)
     if null schemas
       then (a :) <$> acc
       else do
-        b <- createFieldData moduleName schemas
+        b <- createFieldContent moduleName schemas
         (a :) <$> ((b :) <$> acc)
   f (DataEnum (name, enums)) acc = do
     let a     = createFieldEnumContent name enums
