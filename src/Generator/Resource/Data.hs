@@ -9,79 +9,32 @@ import qualified RIO.List                      as L
 import qualified RIO.Map                       as Map
 import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
-import           RIO.Writer                     ( runWriterT
-                                                , tell
-                                                )
+import           RIO.Writer                     ( tell )
 import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
-import           Generator.Schema.ImportInfo    ( createImport )
-import           Generator.Schema.File          ( schemaName )
-import           Generator.Schema.Types  hiding ( Schema )
 import           Path
 
 type ApiName = Text
 
-defaultExtentions :: [Text]
-defaultExtentions =
-  [ "{-# LANGUAGE DataKinds #-}"
-  , "{-# LANGUAGE OverloadedStrings #-}"
-  , "{-# LANGUAGE TypeOperators #-}"
-  ]
-
-defaultImports :: [Text]
-defaultImports = ["import Servant.API"]
-
-createData
-  :: ModuleName
-  -> ServiceName
-  -> ServiceVersion
-  -> RestDescriptionParameters
-  -> RestDescriptionMethods
-  -> IO Text
-createData moduleName svcName svcVer commonParams methods = do
-  (cs, imports) <- runWriterT $ createMethods commonParams methods
-  let (apiNames, contents) = L.unzip cs
-      api                  = createApi apiNames
-      content =
-        T.intercalate "\n"
-          $  defaultExtentions
-          <> [ "module " <> moduleName <> " where"
-             , ""
-             , createImports svcName svcVer imports
-             , ""
-             , api
-             , ""
-             ]
-          <> contents
-  pure content
-
-
+{-
 createApi :: [ApiName] -> Text
 createApi apiNames = "type API\n  =    " <> api
   where api = T.intercalate "\n  :<|> " apiNames
+-}
 
-createMethods
+createData
   :: MonadThrow m
   => RestDescriptionParameters
-  -> Map MethodName RestDescriptionMethod
-  -> GenImport m [(ApiName, Text)]
-createMethods commonParams methods =
-  forM (Map.toList methods) (uncurry $ createMethod commonParams)
-
-createMethod
-  :: MonadThrow m
-  => RestDescriptionParameters
-  -> MethodName
   -> RestDescriptionMethod
   -> GenImport m (ApiName, Text)
-createMethod commonParams _name method = do
+createData commonParams method = do
   methodId   <- get restDescriptionMethodId "method id" method
   path       <- get restDescriptionMethodPath "method path" method
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
   let apiName  = toCamelName methodId
       pathName = unTitle $ apiName <> "Path"
-  createPath    <- createPathFunction params pathName path
+  cpath         <- createPath params pathName path
   captures      <- createCapture pathName
   queries       <- createQueryParam params
   commonQueries <- createQueryParam commonParams
@@ -98,16 +51,17 @@ createMethod commonParams _name method = do
           <> reqBody
           <> verb
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
-  pure (apiName, desc <> apiType <> "\n\n" <> createPath)
+      content = desc <> apiType <> "\n\n" <> cpath
+  pure (apiName, content)
   where params = fromMaybe Map.empty $ restDescriptionMethodParameters method
 
-createPathFunction
+createPath
   :: MonadThrow m
   => RestDescriptionParameters
   -> Text
   -> Text
   -> GenImport m Text
-createPathFunction params pathName path = do
+createPath params pathName path = do
   tell (Set.singleton ImportPrelude)
   paths    <- either throwM pure $ Path.parse path
   pathArgs <- createPathParams paths
@@ -123,7 +77,7 @@ createPathFunction params pathName path = do
           <> " = join ["
           <> T.intercalate ", " pathArgs
           <> "]"
-  pure $ functionType <> "\n" <> functionBody <> "\n"
+  pure $ functionType <> "\n" <> functionBody
  where
   pathParams = Map.filter filterPath params
   filterPath schema = schemaLocation schema == Just "path"
@@ -221,12 +175,3 @@ createVerb method resp = case resp of
   (Just ref) -> [m <> " '[JSON] " <> ref <> "." <> ref]
   _          -> [m <> "NoContent '[JSON] NoContent"]
   where m = "  " <> T.toTitle method
-
-createImports :: ServiceName -> ServiceVersion -> Set Import -> Text
-createImports svcName svcVer =
-  T.intercalate "\n" . L.sort . (<>) defaultImports . join . fmap f . Set.toList
- where
-  f ImportPrelude = ["import RIO"]
-  f ImportText    = ["import qualified RIO.Text as T"]
-  f (Import ref)  = [createImport "" svcName svcVer schemaName ref ref]
-  f _             = undefined
