@@ -32,9 +32,21 @@ createContent commonParams method = do
   methodId   <- get restDescriptionMethodId "method id" method
   path       <- get restDescriptionMethodPath "method path" method
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  let apiName  = toCamelName methodId
-      pathName = unTitle $ apiName <> "Path"
-  cpath         <- createPath apiName params pathName path paramOrder
+  let apiName           = toCamelName methodId
+      pathName          = unTitle $ apiName <> "Path"
+      simplePathName    = unTitle $ apiName <> "SimplePath"
+      resumablePathName = unTitle $ apiName <> "ResumablePath"
+  createpath       <- createPath apiName params pathName (Just path) paramOrder
+  createSimplePath <- createPath apiName
+                                 params
+                                 simplePathName
+                                 uploadSimplePath
+                                 paramOrder
+  createResumablePath <- createPath apiName
+                                    params
+                                    resumablePathName
+                                    uploadResumablePath
+                                    paramOrder
   captures      <- createCapture pathName
   queries       <- createQueryParam params
   commonQueries <- createQueryParam commonParams
@@ -52,23 +64,36 @@ createContent commonParams method = do
           <> reqBody
           <> verb
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
-      content = desc <> apiType <> "\n\n" <> cpath
+      content =
+        T.intercalate "\n\n"
+          . filter (not . T.null)
+          $ [desc <> apiType, createpath, createSimplePath, createResumablePath]
   pure (apiName, content)
  where
   params          = fromMaybe Map.empty $ restDescriptionMethodParameters method
   paramOrder      = fromMaybe [] $ restDescriptionMethodParameterOrder method
   upload = fromMaybe False $ restDescriptionMethodSupportsMediaUpload method
   uploadTypeQuery = [ "  QueryParam \"uploadType\" RIO.Text" | upload ]
+  mediaUpload     = restDescriptionMethodMediaUpload method
+  uploadProtocols = mediaUpload >>= restDescriptionMethodMediaProtocols
+  uploadSimple = uploadProtocols >>= restDescriptionMethodMediaProtocolsSimple
+  uploadSimplePath =
+    uploadSimple >>= restDescriptionMethodMediaProtocolsSimplePath
+  uploadResumable =
+    uploadProtocols >>= restDescriptionMethodMediaProtocolsResumable
+  uploadResumablePath =
+    uploadResumable >>= restDescriptionMethodMediaProtocolsResumablePath
 
 createPath
   :: MonadThrow m
   => ApiName
   -> RestDescriptionParameters
   -> Text
-  -> Text
+  -> Maybe Text
   -> [Text]
   -> GenImport m Text
-createPath apiName params pathName path paramOrder = do
+createPath _       _      _        Nothing     _          = pure ""
+createPath apiName params pathName (Just path) paramOrder = do
   tell (Set.singleton ImportPrelude)
   paths    <- either throwM pure $ Path.parse path
   pathArgs <- createPathParams paths
@@ -113,7 +138,9 @@ createPathTypes params argNames = sequence $ argTypes <$> argNames
 createPathParams :: MonadThrow m => Path -> GenImport m [Text]
 createPathParams path = sequence $ segment <$> pathSegments path
  where
-  segment = fmap (T.intercalate " <> ") . traverse template
+  segment = fmap cat . traverse template
+  cat [] = "[\"\"]"
+  cat xs = T.intercalate " <> " xs
   template :: MonadThrow m => Template -> GenImport m Text
   template (Literal a                   ) = pure $ "[\"" <> a <> "\"]"
   template (Expression Nothing         a) = pure $ "[" <> a <> "]"
