@@ -212,7 +212,9 @@ createResponseBody resp =
 
 createReqBody :: Bool -> Maybe Text -> [Text]
 createReqBody False (Just ref) = ["  ReqBody '[JSON] " <> ref <> "." <> ref]
-createReqBody _     _          = []
+createReqBody True (Just ref) =
+  ["  ReqBody '[JSON] (Maybe " <> ref <> "." <> ref <> ")"]
+createReqBody _ _ = []
 
 createVerb :: Text -> Maybe Text -> [Text]
 createVerb method resp = case resp of
