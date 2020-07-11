@@ -40,7 +40,7 @@ createContent commonParams method = do
   commonQueries <- createQueryParam commonParams
   request       <- createRequestBody $ restDescriptionMethodRequest method
   response      <- createResponseBody $ restDescriptionMethodResponse method
-  let reqBody = createReqBody request
+  let reqBody = createReqBody upload request
       verb    = createVerb httpMethod response
       desc    = descContent 0 $ restDescriptionMethodDescription method
       apiPath =
@@ -48,14 +48,17 @@ createContent commonParams method = do
           $  captures
           <> queries
           <> commonQueries
+          <> uploadTypeQuery
           <> reqBody
           <> verb
       apiType = "type " <> apiName <> "\n  =\n" <> apiPath
       content = desc <> apiType <> "\n\n" <> cpath
   pure (apiName, content)
  where
-  params     = fromMaybe Map.empty $ restDescriptionMethodParameters method
-  paramOrder = fromMaybe [] $ restDescriptionMethodParameterOrder method
+  params          = fromMaybe Map.empty $ restDescriptionMethodParameters method
+  paramOrder      = fromMaybe [] $ restDescriptionMethodParameterOrder method
+  upload = fromMaybe False $ restDescriptionMethodSupportsMediaUpload method
+  uploadTypeQuery = [ "  QueryParam \"uploadType\" RIO.Text" | upload ]
 
 createPath
   :: MonadThrow m
@@ -180,9 +183,9 @@ createResponseBody resp =
       pure . pure $ ref
     _ -> pure Nothing
 
-createReqBody :: Maybe Text -> [Text]
-createReqBody (Just ref) = ["  ReqBody '[JSON] " <> ref <> "." <> ref]
-createReqBody _          = []
+createReqBody :: Bool -> Maybe Text -> [Text]
+createReqBody False (Just ref) = ["  ReqBody '[JSON] " <> ref <> "." <> ref]
+createReqBody _     _          = []
 
 createVerb :: Text -> Maybe Text -> [Text]
 createVerb method resp = case resp of
