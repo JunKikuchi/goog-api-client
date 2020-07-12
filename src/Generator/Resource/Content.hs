@@ -95,20 +95,12 @@ createPath
 createPath _       _      _        Nothing     _          = pure ""
 createPath apiName params pathName (Just path) paramOrder = do
   tell (Set.singleton ImportPrelude)
-  paths    <- either throwM pure $ Path.parse path
-  pathArgs <- createPathParams paths
-  let argNames = foldr f [] . join . pathSegments $ paths
-  types <- createPathTypes pathParams argNames
-  let desc =
-        descContent 0
-          .  Just
-          $  "Create CaptureAll path parameter for "
-          <> apiName
-          <> (if null paramOrder
-               then ""
-               else "\n\nArgs: " <> T.intercalate ", " paramOrder
-             )
-      functionType = desc <> pathName <> " :: " <> T.intercalate
+  paths <- either throwM pure $ Path.parse path
+  let segments = pathSegments paths
+      argNames = foldr f [] . join $ segments
+  pathArgs <- createPathParams segments
+  types    <- createPathTypes pathParams argNames
+  let functionType = desc <> pathName <> " :: " <> T.intercalate
         " "
         (L.intersperse "->" (types <> ["RIO.Text"]))
       functionBody =
@@ -125,6 +117,15 @@ createPath apiName params pathName (Just path) paramOrder = do
   filterPath schema = schemaLocation schema == Just "path"
   f (Expression _ name) acc = name : acc
   f _                   acc = acc
+  desc =
+    descContent 0
+      .  Just
+      $  "Create CaptureAll path parameter for "
+      <> apiName
+      <> (if null paramOrder
+           then ""
+           else "\n\nArgs: " <> T.intercalate ", " paramOrder
+         )
 
 createPathTypes
   :: MonadThrow m => RestDescriptionParameters -> [Text] -> GenImport m [Text]
@@ -135,8 +136,8 @@ createPathTypes params argNames = sequence $ argTypes <$> argNames
     paramType
     (Map.lookup name params)
 
-createPathParams :: MonadThrow m => Path -> GenImport m [Text]
-createPathParams path = sequence $ segment <$> pathSegments path
+createPathParams :: MonadThrow m => [Segment] -> GenImport m [Text]
+createPathParams segments = sequence $ segment <$> segments
  where
   segment = fmap cat . traverse template
   cat [] = "[\"\"]"
