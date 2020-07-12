@@ -7,12 +7,12 @@ where
 import           RIO
 import qualified RIO.List                      as L
 import qualified RIO.Map                       as Map
-import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( tell )
 import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
+import           Generator.Resource.Types
 import           Path
 
 type ApiName = Text
@@ -27,7 +27,7 @@ createContent
   :: MonadThrow m
   => RestDescriptionParameters
   -> RestDescriptionMethod
-  -> GenImport m (ApiName, Text)
+  -> GenData m (ApiName, Text)
 createContent commonParams method = do
   methodId   <- get restDescriptionMethodId "method id" method
   path       <- get restDescriptionMethodPath "method path" method
@@ -91,10 +91,10 @@ createPath
   -> Text
   -> Maybe Text
   -> [Text]
-  -> GenImport m Text
+  -> GenData m Text
 createPath _       _      _        Nothing     _          = pure ""
 createPath apiName params pathName (Just path) paramOrder = do
-  tell (Set.singleton ImportPrelude)
+  tell [DataImport ImportPrelude]
   paths <- either throwM pure $ Path.parse path
   let segments = pathSegments paths
       argNames = foldr f [] . join $ segments
@@ -132,7 +132,7 @@ createPathTypes
   => ApiName
   -> RestDescriptionParameters
   -> [Text]
-  -> GenImport m [Text]
+  -> GenData m [Text]
 createPathTypes apiName params argNames = sequence $ argTypes <$> argNames
  where
   argTypes name = maybe
@@ -140,26 +140,26 @@ createPathTypes apiName params argNames = sequence $ argTypes <$> argNames
     (paramType apiName name)
     (Map.lookup name params)
 
-createPathParams :: MonadThrow m => [Segment] -> GenImport m [Text]
+createPathParams :: MonadThrow m => [Segment] -> GenData m [Text]
 createPathParams segments = sequence $ segment <$> segments
  where
   segment = fmap cat . traverse template
   cat [] = "[\"\"]"
   cat xs = T.intercalate " <> " xs
-  template :: MonadThrow m => Template -> GenImport m Text
+  template :: MonadThrow m => Template -> GenData m Text
   template (Literal a                   ) = pure $ "[\"" <> a <> "\"]"
   template (Expression Nothing         a) = pure $ "[" <> a <> "]"
   template (Expression (Just Reserved) a) = do
-    tell (Set.singleton ImportText)
+    tell [DataImport ImportPrelude]
     pure $ "T.split (== '/') " <> a
   template _ = undefined
 
-createCapture :: MonadThrow m => Text -> GenImport m [Text]
-createCapture name = tell (Set.singleton ImportPrelude)
+createCapture :: MonadThrow m => Text -> GenData m [Text]
+createCapture name = tell [DataImport ImportPrelude]
   >> pure ["  CaptureAll \"" <> name <> "\" RIO.Text"]
 
 createQueryParam
-  :: MonadThrow m => ApiName -> RestDescriptionParameters -> GenImport m [Text]
+  :: MonadThrow m => ApiName -> RestDescriptionParameters -> GenData m [Text]
 createQueryParam apiName =
   traverse (uncurry $ createQueryParamElement apiName)
     . filter filterQuery
@@ -167,7 +167,7 @@ createQueryParam apiName =
   where filterQuery (_, schema) = schemaLocation schema == Just "query"
 
 createQueryParamElement
-  :: MonadThrow m => ApiName -> Text -> Schema -> GenImport m Text
+  :: MonadThrow m => ApiName -> Text -> Schema -> GenData m Text
 createQueryParamElement apiName name schema = do
   pt <- paramType apiName name schema
   pure $ "  " <> query <> " \"" <> name <> "\" " <> pt
@@ -177,12 +177,12 @@ createQueryParamElement apiName name schema = do
         | schemaRequired schema == Just True = "QueryParam' '[Required, Strict]"
         | otherwise                          = "QueryParam"
 
-paramType :: MonadThrow m => ApiName -> Text -> Schema -> GenImport m Text
+paramType :: MonadThrow m => ApiName -> Text -> Schema -> GenData m Text
 paramType apiName name schema = case schemaType schema of
   Just (StringType  _) -> stringParamType apiName name schema
-  Just (IntegerType _) -> tell (Set.singleton ImportPrelude) >> pure "RIO.Int"
-  Just (NumberType  _) -> tell (Set.singleton ImportPrelude) >> pure "RIO.Float"
-  Just BooleanType     -> tell (Set.singleton ImportPrelude) >> pure "RIO.Bool"
+  Just (IntegerType _) -> tell [DataImport ImportPrelude] >> pure "RIO.Int"
+  Just (NumberType  _) -> tell [DataImport ImportPrelude] >> pure "RIO.Float"
+  Just BooleanType     -> tell [DataImport ImportPrelude] >> pure "RIO.Bool"
   Just st ->
     throwM
       .  GeneratorException
@@ -196,30 +196,30 @@ paramType apiName name schema = case schemaType schema of
       <> T.pack (show schema)
       <> "'"
 
-stringParamType :: MonadThrow m => ApiName -> Text -> Schema -> GenImport m Text
+stringParamType :: MonadThrow m => ApiName -> Text -> Schema -> GenData m Text
 stringParamType apiName name schema = case schemaEnum schema of
   (Just _descEnum) -> pure $ apiName <> toTitle name
-  Nothing          -> tell (Set.singleton ImportPrelude) >> pure "RIO.Text"
+  Nothing          -> tell [DataImport ImportPrelude] >> pure "RIO.Text"
 
 createRequestBody
   :: MonadThrow m
   => Maybe RestDescriptionMethodRequest
-  -> GenImport m (Maybe Text)
+  -> GenData m (Maybe Text)
 createRequestBody req =
   case maybe Nothing restDescriptionMethodRequestRef req of
     (Just ref) -> do
-      tell (Set.singleton $ Import ref)
+      tell [DataImport $ Import ref]
       pure . pure $ ref
     _ -> pure Nothing
 
 createResponseBody
   :: MonadThrow m
   => Maybe RestDescriptionMethodResponse
-  -> GenImport m (Maybe Text)
+  -> GenData m (Maybe Text)
 createResponseBody resp =
   case maybe Nothing restDescriptionMethodResponseRef resp of
     (Just ref) -> do
-      tell (Set.singleton $ Import ref)
+      tell [DataImport $ Import ref]
       pure . pure $ ref
     _ -> pure Nothing
 

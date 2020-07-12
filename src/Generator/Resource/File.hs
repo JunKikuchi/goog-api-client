@@ -11,15 +11,19 @@ import qualified RIO.ByteString                as B
 import qualified RIO.FilePath                  as FP
 import qualified RIO.List                      as L
 import qualified RIO.Map                       as Map
+import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
 import           RIO.Writer                     ( runWriterT )
 import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
 import qualified Generator.Resource.Content    as C
+import           Generator.Resource.Types
 import           Generator.Schema.File          ( schemaName )
 import qualified Generator.Schema.ImportInfo   as ImportInfo
-import           Generator.Schema.Types  hiding ( Schema )
+import           Generator.Schema.Types         ( SchemaDir
+                                                , ResourceName
+                                                )
 
 resourceName :: Text
 resourceName = "Resource"
@@ -58,14 +62,15 @@ createFile
 createFile svcName svcVer commonParams resNames resName resource = do
   case restDescriptionResourceMethods resource of
     Just methods -> withDir dir $ forM_ (Map.elems methods) $ \method -> do
-      ((apiName, body), imports) <- runWriterT
+      ((apiName, body), genData) <- runWriterT
         $ C.createContent commonParams method
       let moduleName =
             T.intercalate "."
               $  [svcName, svcVer, resourceName]
               <> resNames
               <> [name, apiName]
-          path = FP.addExtension (T.unpack apiName) "hs"
+          path    = FP.addExtension (T.unpack apiName) "hs"
+          imports = foldr foldImports Set.empty genData
           importList =
             L.sort
               $  defaultImports
@@ -94,3 +99,5 @@ createFile svcName svcVer commonParams resNames resName resource = do
  where
   dir  = T.unpack name
   name = toCamelName resName
+  foldImports (DataImport imprt) = Set.insert imprt
+  foldImports _                  = id
