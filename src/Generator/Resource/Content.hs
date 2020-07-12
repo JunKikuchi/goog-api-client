@@ -48,8 +48,8 @@ createContent commonParams method = do
                                     uploadResumablePath
                                     paramOrder
   captures      <- createCapture pathName
-  queries       <- createQueryParam params
-  commonQueries <- createQueryParam commonParams
+  queries       <- createQueryParam apiName params
+  commonQueries <- createQueryParam apiName commonParams
   request       <- createRequestBody $ restDescriptionMethodRequest method
   response      <- createResponseBody $ restDescriptionMethodResponse method
   let reqBody = createReqBody upload request
@@ -99,7 +99,7 @@ createPath apiName params pathName (Just path) paramOrder = do
   let segments = pathSegments paths
       argNames = foldr f [] . join $ segments
   pathArgs <- createPathParams segments
-  types    <- createPathTypes pathParams argNames
+  types    <- createPathTypes apiName pathParams argNames
   let functionType = desc <> pathName <> " :: " <> T.intercalate
         " "
         (L.intersperse "->" (types <> ["RIO.Text"]))
@@ -128,12 +128,16 @@ createPath apiName params pathName (Just path) paramOrder = do
          )
 
 createPathTypes
-  :: MonadThrow m => RestDescriptionParameters -> [Text] -> GenImport m [Text]
-createPathTypes params argNames = sequence $ argTypes <$> argNames
+  :: MonadThrow m
+  => ApiName
+  -> RestDescriptionParameters
+  -> [Text]
+  -> GenImport m [Text]
+createPathTypes apiName params argNames = sequence $ argTypes <$> argNames
  where
   argTypes name = maybe
     (throwM . GeneratorException $ "could not find param '" <> name <> "'")
-    paramType
+    (paramType apiName name)
     (Map.lookup name params)
 
 createPathParams :: MonadThrow m => [Segment] -> GenImport m [Text]
@@ -155,14 +159,17 @@ createCapture name = tell (Set.singleton ImportPrelude)
   >> pure ["  CaptureAll \"" <> name <> "\" RIO.Text"]
 
 createQueryParam
-  :: MonadThrow m => RestDescriptionParameters -> GenImport m [Text]
-createQueryParam =
-  traverse (uncurry createQueryParamElement) . filter filterQuery . Map.toList
+  :: MonadThrow m => ApiName -> RestDescriptionParameters -> GenImport m [Text]
+createQueryParam apiName =
+  traverse (uncurry $ createQueryParamElement apiName)
+    . filter filterQuery
+    . Map.toList
   where filterQuery (_, schema) = schemaLocation schema == Just "query"
 
-createQueryParamElement :: MonadThrow m => Text -> Schema -> GenImport m Text
-createQueryParamElement name schema = do
-  pt <- paramType schema
+createQueryParamElement
+  :: MonadThrow m => ApiName -> Text -> Schema -> GenImport m Text
+createQueryParamElement apiName name schema = do
+  pt <- paramType apiName name schema
   pure $ "  " <> query <> " \"" <> name <> "\" " <> pt
  where
   query | schemaRepeated schema == Just True -- TODO: required 対応
@@ -170,9 +177,9 @@ createQueryParamElement name schema = do
         | schemaRequired schema == Just True = "QueryParam' '[Required, Strict]"
         | otherwise                          = "QueryParam"
 
-paramType :: MonadThrow m => Schema -> GenImport m Text
-paramType schema = case schemaType schema of
-  Just (StringType  _) -> tell (Set.singleton ImportPrelude) >> pure "RIO.Text"
+paramType :: MonadThrow m => ApiName -> Text -> Schema -> GenImport m Text
+paramType apiName name schema = case schemaType schema of
+  Just (StringType  _) -> stringParamType apiName name schema
   Just (IntegerType _) -> tell (Set.singleton ImportPrelude) >> pure "RIO.Int"
   Just (NumberType  _) -> tell (Set.singleton ImportPrelude) >> pure "RIO.Float"
   Just BooleanType     -> tell (Set.singleton ImportPrelude) >> pure "RIO.Bool"
@@ -188,6 +195,11 @@ paramType schema = case schemaType schema of
       $  "failed to get schemaType '"
       <> T.pack (show schema)
       <> "'"
+
+stringParamType :: MonadThrow m => ApiName -> Text -> Schema -> GenImport m Text
+stringParamType apiName name schema = case schemaEnum schema of
+  (Just _descEnum) -> pure $ apiName <> toTitle name
+  Nothing          -> tell (Set.singleton ImportPrelude) >> pure "RIO.Text"
 
 createRequestBody
   :: MonadThrow m
