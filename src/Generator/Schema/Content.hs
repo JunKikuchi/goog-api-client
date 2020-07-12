@@ -3,6 +3,8 @@ module Generator.Schema.Content
   ( createContent
   , createBootContent
   , createFieldContent
+  , createFieldEnumContent
+  , createFieldEnumAesonContent
   )
 where
 
@@ -228,7 +230,7 @@ createField moduleName name props = do
   pure $ T.intercalate ",\n\n" fields
  where
   cons s schema acc = do
-    let camelName = name <> toCamelName s
+    let camelName = name <> titlize s
         fieldName = unTitle camelName
         desc      = descContent 4 $ JSON.schemaDescription schema
     fieldType <- createType moduleName camelName schema False
@@ -268,11 +270,9 @@ createEnumType
 createEnumType defaultType name schema = case JSON.schemaEnum schema of
   (Just jsonEnum) -> do
     let descs = fromMaybe (L.repeat "") $ JSON.schemaEnumDescriptions schema
+        enums = zip jsonEnum descs
     tell
-      [ DataEnum (name, zip jsonEnum descs)
-      , DataImport ImportGenerics
-      , DataImport ImportMap
-      ]
+      [DataEnum (name, enums), DataImport ImportGenerics, DataImport ImportMap]
     pure name
   _ -> pure defaultType
 
@@ -371,7 +371,7 @@ createToJSONContent moduleName name props
     <> "\n    ]"
  where
   names =
-    (\key -> (key, unTitle name <> toCamelName key <> "'")) <$> Map.keys props
+    (\key -> (key, unTitle name <> titlize key <> "'")) <$> Map.keys props
   args = T.intercalate "\n      " (snd <$> names)
   obj  = T.intercalate
     "\n    , "
@@ -404,9 +404,7 @@ createFieldEnumContent name enums =
     <> T.intercalate
          "\n  |\n"
          (fmap
-           (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> toCamelName
-             (T.toLower e)
-           )
+           (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> titlize e)
            enums
          )
     <> "\n  deriving (Show, Generic)"
@@ -438,14 +436,7 @@ createFieldEnumConstructorTagModifierValues name enums = T.intercalate
        "\n    ,"
        (fmap
          (\(e, _) ->
-           " (\""
-             <> name
-             <> toCamelName (T.toLower e)
-             <> "\""
-             <> ", "
-             <> "\""
-             <> e
-             <> "\")"
+           " (\"" <> name <> titlize e <> "\"" <> ", " <> "\"" <> e <> "\")"
          )
          enums
        )

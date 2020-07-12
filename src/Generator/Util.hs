@@ -5,6 +5,7 @@ module Generator.Util
   , toTitle
   , unTitle
   , toCamelName
+  , titlize
   , withDir
   , unLines
   , descContent
@@ -32,6 +33,10 @@ applyHead f text = maybe text (\(c, t) -> T.cons (f c) t) (T.uncons text)
 
 toCamelName :: Text -> Text
 toCamelName = toTitle . T.concat . fmap toTitle . T.split (not . C.isAlphaNum)
+
+titlize :: Text -> Text
+titlize a | T.any (not . C.isAlphaNum) a = toCamelName . T.toLower $ a
+          | otherwise                    = toTitle a
 
 withDir :: FilePath -> IO a -> IO a
 withDir dir action = do

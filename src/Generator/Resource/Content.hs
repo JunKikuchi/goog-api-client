@@ -4,15 +4,20 @@ module Generator.Resource.Content
   )
 where
 
-import           RIO
+import           RIO                     hiding ( Data )
+import qualified RIO.Char                      as C
 import qualified RIO.List                      as L
 import qualified RIO.Map                       as Map
+import qualified RIO.Set                       as Set
 import qualified RIO.Text                      as T
-import           RIO.Writer                     ( tell )
+import           RIO.Writer                     ( runWriterT
+                                                , tell
+                                                )
 import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
 import           Generator.Resource.Types
+import qualified Generator.Schema.Content      as C
 import           Path
 
 type ApiName = Text
@@ -25,37 +30,38 @@ createApi apiNames = "type API\n  =    " <> api
 
 createContent
   :: MonadThrow m
-  => RestDescriptionParameters
+  => ModuleName
+  -> ApiName
+  -> RestDescriptionParameters
   -> RestDescriptionMethod
-  -> GenData m (ApiName, Text)
-createContent commonParams method = do
-  methodId   <- get restDescriptionMethodId "method id" method
-  path       <- get restDescriptionMethodPath "method path" method
+  -> GenImport m Text
+createContent moduleName apiName commonParams method = do
+  ((apiType, paths), gens) <- runWriterT $ do
+    apiType <- createApiType apiName pathName commonParams method
+    paths   <- createPaths apiName pathName method
+    pure (apiType, paths)
+  (enums, imports) <- runWriterT $ createEnums moduleName gens
+  tell imports
+  let content =
+        T.intercalate "\n\n" . filter (not . T.null) $ [apiType, enums, paths]
+  pure content
+  where pathName = unTitle apiName <> "Path"
+
+createApiType
+  :: MonadThrow m
+  => ApiName
+  -> Text
+  -> RestDescriptionParameters
+  -> RestDescriptionMethod
+  -> GenData m Text
+createApiType apiName pathName commonParams method = do
   httpMethod <- get restDescriptionMethodHttpMethod "method httpMethod" method
-  let apiName           = toCamelName methodId
-      pathName          = unTitle $ apiName <> "Path"
-      simplePathName    = unTitle $ apiName <> "SimplePath"
-      resumablePathName = unTitle $ apiName <> "ResumablePath"
-  createpath       <- createPath apiName params pathName (Just path) paramOrder
-  createSimplePath <- createPath apiName
-                                 params
-                                 simplePathName
-                                 uploadSimplePath
-                                 paramOrder
-  createResumablePath <- createPath apiName
-                                    params
-                                    resumablePathName
-                                    uploadResumablePath
-                                    paramOrder
   captures      <- createCapture pathName
   queries       <- createQueryParam apiName params
   commonQueries <- createQueryParam apiName commonParams
-  request       <- createRequestBody $ restDescriptionMethodRequest method
-  response      <- createResponseBody $ restDescriptionMethodResponse method
-  let reqBody = createReqBody upload request
-      verb    = createVerb httpMethod response
-      desc    = descContent 0 $ restDescriptionMethodDescription method
-      apiPath =
+  reqBody       <- createRequestBody upload request
+  verb          <- createResponseBody httpMethod response
+  let apiPath =
         T.intercalate "\n  :>\n"
           $  captures
           <> queries
@@ -63,26 +69,55 @@ createContent commonParams method = do
           <> uploadTypeQuery
           <> reqBody
           <> verb
-      apiType = "type " <> apiName <> "\n  =\n" <> apiPath
-      content =
-        T.intercalate "\n\n"
-          . filter (not . T.null)
-          $ [desc <> apiType, createpath, createSimplePath, createResumablePath]
-  pure (apiName, content)
+  pure $ desc <> "type " <> apiName <> "\n  =\n" <> apiPath
  where
   params          = fromMaybe Map.empty $ restDescriptionMethodParameters method
-  paramOrder      = fromMaybe [] $ restDescriptionMethodParameterOrder method
   upload = fromMaybe False $ restDescriptionMethodSupportsMediaUpload method
+  request         = restDescriptionMethodRequest method
+  response        = restDescriptionMethodResponse method
   uploadTypeQuery = [ "  QueryParam \"uploadType\" RIO.Text" | upload ]
-  mediaUpload     = restDescriptionMethodMediaUpload method
-  uploadProtocols = mediaUpload >>= restDescriptionMethodMediaProtocols
-  uploadSimple = uploadProtocols >>= restDescriptionMethodMediaProtocolsSimple
+  desc            = descContent 0 $ restDescriptionMethodDescription method
+
+createPaths
+  :: MonadThrow m => Text -> Text -> RestDescriptionMethod -> GenData m Text
+createPaths apiName pathName method = do
+  let cpath = createPath apiName params
+  path                <- get restDescriptionMethodPath "method path" method
+  createpath          <- cpath pathName (Just path) paramOrder
+  createSimplePath    <- cpath simplePathName uploadSimplePath paramOrder
+  createResumablePath <- cpath resumablePathName uploadResumablePath paramOrder
+  pure
+    $ T.intercalate "\n\n"
+    . filter (not . T.null)
+    $ [createpath, createSimplePath, createResumablePath]
+ where
+  pname             = unTitle apiName
+  simplePathName    = pname <> "SimplePath"
+  resumablePathName = pname <> "ResumablePath"
+  params = fromMaybe Map.empty $ restDescriptionMethodParameters method
+  paramOrder        = fromMaybe [] $ restDescriptionMethodParameterOrder method
+  mediaUpload       = restDescriptionMethodMediaUpload method
+  uploadProtocols   = mediaUpload >>= restDescriptionMethodMediaProtocols
   uploadSimplePath =
-    uploadSimple >>= restDescriptionMethodMediaProtocolsSimplePath
-  uploadResumable =
-    uploadProtocols >>= restDescriptionMethodMediaProtocolsResumable
+    uploadProtocols
+      >>= restDescriptionMethodMediaProtocolsSimple
+      >>= restDescriptionMethodMediaProtocolsSimplePath
   uploadResumablePath =
-    uploadResumable >>= restDescriptionMethodMediaProtocolsResumablePath
+    uploadProtocols
+      >>= restDescriptionMethodMediaProtocolsResumable
+      >>= restDescriptionMethodMediaProtocolsResumablePath
+
+createEnums :: MonadThrow m => ModuleName -> [Data] -> GenImport m Text
+createEnums moduleName = fmap unLines . foldr f (pure mempty)
+ where
+  f :: MonadThrow m => Data -> GenImport m [Text] -> GenImport m [Text]
+  f (DataEnum (name, enums)) acc = do
+    let a     = C.createFieldEnumContent name enums
+        aeson = C.createFieldEnumAesonContent moduleName name enums
+    ((a <> "\n\n" <> aeson) :) <$> acc
+  f (DataImport ref) acc = do
+    tell $ Set.singleton ref
+    acc
 
 createPath
   :: MonadThrow m
@@ -155,8 +190,9 @@ createPathParams segments = sequence $ segment <$> segments
   template _ = undefined
 
 createCapture :: MonadThrow m => Text -> GenData m [Text]
-createCapture name = tell [DataImport ImportPrelude]
-  >> pure ["  CaptureAll \"" <> name <> "\" RIO.Text"]
+createCapture name = do
+  tell [DataImport ImportPrelude]
+  pure ["  CaptureAll \"" <> name <> "\" RIO.Text"]
 
 createQueryParam
   :: MonadThrow m => ApiName -> RestDescriptionParameters -> GenData m [Text]
@@ -179,7 +215,8 @@ createQueryParamElement apiName name schema = do
 
 paramType :: MonadThrow m => ApiName -> Text -> Schema -> GenData m Text
 paramType apiName name schema = case schemaType schema of
-  Just (StringType  _) -> stringParamType apiName name schema
+  Just (StringType _) ->
+    stringParamType (apiName <> toTitle (T.filter C.isAlphaNum name)) schema
   Just (IntegerType _) -> tell [DataImport ImportPrelude] >> pure "RIO.Int"
   Just (NumberType  _) -> tell [DataImport ImportPrelude] >> pure "RIO.Float"
   Just BooleanType     -> tell [DataImport ImportPrelude] >> pure "RIO.Bool"
@@ -196,41 +233,47 @@ paramType apiName name schema = case schemaType schema of
       <> T.pack (show schema)
       <> "'"
 
-stringParamType :: MonadThrow m => ApiName -> Text -> Schema -> GenData m Text
-stringParamType apiName name schema = case schemaEnum schema of
-  (Just _descEnum) -> pure $ apiName <> toTitle name
-  Nothing          -> tell [DataImport ImportPrelude] >> pure "RIO.Text"
+stringParamType :: MonadThrow m => Text -> Schema -> GenData m Text
+stringParamType name schema = case schemaEnum schema of
+  (Just descEnum) -> do
+    let descs = fromMaybe (L.repeat "") $ schemaEnumDescriptions schema
+        enums = zip descEnum descs
+    tell
+      [ DataEnum (name, enums)
+      , DataImport ImportPrelude
+      , DataImport ImportGenerics
+      , DataImport ImportJSON
+      , DataImport ImportMap
+      ]
+    pure name
+  Nothing -> tell [DataImport ImportPrelude] >> pure "RIO.Text"
 
 createRequestBody
   :: MonadThrow m
-  => Maybe RestDescriptionMethodRequest
-  -> GenData m (Maybe Text)
-createRequestBody req =
+  => Bool
+  -> Maybe RestDescriptionMethodRequest
+  -> GenData m [Text]
+createRequestBody upload req =
   case maybe Nothing restDescriptionMethodRequestRef req of
     (Just ref) -> do
       tell [DataImport $ Import ref]
-      pure . pure $ ref
-    _ -> pure Nothing
+      pure $ createReqBody upload ref
+    _ -> pure []
+
+createReqBody :: Bool -> Text -> [Text]
+createReqBody False ref = ["  ReqBody '[JSON] " <> ref <> "." <> ref]
+createReqBody True ref =
+  ["  ReqBody '[JSON] (Maybe " <> ref <> "." <> ref <> ")"]
 
 createResponseBody
   :: MonadThrow m
-  => Maybe RestDescriptionMethodResponse
-  -> GenData m (Maybe Text)
-createResponseBody resp =
+  => Text
+  -> Maybe RestDescriptionMethodResponse
+  -> GenData m [Text]
+createResponseBody method resp =
   case maybe Nothing restDescriptionMethodResponseRef resp of
     (Just ref) -> do
       tell [DataImport $ Import ref]
-      pure . pure $ ref
-    _ -> pure Nothing
-
-createReqBody :: Bool -> Maybe Text -> [Text]
-createReqBody False (Just ref) = ["  ReqBody '[JSON] " <> ref <> "." <> ref]
-createReqBody True (Just ref) =
-  ["  ReqBody '[JSON] (Maybe " <> ref <> "." <> ref <> ")"]
-createReqBody _ _ = []
-
-createVerb :: Text -> Maybe Text -> [Text]
-createVerb method resp = case resp of
-  (Just ref) -> [m <> " '[JSON] " <> ref <> "." <> ref]
-  _          -> [m <> "NoContent '[JSON] NoContent"]
+      pure [m <> " '[JSON] " <> ref <> "." <> ref]
+    _ -> pure [m <> "NoContent '[JSON] NoContent"]
   where m = "  " <> T.toTitle method

@@ -13,6 +13,7 @@ type SrcDir      = FilePath
 type ServiceDir  = FilePath
 type PrameterDir = FilePath
 
+type ModuleName     = Text
 type ProjectName    = Text
 type ServiceName    = Text
 type ServiceVersion = Text
@@ -24,4 +25,11 @@ type Required = Bool
 type Gen w     = WriterT w
 type GenImport = Gen (Set Import)
 
-data Import = ImportPrelude | ImportText | ImportMap | ImportGenerics | Import Text deriving (Eq, Ord, Show)
+data Import
+  = ImportPrelude
+  | ImportText
+  | ImportMap
+  | ImportGenerics
+  | ImportJSON
+  | Import Text
+  deriving (Eq, Ord, Show)

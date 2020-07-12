@@ -8,7 +8,6 @@ import           Generator.Types
 
 type SchemaDir = FilePath
 
-type ModuleName   = Text
 type RecordName   = Text
 type ResourceName = Text
 
