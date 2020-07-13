@@ -22,6 +22,29 @@ import           Path
 
 type ApiName = Text
 
+uploadTypeSchema :: Schema
+uploadTypeSchema = Schema
+  { schemaId               = Nothing
+  , schemaType             = Just (StringType emptyString)
+  , schemaRef              = Nothing
+  , schemaDescription      = Just
+    "The type of upload request to the /upload URI. Acceptable values are:"
+  , schemaDefault          = Nothing
+  , schemaRequired         = Nothing
+  , schemaEnum             = Just ["media", "multipart", "resumable"]
+  , schemaEnumDescriptions = Just
+    [ "Simple upload. Upload the object data only, without any metadata."
+    , "Upload both the object data and its metadata, in a single request."
+    , "Upload the object data in a resumable fashion, using a series of at least two requests where the first request includes the metadata."
+    ]
+  , schemaRepeated         = Nothing
+  , schemaLocation         = Nothing
+  , schemaAnnotations      = Nothing
+  }
+
+emptyString :: Discovery.RestDescription.String
+emptyString = String {stringPattern = Nothing, stringFormat = Nothing}
+
 createContent
   :: MonadThrow m
   => ModuleName
@@ -51,24 +74,28 @@ createApiType apiName pathName commonParams method = do
   captures      <- createCapture pathName
   queries       <- createQueryParam apiName params
   commonQueries <- createQueryParam apiName commonParams
-  reqBody       <- createRequestBody upload request
-  verb          <- createResponseBody httpMethod response
+  uploadType    <- if upload
+    then do
+      ut <- createQueryParamElement apiName "uploadType" uploadTypeSchema
+      pure [ut]
+    else pure []
+  reqBody <- createRequestBody upload request
+  verb    <- createResponseBody httpMethod response
   let apiPath =
         T.intercalate "\n  :>\n"
           $  captures
           <> queries
           <> commonQueries
-          <> uploadTypeQuery
+          <> uploadType
           <> reqBody
           <> verb
   pure $ desc <> "type " <> apiName <> "\n  =\n" <> apiPath
  where
-  params          = fromMaybe Map.empty $ restDescriptionMethodParameters method
-  upload = fromMaybe False $ restDescriptionMethodSupportsMediaUpload method
-  request         = restDescriptionMethodRequest method
-  response        = restDescriptionMethodResponse method
-  uploadTypeQuery = [ "  QueryParam \"uploadType\" RIO.Text" | upload ]
-  desc            = descContent 0 $ restDescriptionMethodDescription method
+  params   = fromMaybe Map.empty $ restDescriptionMethodParameters method
+  upload   = fromMaybe False $ restDescriptionMethodSupportsMediaUpload method
+  request  = restDescriptionMethodRequest method
+  response = restDescriptionMethodResponse method
+  desc     = descContent 0 $ restDescriptionMethodDescription method
 
 createPaths
   :: MonadThrow m => Text -> Text -> RestDescriptionMethod -> GenData m Text
