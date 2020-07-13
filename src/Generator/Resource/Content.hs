@@ -111,8 +111,8 @@ createPaths apiName pathName method = do
     $ [createpath, createSimplePath, createResumablePath]
  where
   pname             = unTitle apiName
-  simplePathName    = pname <> "SimplePath"
-  resumablePathName = pname <> "ResumablePath"
+  simplePathName    = pname <> "UploadMediaSimplePath"
+  resumablePathName = pname <> "UploadMediaResumablePath"
   params = fromMaybe Map.empty $ restDescriptionMethodParameters method
   paramOrder        = fromMaybe [] $ restDescriptionMethodParameterOrder method
   mediaUpload       = restDescriptionMethodMediaUpload method
