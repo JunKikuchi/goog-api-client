@@ -130,10 +130,11 @@ createEnums :: MonadThrow m => ModuleName -> [Data] -> GenImport m Text
 createEnums moduleName = fmap unLines . foldr f (pure mempty)
  where
   f :: MonadThrow m => Data -> GenImport m [Text] -> GenImport m [Text]
-  f (DataEnum (name, enums)) acc = do
-    let a     = C.createFieldEnumContent name enums
-        aeson = C.createFieldEnumAesonContent moduleName name enums
-    ((a <> "\n\n" <> aeson) :) <$> acc
+  f (DataEnum (name, desc, enums)) acc = do
+    let c = C.createFieldEnumContent name enums
+        d = descContent 0 desc
+        a = C.createFieldEnumAesonContent moduleName name enums
+    ((d <> c <> "\n\n" <> a) :) <$> acc
   f (DataImport ref) acc = do
     tell $ Set.singleton ref
     acc
@@ -256,8 +257,9 @@ stringParamType name schema = case schemaEnum schema of
   (Just descEnum) -> do
     let descs = fromMaybe (L.repeat "") $ schemaEnumDescriptions schema
         enums = zip descEnum descs
+        desc  = schemaDescription schema
     tell
-      [ DataEnum (name, enums)
+      [ DataEnum (name, desc, enums)
       , DataImport ImportPrelude
       , DataImport ImportGenerics
       , DataImport ImportJSON

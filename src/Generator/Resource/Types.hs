@@ -9,7 +9,9 @@ type GenData = Gen [Data]
 
 data Data = DataEnum Enum | DataImport Import deriving Show
 
-type Enum     = (Text, EnumList)
+type Enum = (Text, Maybe Text, EnumList)
+
 type EnumList = [(EnumName, EnumDesc)]
+
 type EnumName = Text
 type EnumDesc = Text
