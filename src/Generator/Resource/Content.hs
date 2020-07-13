@@ -22,12 +22,6 @@ import           Path
 
 type ApiName = Text
 
-{-
-createApi :: [ApiName] -> Text
-createApi apiNames = "type API\n  =    " <> api
-  where api = T.intercalate "\n  :<|> " apiNames
--}
-
 createContent
   :: MonadThrow m
   => ModuleName
