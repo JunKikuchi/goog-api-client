@@ -30,6 +30,5 @@ data Import
   | ImportText
   | ImportMap
   | ImportGenerics
-  | ImportJSON
   | Import Text
   deriving (Eq, Ord, Show)

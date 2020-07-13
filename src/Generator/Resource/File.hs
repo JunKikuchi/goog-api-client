@@ -32,7 +32,6 @@ resourceDir = T.unpack resourceName
 defaultExtentions :: [Text]
 defaultExtentions =
   [ "{-# LANGUAGE DataKinds #-}"
-  , "{-# LANGUAGE DeriveGeneric #-}"
   , "{-# LANGUAGE OverloadedStrings #-}"
   , "{-# LANGUAGE TypeOperators #-}"
   ]
@@ -68,7 +67,7 @@ createFile svcName svcVer commonParams resNames resName resource = do
               <> resNames
               <> [name, apiName]
       (body, imports) <- runWriterT
-        $ C.createContent moduleName apiName commonParams method
+        $ C.createContent apiName commonParams method
       let path = FP.addExtension (T.unpack apiName) "hs"
           importList =
             L.sort

@@ -17,7 +17,6 @@ import           Discovery.RestDescription
 import           Generator.Types
 import           Generator.Util
 import           Generator.Resource.Types
-import qualified Generator.Schema.Content      as C
 import           Path
 
 type ApiName = Text
@@ -47,17 +46,16 @@ emptyString = String {stringPattern = Nothing, stringFormat = Nothing}
 
 createContent
   :: MonadThrow m
-  => ModuleName
-  -> ApiName
+  => ApiName
   -> RestDescriptionParameters
   -> RestDescriptionMethod
   -> GenImport m Text
-createContent moduleName apiName commonParams method = do
+createContent apiName commonParams method = do
   ((apiType, paths), gens) <- runWriterT $ do
     apiType <- createApiType apiName pathName commonParams method
     paths   <- createPaths apiName pathName method
     pure (apiType, paths)
-  (enums, imports) <- runWriterT $ createEnums moduleName gens
+  (enums, imports) <- runWriterT $ createEnums gens
   tell imports
   pure $ T.intercalate "\n\n" . filter (not . T.null) $ [apiType, enums, paths]
   where pathName = unTitle apiName <> "Path"
@@ -126,18 +124,40 @@ createPaths apiName pathName method = do
       >>= restDescriptionMethodMediaProtocolsResumable
       >>= restDescriptionMethodMediaProtocolsResumablePath
 
-createEnums :: MonadThrow m => ModuleName -> [Data] -> GenImport m Text
-createEnums moduleName = fmap unLines . foldr f (pure mempty)
+createEnums :: MonadThrow m => [Data] -> GenImport m Text
+createEnums = fmap unLines . foldr f (pure mempty)
  where
   f :: MonadThrow m => Data -> GenImport m [Text] -> GenImport m [Text]
   f (DataEnum (name, desc, enums)) acc = do
-    let c = C.createFieldEnumContent name enums
-        d = descContent 0 desc
-        a = C.createFieldEnumAesonContent moduleName name enums
+    let d = descContent 0 desc
+        c = createEnumData name enums
+        a = createEnumInstance name
     ((d <> c <> "\n\n" <> a) :) <$> acc
   f (DataImport ref) acc = do
     tell $ Set.singleton ref
     acc
+
+createEnumData :: Text -> EnumList -> Text
+createEnumData name enums =
+  "data "
+    <> name
+    <> "\n  =\n"
+    <> T.intercalate
+         "\n  |\n"
+         (fmap
+           (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> titlize e)
+           enums
+         )
+    <> "\n  deriving (Show, Read, Eq, Ord, Enum, Bounded)"
+
+createEnumInstance :: Text -> Text
+createEnumInstance name =
+  "instance FromHttpApiData "
+    <> name
+    <> " where\n"
+    <> "  parseQueryParam = maybe (Left \"HttpApiData "
+    <> name
+    <> " parse error\") Right . readMaybe . T.unpack"
 
 createPath
   :: MonadThrow m
@@ -258,13 +278,7 @@ stringParamType name schema = case schemaEnum schema of
     let descs = fromMaybe (L.repeat "") $ schemaEnumDescriptions schema
         enums = zip descEnum descs
         desc  = schemaDescription schema
-    tell
-      [ DataEnum (name, desc, enums)
-      , DataImport ImportPrelude
-      , DataImport ImportGenerics
-      , DataImport ImportJSON
-      , DataImport ImportMap
-      ]
+    tell [DataEnum (name, desc, enums), DataImport ImportPrelude]
     pure name
   Nothing -> tell [DataImport ImportPrelude] >> pure "RIO.Text"
 
