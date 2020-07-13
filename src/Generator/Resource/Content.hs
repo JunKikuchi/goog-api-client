@@ -42,9 +42,7 @@ createContent moduleName apiName commonParams method = do
     pure (apiType, paths)
   (enums, imports) <- runWriterT $ createEnums moduleName gens
   tell imports
-  let content =
-        T.intercalate "\n\n" . filter (not . T.null) $ [apiType, enums, paths]
-  pure content
+  pure $ T.intercalate "\n\n" . filter (not . T.null) $ [apiType, enums, paths]
   where pathName = unTitle apiName <> "Path"
 
 createApiType
@@ -145,8 +143,7 @@ createPath apiName params pathName (Just path) paramOrder = do
           <> " = T.intercalate \"/\" $ join ["
           <> T.intercalate ", " pathArgs
           <> "]"
-      content = T.intercalate "\n" [functionType, functionBody]
-  pure content
+  pure $ T.intercalate "\n" [functionType, functionBody]
  where
   pathParams = Map.filter filterPath params
   filterPath schema = schemaLocation schema == Just "path"
