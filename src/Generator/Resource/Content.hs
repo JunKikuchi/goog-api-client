@@ -173,8 +173,8 @@ createPath apiName params pathName (Just path) paramOrder = do
   paths <- either throwM pure $ Path.parse path
   let segments = pathSegments paths
       argNames = foldr f [] . join $ segments
-  pathArgs <- createPathParams segments
   types    <- createPathTypes apiName pathParams argNames
+  pathArgs <- createPathParams pathParams segments
   let functionType = desc <> pathName <> " :: " <> T.intercalate
         " "
         (L.intersperse "->" (types <> ["RIO.Text"]))
@@ -214,15 +214,27 @@ createPathTypes apiName params argNames = sequence $ argTypes <$> argNames
     (paramType apiName name)
     (Map.lookup name params)
 
-createPathParams :: MonadThrow m => [Segment] -> GenData m [Text]
-createPathParams segments = sequence $ segment <$> segments
+createPathParams
+  :: MonadThrow m => RestDescriptionParameters -> [Segment] -> GenData m [Text]
+createPathParams params segments = sequence $ segment <$> segments
  where
   segment = fmap cat . traverse template
   cat [] = "\"\""
   cat xs = T.intercalate " <> " xs
   template :: MonadThrow m => Template -> GenData m Text
-  template (Literal a       ) = pure $ "\"" <> a <> "\""
-  template (Expression _ _ a) = pure a
+  template (Literal name       ) = pure $ "\"" <> name <> "\""
+  template (Expression _ _ name) = maybe
+    (throwM . GeneratorException $ "could not find param '" <> name <> "'")
+    (createPathParamExpression name)
+    (Map.lookup name params)
+
+createPathParamExpression :: MonadThrow m => Text -> Schema -> GenData m Text
+createPathParamExpression name schema = case schemaType schema of
+  Just (StringType  _) -> pure name
+  Just (IntegerType _) -> pure $ "T.pack $ show " <> name
+  Just (NumberType  _) -> pure $ "T.pack $ show " <> name
+  Just BooleanType -> pure $ "if " <> name <> " then \"true\" else \"false\""
+  _                    -> undefined
 
 createCapture :: MonadThrow m => Text -> GenData m [Text]
 createCapture name = do
