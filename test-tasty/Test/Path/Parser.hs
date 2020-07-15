@@ -18,20 +18,40 @@ spec_Test_Path_Parser = describe "Parser" $ describe "path" $ do
   it "foo/bar" $ parse path "" "foo/bar" `shouldBe` Right
     (Path [[Literal "foo"], [Literal "bar"]])
   it "{foo}" $ parse path "" "{foo}" `shouldBe` Right
-    (Path [[Expression Nothing "foo"]])
+    (Path [[Expression Nothing Nothing "foo"]])
+  it "{foo:123}" $ parse path "" "{foo:123}" `shouldBe` Right
+    (Path [[Expression Nothing (Just (Prefix 123)) "foo"]])
+  it "{foo*}" $ parse path "" "{foo*}" `shouldBe` Right
+    (Path [[Expression Nothing (Just Explode) "foo"]])
   it "{+foo}" $ parse path "" "{+foo}" `shouldBe` Right
-    (Path [[Expression (Just Reserved) "foo"]])
+    (Path [[Expression (Just Reserved) Nothing "foo"]])
   it "{#foo}" $ parse path "" "{#foo}" `shouldBe` Right
-    (Path [[Expression (Just Fragment) "foo"]])
+    (Path [[Expression (Just Fragment) Nothing "foo"]])
   it "{foo}/{+bar}" $ parse path "" "{foo}/{+bar}" `shouldBe` Right
-    (Path [[Expression Nothing "foo"], [Expression (Just Reserved) "bar"]])
+    (Path
+      [ [Expression Nothing Nothing "foo"]
+      , [Expression (Just Reserved) Nothing "bar"]
+      ]
+    )
   it "foo{bar}" $ parse path "" "foo{bar}" `shouldBe` Right
-    (Path [[Literal "foo", Expression Nothing "bar"]])
+    (Path [[Literal "foo", Expression Nothing Nothing "bar"]])
   it "foo{bar}:buzz" $ parse path "" "foo{bar}:buzz" `shouldBe` Right
-    (Path [[Literal "foo", Expression Nothing "bar", Literal ":buzz"]])
+    (Path [[Literal "foo", Expression Nothing Nothing "bar", Literal ":buzz"]])
   it "a/foo{bar}:buzz" $ parse path "" "a/foo{bar}:buzz" `shouldBe` Right
     (Path
       [ [Literal "a"]
-      , [Literal "foo", Expression Nothing "bar", Literal ":buzz"]
+      , [Literal "foo", Expression Nothing Nothing "bar", Literal ":buzz"]
+      ]
+    )
+  it "a/foo{/bar}" $ parse path "" "a/foo{/bar}" `shouldBe` Right
+    (Path
+      [ [Literal "a"]
+      , [Literal "foo", Expression (Just PathSegment) Nothing "bar"]
+      ]
+    )
+  it "a/foo{/bar*}" $ parse path "" "a/foo{/bar*}" `shouldBe` Right
+    (Path
+      [ [Literal "a"]
+      , [Literal "foo", Expression (Just PathSegment) (Just Explode) "bar"]
       ]
     )

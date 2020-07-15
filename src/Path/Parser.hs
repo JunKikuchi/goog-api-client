@@ -1,11 +1,13 @@
 module Path.Parser where
 
 import           RIO                     hiding ( many
+                                                , mod
                                                 , some
                                                 )
 import qualified RIO.Text                      as T
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
+import           Text.Megaparsec.Char.Lexer
 import           Path.Types
 
 type Parser = Parsec Void Text
@@ -28,16 +30,30 @@ template = expression <|> literal
 expression :: Parser Template
 expression = do
   void $ char '{'
-  (op, str) <- do
+  (op, str, mod) <- do
     op  <- operator
-    str <- T.pack <$> many (satisfy (/= '}'))
-    return (op, str)
+    str <- T.pack <$> many (noneOf ['}', '*', ':'])
+    mod <- modifier
+    return (op, str, mod)
   void $ char '}'
-  pure (Expression op str)
+  pure (Expression op mod str)
 
 operator :: Parser (Maybe Operator)
-operator =
-  choice [Just Reserved <$ char '+', Just Fragment <$ char '#', pure Nothing]
+operator = choice
+  [ Just Reserved <$ char '+'
+  , Just Fragment <$ char '#'
+  , Just PathSegment <$ char '/'
+  , pure Nothing
+  ]
+
+modifier :: Parser (Maybe Modifier)
+modifier = choice [Just Explode <$ char '*', prefixModifier, pure Nothing]
+
+prefixModifier :: Parser (Maybe Modifier)
+prefixModifier = do
+  void $ char ':'
+  num <- decimal
+  pure (Just (Prefix num))
 
 literal :: Parser Template
 literal = (Literal . T.pack) <$> some (noneOf ['/', '{'])

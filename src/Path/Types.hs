@@ -11,10 +11,16 @@ type Segment = [Template]
 
 data Template
   = Literal Text
-  | Expression (Maybe Operator) Text
+  | Expression (Maybe Operator) (Maybe Modifier) Text
   deriving (Show, Eq)
 
 data Operator
   = Reserved
   | Fragment
+  | PathSegment
+  deriving (Show, Eq)
+
+data Modifier
+  = Explode
+  | Prefix Int
   deriving (Show, Eq)
