@@ -182,15 +182,15 @@ createPath apiName params pathName (Just path) paramOrder = do
         pathName
           <> " "
           <> T.intercalate " " argNames
-          <> " = T.intercalate \"/\" $ join ["
+          <> " = T.intercalate \"/\" ["
           <> T.intercalate ", " pathArgs
           <> "]"
   pure $ T.intercalate "\n" [functionType, functionBody]
  where
   pathParams = Map.filter filterPath params
   filterPath schema = schemaLocation schema == Just "path"
-  f (Expression _ name) acc = name : acc
-  f _                   acc = acc
+  f (Expression _ _ name) acc = name : acc
+  f _                     acc = acc
   desc =
     descContent 0
       .  Just
@@ -218,15 +218,11 @@ createPathParams :: MonadThrow m => [Segment] -> GenData m [Text]
 createPathParams segments = sequence $ segment <$> segments
  where
   segment = fmap cat . traverse template
-  cat [] = "[\"\"]"
+  cat [] = "\"\""
   cat xs = T.intercalate " <> " xs
   template :: MonadThrow m => Template -> GenData m Text
-  template (Literal a                   ) = pure $ "[\"" <> a <> "\"]"
-  template (Expression Nothing         a) = pure $ "[" <> a <> "]"
-  template (Expression (Just Reserved) a) = do
-    tell [DataImport ImportPrelude]
-    pure $ "T.split (== '/') " <> a
-  template _ = undefined
+  template (Literal a       ) = pure $ "\"" <> a <> "\""
+  template (Expression _ _ a) = pure a
 
 createCapture :: MonadThrow m => Text -> GenData m [Text]
 createCapture name = do
