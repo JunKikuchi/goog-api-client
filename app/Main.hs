@@ -48,4 +48,4 @@ runCommand (Opts.GenApiCommand a) = gen optName optVer optDist
 gen :: D.Api -> D.Version -> G.DistDir -> IO ()
 gen name ver dist = do
   resp <- D.run $ D.getRest name ver
-  either (error . show) (G.gen dist) resp
+  either print (G.gen dist) resp
