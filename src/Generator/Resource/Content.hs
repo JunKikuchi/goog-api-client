@@ -130,9 +130,10 @@ createEnums = fmap unLines . foldr f (pure mempty)
   f :: MonadThrow m => Data -> GenImport m [Text] -> GenImport m [Text]
   f (DataEnum (name, desc, enums)) acc = do
     let d = descContent 0 desc
-        c = createEnumData name enums
-        a = createEnumInstance name
-    ((d <> c <> "\n\n" <> a) :) <$> acc
+        a = createEnumData name enums
+        b = createEnumToHttpApiDataInstance name enums
+        c = createEnumFromHttpApiDataInstance name enums
+    ((d <> a <> "\n\n" <> b <> "\n\n" <> c) :) <$> acc
   f (DataImport ref) acc = do
     tell $ Set.singleton ref
     acc
@@ -148,16 +149,33 @@ createEnumData name enums =
            (\(e, d) -> descContent 2 (Just d) <> "  " <> name <> titlize e)
            enums
          )
-    <> "\n  deriving (Show, Read, Eq, Ord, Enum, Bounded)"
+    <> "\n  deriving Show"
 
-createEnumInstance :: Text -> Text
-createEnumInstance name =
+createEnumToHttpApiDataInstance :: Text -> EnumList -> Text
+createEnumToHttpApiDataInstance name enums =
+  "instance ToHttpApiData " <> name <> " where\n" <> T.intercalate
+    "\n"
+    (fmap
+      (\(e, _) -> "  toQueryParam " <> name <> titlize e <> " = \"" <> e <> "\""
+      )
+      enums
+    )
+
+createEnumFromHttpApiDataInstance :: Text -> EnumList -> Text
+createEnumFromHttpApiDataInstance name enums =
   "instance FromHttpApiData "
     <> name
     <> " where\n"
-    <> "  parseQueryParam = maybe (Left \"HttpApiData "
+    <> "  parseQueryParam s = case s of\n"
+    <> T.intercalate
+         "\n"
+         (fmap
+           (\(e, _) -> "    \"" <> e <> "\" -> Right " <> name <> titlize e)
+           enums
+         )
+    <> "\n    _ -> Left \"FromHttpApiData "
     <> name
-    <> " parse error\") Right . readMaybe . T.unpack"
+    <> " parse error\""
 
 createPath
   :: MonadThrow m
