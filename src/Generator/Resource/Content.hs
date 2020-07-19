@@ -199,7 +199,7 @@ createPath apiName params pathName (Just path) paramOrder = do
       functionBody =
         pathName
           <> " "
-          <> T.intercalate " " argNames
+          <> T.intercalate " " (map (<> "'") argNames)
           <> " = T.intercalate \"/\" ["
           <> T.intercalate ", " pathArgs
           <> "]"
@@ -248,9 +248,9 @@ createPathParams params segments = sequence $ segment <$> segments
 
 createPathParamExpression :: MonadThrow m => Text -> Schema -> GenData m Text
 createPathParamExpression name schema = case schemaType schema of
-  Just (StringType  _) -> pure $ "toQueryParam " <> name
-  Just (IntegerType _) -> pure $ "T.pack $ show " <> name
-  Just (NumberType  _) -> pure $ "T.pack $ show " <> name
+  Just (StringType  _) -> pure $ "toQueryParam " <> name <> "'"
+  Just (IntegerType _) -> pure $ "T.pack $ show " <> name <> "'"
+  Just (NumberType  _) -> pure $ "T.pack $ show " <> name <> "'"
   Just BooleanType -> pure $ "if " <> name <> " then \"true\" else \"false\""
   _                    -> undefined
 
