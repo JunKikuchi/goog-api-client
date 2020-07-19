@@ -248,7 +248,7 @@ createPathParams params segments = sequence $ segment <$> segments
 
 createPathParamExpression :: MonadThrow m => Text -> Schema -> GenData m Text
 createPathParamExpression name schema = case schemaType schema of
-  Just (StringType  _) -> pure name
+  Just (StringType  _) -> pure $ "toQueryParam " <> name
   Just (IntegerType _) -> pure $ "T.pack $ show " <> name
   Just (NumberType  _) -> pure $ "T.pack $ show " <> name
   Just BooleanType -> pure $ "if " <> name <> " then \"true\" else \"false\""
